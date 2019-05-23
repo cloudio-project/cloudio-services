@@ -18,6 +18,8 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.influxdb:influxdb-java")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
