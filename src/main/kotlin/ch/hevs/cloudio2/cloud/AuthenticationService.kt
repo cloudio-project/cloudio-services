@@ -89,7 +89,7 @@ class AuthenticationService {
 
                         when {
                             endpointPermission == Permission.DENY -> "deny"
-                            routingKey[0].toUpperCase() != "@UPDATE" -> "deny"
+                            routingKey[0][0] != '@' -> "deny"
                             endpointPermission.value >= permission.value -> "allow"
                             else -> "deny"
                         }
