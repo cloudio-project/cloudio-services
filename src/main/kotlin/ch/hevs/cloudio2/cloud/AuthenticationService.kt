@@ -1,7 +1,8 @@
 package ch.hevs.cloudio2.cloud
 
 import ch.hevs.cloudio2.cloud.model.Permission
-import ch.hevs.cloudio2.cloud.model.User
+import ch.hevs.cloudio2.cloud.repo.User
+import ch.hevs.cloudio2.cloud.repo.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message

@@ -2,6 +2,10 @@ package ch.hevs.cloudio2.cloud
 
 import ch.hevs.cloudio2.cloud.model.Attribute
 import ch.hevs.cloudio2.cloud.model.AttributeType
+import ch.hevs.cloudio2.cloud.model.CloudioObject
+import ch.hevs.cloudio2.cloud.model.Node
+import ch.hevs.cloudio2.cloud.repo.EndpointEntity
+import ch.hevs.cloudio2.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio2.cloud.serialization.SerializationFormatFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
@@ -14,12 +18,14 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import org.springframework.core.env.Environment;
+import org.springframework.data.repository.findByIdOrNull
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 
 
 @Service
-class UpdateService(val env: Environment, val influx: InfluxDB) {
+class UpdateService(val env: Environment, val influx: InfluxDB, val endpointEntityRepository: EndpointEntityRepository) {
 
     companion object {
         private val log = LoggerFactory.getLogger(UpdateService::class.java)
@@ -51,7 +57,8 @@ class UpdateService(val env: Environment, val influx: InfluxDB) {
             val attribute = Attribute()
             messageFormat.deserializeAttribute(attribute, data)
             if (attribute.timestamp != -1.0 && attribute.value != null) {
-                attributeUpdated(attributeId, attribute)
+                attributeUpdatedInflux(attributeId, attribute)
+                attributeUpdatedMongo(attributeId, attribute)
 
             }
         } else {
@@ -59,7 +66,7 @@ class UpdateService(val env: Environment, val influx: InfluxDB) {
         }
     }
 
-    fun attributeUpdated(attributeId: String, attribute: Attribute)
+    private fun attributeUpdatedInflux(attributeId: String, attribute: Attribute)
     {
         // create the influxDB point
         val point = Point
@@ -77,6 +84,68 @@ class UpdateService(val env: Environment, val influx: InfluxDB) {
         }
 
         //write the actual point in influx
-        influx.write(database, "autogen", point.build())
+        val myPoint =  point.build()
+        log.info(myPoint.toString())
+        influx.write(database, "autogen",myPoint)
+        log.info("Endpoint updated Influx")
+    }
+
+    private fun attributeUpdatedMongo(attributeId: String, attribute: Attribute) {
+        val path = Stack<String>()
+        path.addAll(attributeId.split(".").toList().reversed())
+        if (path.size >= 3) {
+
+            val id = path.pop()
+            val endpointEntity = endpointEntityRepository.findByIdOrNull(id)
+            if (endpointEntity != null && path.pop() == "nodes") {
+                log.info("1")
+                val node = endpointEntity.endpoint.nodes[path.pop()]
+                if (node != null) {
+                    log.info("2")
+                    val existingAttribute = findAttributeInNode(node, path)
+                    if (existingAttribute != null) {
+                        log.info("3")
+                        existingAttribute.timestamp = attribute.timestamp
+                        existingAttribute.constraint = attribute.constraint
+                        existingAttribute.type = attribute.type
+                        existingAttribute.value = attribute.value
+                        endpointEntityRepository.save(endpointEntity)
+                        log.info("Endpoint updated Mongo")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun findAttributeInNode(node: Node, path: Stack<String>): Attribute? {
+        if (path.size > 1 && path.pop() == "objects") {
+            log.info("objects")
+            val obj = node.objects[path.pop()]
+            if (obj != null) {
+                log.info("obj != null")
+                return findAttributeInObject(obj, path)
+            }
+        }
+
+        return null
+    }
+
+    private fun findAttributeInObject(obj: CloudioObject, path: Stack<String>): Attribute? {
+        if (path.size > 1) {
+            when (path.pop()) {
+                "objects" -> {
+                    val childObj = obj.objects[path.pop()]
+                    if (childObj != null) {
+                        return findAttributeInObject(childObj, path)
+                    } else {
+                        return null
+                    }
+                }
+                "attributes" -> return obj.attributes[path.pop()]
+                else -> return null
+            }
+        } else {
+            return null
+        }
     }
 }

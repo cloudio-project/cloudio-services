@@ -1,6 +1,5 @@
-package ch.hevs.cloudio2.cloud
+package ch.hevs.cloudio2.cloud.repo
 
-import ch.hevs.cloudio2.cloud.model.User
 import org.springframework.data.mongodb.repository.MongoRepository
 
 interface UserRepository : MongoRepository<User, String>{
