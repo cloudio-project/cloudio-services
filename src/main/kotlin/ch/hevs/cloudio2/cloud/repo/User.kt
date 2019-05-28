@@ -3,7 +3,7 @@ package ch.hevs.cloudio2.cloud.repo
 import ch.hevs.cloudio2.cloud.model.Permission
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
-import java.util.HashMap
+import java.util.*
 
 
 @Document
