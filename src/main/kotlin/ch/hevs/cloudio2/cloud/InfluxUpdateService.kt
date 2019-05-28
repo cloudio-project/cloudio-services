@@ -5,10 +5,12 @@ import ch.hevs.cloudio2.cloud.model.Attribute
 import ch.hevs.cloudio2.cloud.model.AttributeType
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
+import org.influxdb.dto.Query
 import org.slf4j.LoggerFactory
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
+import javax.annotation.PostConstruct
 
 @Service
 class InfluxUpdateService(val env: Environment, val influx: InfluxDB) : AbstractUpdateService() {
@@ -18,6 +20,14 @@ class InfluxUpdateService(val env: Environment, val influx: InfluxDB) : Abstract
     }
     //get database to write by environment property, has default value
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
+
+    @PostConstruct
+    fun initialize()
+    {
+        // Create database if needed
+        if(influx.query(Query("SHOW DATABASES","")).toString().indexOf(database)==-1)
+            influx.query(Query("CREATE DATABASE $database",""))
+    }
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {
         // create the influxDB point
