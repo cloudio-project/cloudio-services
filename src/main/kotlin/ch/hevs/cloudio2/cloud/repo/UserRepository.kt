@@ -1,6 +1,0 @@
-package ch.hevs.cloudio2.cloud.repo
-
-import org.springframework.data.mongodb.repository.MongoRepository
-
-interface UserRepository : MongoRepository<User, String>{
-}
