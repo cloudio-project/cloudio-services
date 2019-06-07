@@ -6,15 +6,13 @@ import ch.hevs.cloudio2.cloud.repo.authentication.EndpointCredential
 import ch.hevs.cloudio2.cloud.repo.authentication.EndpointCredentialRepository
 import ch.hevs.cloudio2.cloud.repo.authentication.User
 import ch.hevs.cloudio2.cloud.repo.authentication.UserRepository
-import org.slf4j.LoggerFactory
+import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import javax.annotation.PostConstruct
 
@@ -22,7 +20,7 @@ import javax.annotation.PostConstruct
 class AuthenticationService(var userRepository: UserRepository, var endpointCredentialRepository: EndpointCredentialRepository) {
 
     companion object {
-        private val log = LoggerFactory.getLogger(AuthenticationService::class.java)
+        private val log = LogFactory.getLog(AuthenticationService::class.java)
     }
 
     private var encoder: PasswordEncoder = BCryptPasswordEncoder()
