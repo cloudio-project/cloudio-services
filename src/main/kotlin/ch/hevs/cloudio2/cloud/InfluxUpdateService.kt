@@ -3,10 +3,10 @@ package ch.hevs.cloudio2.cloud
 import ch.hevs.cloudio2.cloud.abstractservices.AbstractUpdateService
 import ch.hevs.cloudio2.cloud.model.Attribute
 import ch.hevs.cloudio2.cloud.model.AttributeType
+import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.influxdb.dto.Query
-import org.slf4j.LoggerFactory
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
@@ -16,7 +16,7 @@ import javax.annotation.PostConstruct
 class InfluxUpdateService(val env: Environment, val influx: InfluxDB) : AbstractUpdateService() {
 
     companion object {
-        private val log = LoggerFactory.getLogger(InfluxUpdateService::class.java)
+        private val log = LogFactory.getLog(InfluxUpdateService::class.java)
     }
     //get database to write by environment property, has default value
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }

@@ -2,7 +2,7 @@ package ch.hevs.cloudio2.cloud.abstractservices
 
 import ch.hevs.cloudio2.cloud.model.Attribute
 import ch.hevs.cloudio2.cloud.serialization.SerializationFormatFactory
-import org.slf4j.LoggerFactory
+import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.Exchange
@@ -13,7 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 abstract class AbstractUpdateService{
 
     companion object {
-        private val log = LoggerFactory.getLogger(AbstractUpdateService::class.java)
+        private val log = LogFactory.getLog(AbstractUpdateService::class.java)
     }
 
     @RabbitListener(
@@ -39,6 +39,6 @@ abstract class AbstractUpdateService{
         }
     }
 
-    //Abstract methode to handle update of message
+    //Abstract method to handle update of message
     abstract fun attributeUpdated(attributeId: String, attribute: Attribute)
 }
