@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 data class EndpointCredential (
     @Id
+    var UUID: String ="",
     var userName: String = "",
     var permissions: Map<String, Permission> = emptyMap(),
     var authorities: Set<Authority> = emptySet()
