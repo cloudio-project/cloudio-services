@@ -7,12 +7,14 @@ import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.influxdb.dto.Query
+import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 
 @Service
+@Profile("update-influx", "default")
 class InfluxUpdateService(val env: Environment, val influx: InfluxDB) : AbstractUpdateService() {
 
     companion object {

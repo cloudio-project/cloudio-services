@@ -5,10 +5,12 @@ import ch.hevs.cloudio2.cloud.model.Endpoint
 import ch.hevs.cloudio2.cloud.model.Node
 import ch.hevs.cloudio2.cloud.repo.EndpointEntity
 import ch.hevs.cloudio2.cloud.repo.EndpointEntityRepository
+import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 @Service
+@Profile("lifecycle-mongo", "default")
 class MongoLifecycleService(val endpointEntityRepository: EndpointEntityRepository): AbstractLifecycleService(){
 
     override  fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {

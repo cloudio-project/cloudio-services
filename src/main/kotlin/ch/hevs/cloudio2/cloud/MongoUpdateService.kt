@@ -5,12 +5,14 @@ import ch.hevs.cloudio2.cloud.model.Attribute
 import ch.hevs.cloudio2.cloud.model.CloudioObject
 import ch.hevs.cloudio2.cloud.model.Node
 import ch.hevs.cloudio2.cloud.repo.EndpointEntityRepository
+import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
 
 
 @Service
+@Profile("update-mongo", "default")
 class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository) : AbstractUpdateService(){
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {

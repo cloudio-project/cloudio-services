@@ -5,10 +5,12 @@ import ch.hevs.cloudio2.cloud.model.Endpoint
 import ch.hevs.cloudio2.cloud.model.Node
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
+import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 
 @Service
+@Profile("lifecycle-influx", "default")
 class InfluxLifecycleService(val env: Environment, val influx: InfluxDB) : AbstractLifecycleService() {
 
     //get database to write by environment property, has default value

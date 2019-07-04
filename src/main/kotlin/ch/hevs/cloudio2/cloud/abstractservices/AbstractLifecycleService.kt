@@ -2,7 +2,7 @@ package ch.hevs.cloudio2.cloud.abstractservices
 
 import ch.hevs.cloudio2.cloud.model.Endpoint
 import ch.hevs.cloudio2.cloud.model.Node
-import ch.hevs.cloudio2.cloud.serialization.SerializationFormatFactory
+import ch.hevs.cloudio2.cloud.serialization.JsonSerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -27,10 +27,10 @@ abstract class AbstractLifecycleService{
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
-            val messageFormat = SerializationFormatFactory.serializationFormat(data)
-            if (messageFormat != null) {
+            val messageFormat = JsonSerializationFormat.detect(data)
+            if (messageFormat) {
                 val endpoint = Endpoint()
-                messageFormat.deserializeEndpoint(endpoint, data)
+                JsonSerializationFormat.deserializeEndpoint(endpoint, data)
                 endpointIsOnline(endpointId, endpoint)
             } else {
                 log.error("Unrecognized message format in @online message from $endpointId")
@@ -64,10 +64,10 @@ abstract class AbstractLifecycleService{
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[3]
             val data = message.body
-            val messageFormat = SerializationFormatFactory.serializationFormat(data)
-            if (messageFormat != null) {
+            val messageFormat = JsonSerializationFormat.detect(data)
+            if (messageFormat) {
                 val node = Node()
-                messageFormat.deserializeNode(node, data)
+                JsonSerializationFormat.deserializeNode(node, data)
                 nodeAdded(endpointId, nodeName, node)
             } else {
                 log.error("Unrecognized message format in @nodeAdded message from $endpointId")
