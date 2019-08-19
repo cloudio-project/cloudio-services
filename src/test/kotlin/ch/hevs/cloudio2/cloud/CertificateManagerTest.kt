@@ -2,6 +2,8 @@ package ch.hevs.cloudio2.cloud
 
 import ch.hevs.cloudio2.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio2.cloud.internalservice.CertificateManagerService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
@@ -67,8 +69,12 @@ class CertificateManagerTest {
                 7AsFbQ==
                 -----END CERTIFICATE-----""".trimIndent())
         }
+
+
+        val mapper = ObjectMapper().registerModule(KotlinModule())
         val authority = CertificateManagerService(environment)
-        val certAndKey: CertificateAndPrivateKey = authority.generateEndpointKeyAndCertificatePair(UUID.randomUUID())
+        val certAndKey = CertificateAndPrivateKey("","")
+        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(UUID.randomUUID())) as CertificateAndPrivateKey?
 
         assert(certAndKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
         assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") || certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))

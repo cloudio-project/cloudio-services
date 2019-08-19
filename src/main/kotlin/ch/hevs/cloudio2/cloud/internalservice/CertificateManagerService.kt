@@ -1,6 +1,8 @@
 package ch.hevs.cloudio2.cloud.internalservice
 
 import ch.hevs.cloudio2.cloud.util.toBigInteger
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500NameBuilder
 import org.bouncycastle.asn1.x500.style.BCStyle
@@ -34,6 +36,9 @@ import java.util.*
 @Service
 @Profile("certificate-manager", "default")
 class CertificateManagerService(environment: Environment) {
+
+    private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
+
     private val bouncyCastle: BouncyCastleProvider = BouncyCastleProvider()
     private val keyPairGenerator: KeyPairGenerator
 
@@ -62,7 +67,7 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["certificate-manager"]
         )])
-    fun generateEndpointKeyAndCertificatePair(uuid: UUID): CertificateAndPrivateKey {
+    fun generateEndpointKeyAndCertificatePair(uuid: UUID): String{
         val keyPair = keyPairGenerator.generateKeyPair()
         val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuid.toString()).build()
         val serial = uuid.toBigInteger()
@@ -76,7 +81,7 @@ class CertificateManagerService(environment: Environment) {
         val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, keyPair.public)
         val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
-        return CertificateAndPrivateKey(
+        val toReturn = CertificateAndPrivateKey(
                 StringWriter().let {
                     JcaPEMWriter(it).run {
                         writeObject(certificate)
@@ -94,5 +99,7 @@ class CertificateManagerService(environment: Environment) {
                     it
                 }.toString()
         )
+
+        return mapper.writeValueAsString(toReturn)
     }
 }

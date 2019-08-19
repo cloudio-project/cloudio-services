@@ -1,7 +1,7 @@
 package ch.hevs.cloudio2.cloud.abstractservices
 
 import ch.hevs.cloudio2.cloud.model.Attribute
-import ch.hevs.cloudio2.cloud.serialization.SerializationFormatFactory
+import ch.hevs.cloudio2.cloud.serialization.JsonSerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -27,10 +27,10 @@ abstract class AbstractUpdateService{
         val attributeId = message.messageProperties.receivedRoutingKey.removePrefix("@update.")
 
         val data = message.body
-        val messageFormat = SerializationFormatFactory.serializationFormat(data)
-        if (messageFormat != null) {
+        val messageFormat = JsonSerializationFormat.detect(data)
+        if (messageFormat) {
             val attribute = Attribute()
-            messageFormat.deserializeAttribute(attribute, data)
+            JsonSerializationFormat.deserializeAttribute(attribute, data)
             if (attribute.timestamp != -1.0 && attribute.value != null) {
                 attributeUpdated(attributeId, attribute)
             }
