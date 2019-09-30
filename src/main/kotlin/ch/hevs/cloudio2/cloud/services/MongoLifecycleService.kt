@@ -1,4 +1,4 @@
-package ch.hevs.cloudio2.cloud
+package ch.hevs.cloudio2.cloud.services
 
 import ch.hevs.cloudio2.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio2.cloud.model.Endpoint

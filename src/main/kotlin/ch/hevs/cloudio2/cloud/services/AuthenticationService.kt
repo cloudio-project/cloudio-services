@@ -1,14 +1,11 @@
-package ch.hevs.cloudio2.cloud
+package ch.hevs.cloudio2.cloud.services
 
 import ch.hevs.cloudio2.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio2.cloud.model.Authority
 import ch.hevs.cloudio2.cloud.model.Permission
 import ch.hevs.cloudio2.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio2.cloud.model.Priority
-import ch.hevs.cloudio2.cloud.repo.authentication.EndpointParameters
-import ch.hevs.cloudio2.cloud.repo.authentication.EndpointParametersRepository
-import ch.hevs.cloudio2.cloud.repo.authentication.User
-import ch.hevs.cloudio2.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio2.cloud.repo.authentication.*
 import ch.hevs.cloudio2.cloud.utils.PermissionUtils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -30,7 +27,7 @@ import javax.annotation.PostConstruct
 
 @Service
 @Profile("authentication", "default")
-class AuthenticationService(var userRepository: UserRepository, var endpointParametersRepository: EndpointParametersRepository) {
+class AuthenticationService(var userRepository: UserRepository,var userGroupRepository: UserGroupRepository, var endpointParametersRepository: EndpointParametersRepository) {
 
     companion object {
         private val log = LogFactory.getLog(AuthenticationService::class.java)
@@ -47,8 +44,25 @@ class AuthenticationService(var userRepository: UserRepository, var endpointPara
         if (userRepository.count() == 0L)
             userRepository.save(User("root",
                     encoder.encode("123456"),
-                    mapOf("toto" to PrioritizedPermission(Permission.GRANT, Priority.HIGHEST)),
+                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGHEST),
+                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/inside/temperature" to PrioritizedPermission(Permission.DENY, Priority.HIGH),
+                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/*/temperatures/inside/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
+                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/error/inside/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
+                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/error/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
+                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/*/error/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW)),
+                    setOf("testGroup1","testGroup2"),
                     setOf(Authority.BROKER_ADMINISTRATION, Authority.HTTP_ACCESS)))
+
+        if (userGroupRepository.count() == 0L) {
+            userGroupRepository.save(UserGroup("testGroup1", setOf("root",
+                    "toto"),
+                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGH))
+            ))
+            userGroupRepository.save(UserGroup("testGroup2", setOf("root",
+                    "toto"),
+                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGHEST))
+            ))
+        }
 
         if(endpointParametersRepository.count() == 0L) {
             val uuid = UUID.randomUUID()
@@ -134,7 +148,11 @@ class AuthenticationService(var userRepository: UserRepository, var endpointPara
                                 "deny"
                         }
                         false -> {
-                            val permissionMap = userRepository.findById(id).get().permissions
+                            val permissionMap = PermissionUtils
+                                    .permissionFromGroup(userRepository.findById(id).get().permissions,
+                                        userRepository.findById(id).get().userGroups,
+                                        userGroupRepository)
+
                             val topicFilter = routingKey.drop(1) //drop the @...
 
                             //check if there is permission linked to topic
