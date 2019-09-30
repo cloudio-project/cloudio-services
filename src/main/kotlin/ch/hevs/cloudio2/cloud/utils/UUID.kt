@@ -1,4 +1,4 @@
-package ch.hevs.cloudio2.cloud.util
+package ch.hevs.cloudio2.cloud.utils
 
 import java.math.BigInteger
 import java.util.*

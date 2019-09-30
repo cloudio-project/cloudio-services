@@ -1,6 +1,6 @@
 package ch.hevs.cloudio2.cloud.internalservice
 
-import ch.hevs.cloudio2.cloud.util.toBigInteger
+import ch.hevs.cloudio2.cloud.utils.toBigInteger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo

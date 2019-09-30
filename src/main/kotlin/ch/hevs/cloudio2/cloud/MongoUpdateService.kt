@@ -16,13 +16,13 @@ import java.util.*
 class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository) : AbstractUpdateService(){
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {
+        println(attributeId)
         val path = Stack<String>()
         path.addAll(attributeId.split(".").toList().reversed())
         if (path.size >= 3) {
-
             val id = path.pop()
             val endpointEntity = endpointEntityRepository.findByIdOrNull(id)
-            if (endpointEntity != null && path.pop() == "nodes") {
+            if (endpointEntity != null) {
                 val node = endpointEntity.endpoint.nodes[path.pop()]
                 if (node != null) {
                     val existingAttribute = findAttributeInNode(node, path)
@@ -39,7 +39,7 @@ class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository)
     }
 
     private fun findAttributeInNode(node: Node, path: Stack<String>): Attribute? {
-        if (path.size > 1 && path.pop() == "objects") {
+        if (path.size > 1) {
             val obj = node.objects[path.pop()]
             if (obj != null) {
                 return findAttributeInObject(obj, path)
@@ -50,21 +50,19 @@ class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository)
     }
 
     private fun findAttributeInObject(obj: CloudioObject, path: Stack<String>): Attribute? {
-        if (path.size > 1) {
-            when (path.pop()) {
-                "objects" -> {
-                    val childObj = obj.objects[path.pop()]
-                    if (childObj != null) {
-                        return findAttributeInObject(childObj, path)
-                    } else {
-                        return null
-                    }
+        return if (path.size >= 1) {
+            if (path.size == 1) {
+                obj.attributes[path.pop()]
+            } else {
+                val childObj = obj.objects[path.pop()]
+                if (childObj != null) {
+                    findAttributeInObject(childObj, path)
+                } else {
+                    null
                 }
-                "attributes" -> return obj.attributes[path.pop()]
-                else -> return null
             }
         } else {
-            return null
+            null
         }
     }
 }
