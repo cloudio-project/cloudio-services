@@ -16,7 +16,6 @@ import java.util.*
 class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository) : AbstractUpdateService(){
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {
-        println(attributeId)
         val path = Stack<String>()
         path.addAll(attributeId.split(".").toList().reversed())
         if (path.size >= 3) {

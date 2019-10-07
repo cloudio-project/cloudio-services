@@ -31,49 +31,13 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
 
     companion object {
         private val log = LogFactory.getLog(AuthenticationService::class.java)
+        private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
     }
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
 
     private var encoder: PasswordEncoder = BCryptPasswordEncoder()
-
-    @PostConstruct
-    fun initialize()
-    {
-        if (userRepository.count() == 0L)
-            userRepository.save(User("root",
-                    encoder.encode("123456"),
-                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGHEST),
-                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/inside/temperature" to PrioritizedPermission(Permission.DENY, Priority.HIGH),
-                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/*/temperatures/inside/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
-                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/error/inside/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
-                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/error/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW),
-                            "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/*/error/temperature" to PrioritizedPermission(Permission.GRANT, Priority.LOW)),
-                    setOf("testGroup1","testGroup2"),
-                    setOf(Authority.BROKER_ADMINISTRATION, Authority.HTTP_ACCESS)))
-
-        if (userGroupRepository.count() == 0L) {
-            userGroupRepository.save(UserGroup("testGroup1", setOf("root",
-                    "toto"),
-                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGH))
-            ))
-            userGroupRepository.save(UserGroup("testGroup2", setOf("root",
-                    "toto"),
-                    mapOf("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/#" to PrioritizedPermission(Permission.GRANT, Priority.HIGHEST))
-            ))
-        }
-
-        if(endpointParametersRepository.count() == 0L) {
-            val uuid = UUID.randomUUID()
-            endpointParametersRepository.save(EndpointParameters(uuid.toString(),
-                    "toto"))
-            certificateFromUUIDThreadedPrint(uuid)
-
-            endpointParametersRepository.save(EndpointParameters("bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4",
-                    "test"))
-        }
-    }
 
     @RabbitListener(bindings = [QueueBinding(value=Queue("authentication"),
             exchange = Exchange(value = "authentication", type = ExchangeTypes.FANOUT, ignoreDeclarationExceptions = "true"))])
@@ -135,12 +99,11 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                 "check_topic" -> {
                     val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
                     val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
-                    val UUIDpattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
 
                     if(routingKey.size<2)
                        return "deny"
 
-                    when(UUIDpattern.matches(id)) {
+                    when(uuidPattern.matches(id)) {
                         true -> {
                             if(id == routingKey[1] && endpointParametersRepository.existsById(id))
                                 "allow"
@@ -176,29 +139,5 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
             log.error("Exception during authentication message handling", exception)
         }
         return "allow"
-    }
-
-    fun certificateFromUUID(uuid:UUID):String?
-    {
-        //get certificate from certificate manager service
-        return rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
-                "certificate-manager", uuid) as String?
-    }
-
-    fun certificateFromUUIDThreadedPrint(uuid:UUID)
-    {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-
-        Thread(Runnable {
-            //set waiting time to infinite --> wait until the Certificate manager service turns on
-            rabbitTemplate.setReplyTimeout(-1)
-            val certificateAndPrivateKey = CertificateAndPrivateKey("","")
-            mapper.readerForUpdating(certificateAndPrivateKey).readValue(certificateFromUUID(uuid)) as CertificateAndPrivateKey?
-
-            println(certificateAndPrivateKey.certificate)
-            println(certificateAndPrivateKey.privateKey)
-            //reset waiting time
-            rabbitTemplate.setReplyTimeout(0)
-        }).start()
     }
 }
