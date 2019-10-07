@@ -56,13 +56,13 @@ abstract class AbstractLifecycleService{
 
     @RabbitListener(bindings = [QueueBinding(value= Queue(),
                     exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@nodeAdded.*.nodes.*"])])
+                    key = ["@nodeAdded.*.*"])])
     fun handleNodeAddedMessage(message: Message)
     {
-        log.info("@nodeAdded.*.nodes.*")
+        log.info("@nodeAdded.*.*")
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
-            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[3]
+            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
             val data = message.body
             val messageFormat = JsonSerializationFormat.detect(data)
             if (messageFormat) {
@@ -79,14 +79,14 @@ abstract class AbstractLifecycleService{
 
     @RabbitListener(bindings = [QueueBinding(value= Queue(),
                     exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@nodeRemoved.*.nodes.*"])])
+                    key = ["@nodeRemoved.*.*"])])
     fun handleNodeRemovedMessage(message: Message)
     {
-        log.info("@nodeRemoved.*.nodes.*")
+        log.info("@nodeRemoved.*.*")
 
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
-            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[3]
+            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
             nodeRemoved(endpointId, nodeName)
         } catch (exception: Exception) {
             log.error("Exception during @nodeAdded message handling:", exception)
