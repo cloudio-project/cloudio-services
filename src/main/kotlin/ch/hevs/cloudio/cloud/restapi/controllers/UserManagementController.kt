@@ -23,8 +23,11 @@ class UserManagementController(var userRepository: UserRepository) {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else{
-            UserManagementUtil.createUser(userRepository,user)
-            throw CloudioOkException("Success")
+            val createAction = UserManagementUtil.createUser(userRepository,user)
+            if(createAction.success)
+                throw CloudioOkException("Success")
+            else
+                throw CloudioBadRequestException("Couldn't create user: "+createAction.message)
         }
     }
 
@@ -36,7 +39,7 @@ class UserManagementController(var userRepository: UserRepository) {
         else{
             val user = UserManagementUtil.getUser(userRepository, userRequest)
             if(user == null)
-                throw CloudioBadRequestException("Coudln't return user")
+                throw CloudioBadRequestException("User doesn't exist")
             else
                 return user
         }
@@ -49,10 +52,10 @@ class UserManagementController(var userRepository: UserRepository) {
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else{
             val deleteAction = UserManagementUtil.deleteUser(userRepository,userRequest)
-            if(deleteAction)
+            if(deleteAction.success)
                 throw CloudioOkException("Success")
             else
-                throw CloudioBadRequestException("Couldn't delete user")
+                throw CloudioBadRequestException("Couldn't delete user: "+deleteAction.message)
         }
     }
 }

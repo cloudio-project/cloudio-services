@@ -25,11 +25,9 @@ import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.io.StringReader
 import java.io.StringWriter
-import java.security.KeyPairGenerator
-import java.security.PrivateKey
-import java.security.SecureRandom
-import java.security.Security
+import java.security.*
 import java.security.cert.X509Certificate
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
 
@@ -63,9 +61,9 @@ class CertificateManagerService(environment: Environment) {
 
     @RabbitListener(bindings = [
         QueueBinding(
-                value = Queue(name = "cloudio.service.internal.certificate-manager"),
+                value = Queue(name = "cloudio.service.internal.endpointKey-certificatePair"),
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
-                key = ["certificate-manager"]
+                key = ["endpointKey-certificatePair"]
         )])
     fun generateEndpointKeyAndCertificatePair(uuid: UUID): String{
         val keyPair = keyPairGenerator.generateKeyPair()
@@ -101,5 +99,51 @@ class CertificateManagerService(environment: Environment) {
         )
 
         return mapper.writeValueAsString(toReturn)
+    }
+
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(name = "cloudio.service.internal.certificateFromPublicKey"),
+                exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
+                key = ["certificateFromPublicKey"]
+        )])
+    fun generateEndpointCertificateFromPublicKey(uuidAndPublicKey: UuidAndPublicKey): String{
+        val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuidAndPublicKey.uuid.toString()).build()
+        val serial = uuidAndPublicKey.uuid.toBigInteger()
+        val now = Date(System.currentTimeMillis())
+        val expires = Calendar.getInstance().run {
+            time = now
+            add(Calendar.YEAR, 100)
+            time
+        }
+        val signer = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
+        val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, getKey(uuidAndPublicKey.publicKey))
+        val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
+
+        val toReturn = StringWriter().let {
+                        JcaPEMWriter(it).run {
+                            writeObject(certificate)
+                            flush()
+                            close()
+                        }
+                        it
+                    }.toString()
+
+
+        return mapper.writeValueAsString(toReturn)
+    }
+
+    fun getKey(key: String): PublicKey? {
+        try {
+            val byteKey = Base64.getDecoder().decode(key.toByteArray())
+            val X509publicKey = X509EncodedKeySpec(byteKey)
+            val kf = KeyFactory.getInstance("RSA")
+
+            return kf.generatePublic(X509publicKey)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return null
     }
 }

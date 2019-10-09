@@ -39,10 +39,10 @@ class UserAccessControlController(var userRepository: UserRepository) {
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else {
             val createAction = UserAccessControlUtil.addUserAccessRight(userRepository, userRightRequestList)
-            if(createAction)
+            if(createAction.success)
                 throw CloudioOkException("Success")
             else
-                throw CloudioBadRequestException("Couldn't add user access right")
+                throw CloudioBadRequestException("Couldn't add user access right: "+createAction.message)
 
         }
     }
@@ -54,10 +54,10 @@ class UserAccessControlController(var userRepository: UserRepository) {
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else {
             val modifyAction = UserAccessControlUtil.modifyUserAccessRight(userRepository, userRightRequest)
-            if(modifyAction)
+            if(modifyAction.success)
                 throw CloudioOkException("Success")
             else
-                throw CloudioBadRequestException("Couldn't modify user access right")
+                throw CloudioBadRequestException("Couldn't modify user access right: "+modifyAction.message)
         }
     }
 
@@ -68,10 +68,10 @@ class UserAccessControlController(var userRepository: UserRepository) {
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else {
             val removeAction = UserAccessControlUtil.removeUserAccessRight(userRepository, userTopicRequest)
-            if(removeAction)
+            if(removeAction.success)
                 throw CloudioOkException("Success")
             else
-                throw CloudioBadRequestException("Couldn't delete user access right")
+                throw CloudioBadRequestException("Couldn't delete user access right: "+removeAction.message)
         }
     }
 
@@ -82,10 +82,10 @@ class UserAccessControlController(var userRepository: UserRepository) {
             throw CloudioForbiddenException("You don't have http admin right to access this function")
         else {
             val giveRightAction = UserAccessControlUtil.giveUserAccessRight(userRepository, userRightRequestList, userName)
-            if(giveRightAction)
+            if(giveRightAction.success)
                 throw CloudioOkException("Success")
             else
-                throw CloudioBadRequestException("Couldn't add user access right")
+                throw CloudioBadRequestException("Couldn't add user access right: "+giveRightAction.message)
         }
     }
 }
