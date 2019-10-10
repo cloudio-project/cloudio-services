@@ -129,21 +129,17 @@ class CertificateManagerService(environment: Environment) {
                         it
                     }.toString()
 
-
         return mapper.writeValueAsString(toReturn)
     }
 
     fun getKey(key: String): PublicKey? {
-        try {
-            val byteKey = Base64.getDecoder().decode(key.toByteArray())
-            val X509publicKey = X509EncodedKeySpec(byteKey)
-            val kf = KeyFactory.getInstance("RSA")
+        val formattedKey = key.replace("\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "")
 
-            return kf.generatePublic(X509publicKey)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        val keyBytes: ByteArray = Base64.getDecoder().decode(formattedKey)//, Base64.DEFAULT)
+        val spec = X509EncodedKeySpec(keyBytes)
+        val keyFactory = KeyFactory.getInstance("RSA")
 
-        return null
+        return keyFactory.generatePublic(spec)
     }
+
 }
