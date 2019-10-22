@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/v1")
 class UserGroupAccessControlController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
 
-    @RequestMapping("/api/v1/getUserGroupAccessRight", method = [RequestMethod.GET])
+    @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.GET])
     fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission>{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -32,7 +33,7 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         }
     }
 
-    @RequestMapping("/api/v1/addUserGroupAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/addUserGroupAccessRight", method = [RequestMethod.POST])
     fun addUserGroupAccessRight(@RequestBody userGroupRightRequestList: UserGroupRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -47,7 +48,7 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         }
     }
 
-    @RequestMapping("/api/v1/modifyUserGroupAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/modifyUserGroupAccessRight", method = [RequestMethod.POST])
     fun modifyUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRightRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -61,7 +62,7 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         }
     }
 
-    @RequestMapping("/api/v1/removeUserGroupAccessRight", method = [RequestMethod.DELETE])
+    @RequestMapping("/removeUserGroupAccessRight", method = [RequestMethod.DELETE])
     fun removeUserGroupAccessRight(@RequestBody userGroupTopicRequest: UserGroupTopicRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -75,7 +76,7 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         }
     }
 
-    @RequestMapping("/api/v1/giveUserGroupAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/giveUserGroupAccessRight", method = [RequestMethod.POST])
     fun giveUserGroupAccessRight(@RequestBody userGroupRightRequestList: UserGroupRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
 

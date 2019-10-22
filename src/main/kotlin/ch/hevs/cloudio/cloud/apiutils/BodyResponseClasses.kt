@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.apiutils
 
+import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.Priority
 
@@ -30,3 +31,35 @@ data class UserGroupRightTopic(val topic: String, val permission : Permission, v
 data class UserGroupRightRequestList(val userGroupName : String, val userGroupRights : Set<UserGroupRightTopic>)
 
 data class UserGroupRightRequest(val userGroupName : String, val userGroupRight : UserGroupRightTopic)
+
+data class EndpointCreateRequest(val endpointFriendlyName: String)
+
+data class EndpointRequest(val endpointUuid: String)
+
+data class NodeRequest(val nodeTopic: String)
+
+data class ObjectRequest(val objectTopic: String)
+
+data class AttributeRequest(val attributeTopic: String)
+
+data class AttributeRequestLongpoll(val attributeTopic: String, val timeout: Long)
+
+data class AttributeSetRequest(val attributeTopic: String, val attribute: Attribute)
+
+data class CertificateAndKeyRequest(val endpointUuid: String)
+
+data class CertificateFromKeyRequest(val endpointUuid: String, val publicKey: String)
+
+data class CaCertificateRequest(val caCertificate: String)
+
+data class HistoryDefaultRequest(val attributeTopic: String, val dataPointNumber: Long)
+
+data class HistoryDateRequest(val attributeTopic: String,val dateStart: String, val dateStop: String)
+
+data class HistoryWhereRequest(val attributeTopic: String, val where: String)
+
+data class LogsDefaultRequest(val endpointUuid: String, val dataPointNumber: Long)
+
+data class LogsDateRequest(val endpointUuid: String,val dateStart: String, val dateStop: String)
+
+data class LogsWhereRequest(val endpointUuid: String, val where: String)

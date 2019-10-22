@@ -1,7 +1,10 @@
 package ch.hevs.cloudio.cloud.utils
 
+import ch.hevs.cloudio.cloud.model.CloudioObject
+import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import org.springframework.data.repository.findByIdOrNull
 
@@ -55,5 +58,39 @@ object PermissionUtils {
 
             permissionList.last().second.permission
         }
+    }
+
+    fun censoreEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity){
+        var topic = endpointEntity.id+"/"
+
+        for(node in endpointEntity.endpoint.nodes){
+            val topicNode = topic+node.key+"/"
+            censoreNodeFromUserPermission(permissionMap, topicNode, node.value)
+        }
+
+    }
+    fun censoreNodeFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node){
+
+        for(cloudioObject in node.objects){
+            val topicObject = topic+cloudioObject.key+"/"
+            censoreObjectFromUserPermission(permissionMap, topicObject, cloudioObject.value)
+        }
+    }
+
+    fun censoreObjectFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject){
+        var innerTopic = topic
+        for(attribute in cloudioObject.attributes){
+            val innerTopicAttribute = innerTopic+attribute.key
+            val endpointPermission = getHigherPriorityPermission(permissionMap, innerTopicAttribute.split("/"))
+            if(endpointPermission == Permission.DENY)
+                attribute.value.value = "You don't have the right to see this attribute value"
+        }
+
+        for(cloudioObject in cloudioObject.objects){
+            val innerTopicObject = innerTopic+cloudioObject.key+"/"
+            censoreObjectFromUserPermission(permissionMap, innerTopicObject, cloudioObject.value)
+
+        }
+
     }
 }

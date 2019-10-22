@@ -14,9 +14,10 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/v1")
 class UserAccessControlController(var userRepository: UserRepository) {
 
-    @RequestMapping("/api/v1/getUserAccessRight", method = [RequestMethod.GET])
+    @RequestMapping("/getUserAccessRight", method = [RequestMethod.GET])
     fun getUserAccessRight(@RequestBody userRightRequest: UserRequest): Map<String, PrioritizedPermission>{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -31,7 +32,7 @@ class UserAccessControlController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/addUserAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/addUserAccessRight", method = [RequestMethod.POST])
     fun addUserAccessRight(@RequestBody userRightRequestList: UserRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -46,7 +47,7 @@ class UserAccessControlController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/modifyUserAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/modifyUserAccessRight", method = [RequestMethod.POST])
     fun modifyUserAccessRight(@RequestBody userRightRequest: UserRightRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -60,7 +61,7 @@ class UserAccessControlController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/removeUserAccessRight", method = [RequestMethod.DELETE])
+    @RequestMapping("/removeUserAccessRight", method = [RequestMethod.DELETE])
     fun removeUserAccessRight(@RequestBody userTopicRequest: UserTopicRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -74,7 +75,7 @@ class UserAccessControlController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/giveUserAccessRight", method = [RequestMethod.POST])
+    @RequestMapping("/giveUserAccessRight", method = [RequestMethod.POST])
     fun giveUserAccessRight(@RequestBody userRightRequestList: UserRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
 
