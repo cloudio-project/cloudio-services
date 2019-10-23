@@ -23,9 +23,6 @@ object CertificateUtil{
         val certificateFromUUID = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
                 "endpointKey-certificatePair", uuidString) as String?
         mapper.readerForUpdating(certificateAndPrivateKey).readValue(certificateFromUUID) as CertificateAndPrivateKey?
-
-        println(certificateAndPrivateKey.certificate)
-        println(certificateAndPrivateKey.privateKey)
         //reset waiting time
         rabbitTemplate.setReplyTimeout(0)
 
@@ -45,8 +42,6 @@ object CertificateUtil{
         val certificateFromUuidKey = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
                 "certificateFromPublicKey",uuidAndPublicKeyString) as String?
         mapper.readerForUpdating(certificateOutput).readValue(certificateFromUuidKey) as CertificateFromKey?
-        println(mapper.writeValueAsString(uuidAndPublicKey))
-        println(certificateOutput.certificate)
         //reset waiting time
         rabbitTemplate.setReplyTimeout(0)
 

@@ -32,7 +32,6 @@ object  EndpointManagementUtil{
     }
 
     fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
-        println((endpointRequest.endpointUuid))
         return endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
     }
 

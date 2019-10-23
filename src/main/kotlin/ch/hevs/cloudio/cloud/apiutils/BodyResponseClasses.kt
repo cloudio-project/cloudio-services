@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.Priority
 
@@ -63,3 +64,11 @@ data class LogsDefaultRequest(val endpointUuid: String, val dataPointNumber: Lon
 data class LogsDateRequest(val endpointUuid: String,val dateStart: String, val dateStop: String)
 
 data class LogsWhereRequest(val endpointUuid: String, val where: String)
+
+data class LogsSetRequest(val endpointUuid: String, val level: LogLevel)
+
+data class LogsGetRequest(val endpointUuid: String)
+
+data class LogsGetAnswer(val level: LogLevel)
+
+data class JobExecuteRequest(val endpointUuid: String, val jobURI: String, val getOutput: Boolean)

@@ -1,8 +1,14 @@
 package ch.hevs.cloudio.cloud.apiutils
 
+import ch.hevs.cloudio.cloud.model.LogLevel
+import ch.hevs.cloudio.cloud.model.LogParameter
+import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import org.influxdb.dto.QueryResult
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.data.repository.findByIdOrNull
 
 object LogsUtil {
 
@@ -26,6 +32,26 @@ object LogsUtil {
         return influx.query(Query("SELECT * FROM \"$logEntry\" WHERE $where",database))
 
     }
+
+    fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest){
+        val logParameter = LogParameter(logsSetRequest.level.toString())
+        rabbitTemplate.convertAndSend("amq.topic",
+              "@logsLevelUnRetained." + logsSetRequest.endpointUuid, JsonSerializationFormat.serializeLogParameter(logParameter))
+
+    }
+
+    fun getLogsLevel(endpointEntityRepository: EndpointEntityRepository, logsGetRequest: LogsGetRequest): LogsGetAnswer? {
+
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(logsGetRequest.endpointUuid)
+        if(endpointEntity != null){
+            return LogsGetAnswer(endpointEntity.logLevel)
+        }
+        else{
+            return null
+        }
+
+    }
+
 
 
 }

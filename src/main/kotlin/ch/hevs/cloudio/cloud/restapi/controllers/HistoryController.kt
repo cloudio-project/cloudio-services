@@ -5,18 +5,17 @@ import ch.hevs.cloudio.cloud.apiutils.HistoryDefaultRequest
 import ch.hevs.cloudio.cloud.apiutils.HistoryUtil
 import ch.hevs.cloudio.cloud.apiutils.HistoryWhereRequest
 import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
 import org.influxdb.dto.QueryResult
 import org.springframework.core.env.Environment
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -25,7 +24,7 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
 
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    @RequestMapping("/getAttributeHistoryRequest")
+    @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.GET])
     fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult{
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
@@ -43,7 +42,7 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
             return queryResult
     }
 
-    @RequestMapping("/getAttributeHistoryByDateRequest")
+    @RequestMapping("/getAttributeHistoryByDateRequest", method = [RequestMethod.GET])
     fun getAttributeHistoryByDateRequest(@RequestBody historyDateRequest: HistoryDateRequest): QueryResult{val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromGroup(userRepository.findById(userName).get().permissions,
@@ -61,7 +60,7 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
 
     }
 
-    @RequestMapping("/getAttributeHistoryWhere")
+    @RequestMapping("/getAttributeHistoryWhere", method = [RequestMethod.GET])
     fun getAttributeHistoryWhere(@RequestBody historyWhereRequest: HistoryWhereRequest): QueryResult{
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
