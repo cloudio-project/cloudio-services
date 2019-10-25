@@ -3,16 +3,9 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.model.CloudioLog
 import ch.hevs.cloudio.cloud.model.LogParameter
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
-import org.springframework.amqp.core.ExchangeTypes
-import org.springframework.amqp.core.Message
-import org.springframework.amqp.rabbit.annotation.Exchange
-import org.springframework.amqp.rabbit.annotation.Queue
-import org.springframework.amqp.rabbit.annotation.QueueBinding
-import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service

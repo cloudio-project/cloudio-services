@@ -182,7 +182,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 CloudioTimeoutException("No attribute change after "+attributeRequestLongpoll.timeout+"ms on topic: "+attributeRequestLongpoll.attributeTopic))
 
         CompletableFuture.runAsync {
-            object :  EndpointManagementUtil.TopicChangeNotifier(connectionFactory, "@set."+attributeRequestLongpoll.attributeTopic.replace("/", ".")){
+            object :  AttributeChangeNotifier(connectionFactory, "@set."+attributeRequestLongpoll.attributeTopic.replace("/", ".")){
                 override fun notifyAttributeChange(attribute: Attribute){
                     result.setResult(attribute)
                 }

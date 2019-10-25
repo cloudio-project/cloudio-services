@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
