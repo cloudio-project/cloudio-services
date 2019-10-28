@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/v1")
 class UserManagementController(var userRepository: UserRepository) {
 
-    @RequestMapping("/api/v1/createUser", method = [RequestMethod.POST])
+    @RequestMapping("/createUser", method = [RequestMethod.POST])
     fun createUser(@RequestBody user : User){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -31,7 +32,7 @@ class UserManagementController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/getUser", method = [RequestMethod.GET])
+    @RequestMapping("/getUser", method = [RequestMethod.GET])
     fun getUser(@RequestBody userRequest : UserRequest): User{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -45,7 +46,7 @@ class UserManagementController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/api/v1/deleteUser", method = [RequestMethod.DELETE])
+    @RequestMapping("/deleteUser", method = [RequestMethod.DELETE])
     fun deleteUser(@RequestBody userRequest : UserRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))

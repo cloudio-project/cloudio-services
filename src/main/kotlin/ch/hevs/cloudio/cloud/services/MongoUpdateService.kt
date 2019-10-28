@@ -2,9 +2,8 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateService
 import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.CloudioObject
-import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -24,7 +23,7 @@ class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository)
             if (endpointEntity != null) {
                 val node = endpointEntity.endpoint.nodes[path.pop()]
                 if (node != null) {
-                    val existingAttribute = findAttributeInNode(node, path)
+                    val existingAttribute = CloudioModelUtils.findAttributeInNode(node, path)
                     if (existingAttribute != null) {
                         existingAttribute.timestamp = attribute.timestamp
                         existingAttribute.constraint = attribute.constraint
@@ -34,34 +33,6 @@ class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository)
                     }
                 }
             }
-        }
-    }
-
-    private fun findAttributeInNode(node: Node, path: Stack<String>): Attribute? {
-        if (path.size > 1) {
-            val obj = node.objects[path.pop()]
-            if (obj != null) {
-                return findAttributeInObject(obj, path)
-            }
-        }
-
-        return null
-    }
-
-    private fun findAttributeInObject(obj: CloudioObject, path: Stack<String>): Attribute? {
-        return if (path.size >= 1) {
-            if (path.size == 1) {
-                obj.attributes[path.pop()]
-            } else {
-                val childObj = obj.objects[path.pop()]
-                if (childObj != null) {
-                    findAttributeInObject(childObj, path)
-                } else {
-                    null
-                }
-            }
-        } else {
-            null
         }
     }
 }

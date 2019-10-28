@@ -46,17 +46,4 @@ class ExecJobsService{
             log.error("Exception during @execOutput message handling:", exception)
         }
     }
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
-            exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-            key = ["@execList.*"])])
-    fun handleExecListMessage(message: Message)
-    {
-        log.info("@execList.*")
-
-        try {
-            message.messageProperties.receivedRoutingKey
-        } catch (exception: Exception) {
-            log.error("Exception during @execOutput message handling:", exception)
-        }
-    }
 }

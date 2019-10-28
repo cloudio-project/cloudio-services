@@ -1,13 +1,11 @@
 package ch.hevs.cloudio.cloud.internalservice
 
-import java.security.KeyFactory
 import java.util.*
-import java.security.spec.X509EncodedKeySpec
-import java.security.PublicKey
 
 
+data class CertificateAndPrivateKey (val certificate: String, val privateKey: String)
 
-class CertificateAndPrivateKey (val certificate: String, val privateKey: String)
+data class UuidAndPublicKey(val uuid: UUID, val publicKey: String)
 
-class UuidAndPublicKey(val uuid: UUID, val publicKey: String)
+data class CertificateFromKey(val certificate: String)
 

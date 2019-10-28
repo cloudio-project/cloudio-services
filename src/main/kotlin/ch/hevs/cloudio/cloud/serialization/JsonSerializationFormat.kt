@@ -1,9 +1,6 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.CloudioObject
-import ch.hevs.cloudio.cloud.model.Endpoint
-import ch.hevs.cloudio.cloud.model.Node
+import ch.hevs.cloudio.cloud.model.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 
@@ -31,5 +28,20 @@ internal object JsonSerializationFormat {
 
     fun deserializeAttribute(attribute: Attribute, data: ByteArray) {
         return mapper.readerForUpdating(attribute).readValue(data)
+    }
+
+    fun deserializeCloudioLog(cloudioLog: CloudioLog, data: ByteArray){
+        return mapper.readerForUpdating(cloudioLog).readValue(data)
+    }
+
+    fun serializeLogParameter(logParameter: LogParameter): ByteArray {
+        return mapper.writeValueAsBytes(logParameter)
+    }
+
+    fun deserializeLogParameter(logParameter: LogParameter, data: ByteArray){
+        return mapper.readerForUpdating(logParameter).readValue(data)
+    }
+    fun serializeJobParameter(jobParameter: JobParameter): ByteArray {
+        return mapper.writeValueAsBytes(jobParameter)
     }
 }

@@ -12,3 +12,6 @@ class CloudioBadRequestException(message : String) : RuntimeException(message)
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
 class CloudioForbiddenException(message : String) : RuntimeException(message)
+
+@ResponseStatus(HttpStatus.REQUEST_TIMEOUT)
+class CloudioTimeoutException(message : String) : RuntimeException(message)

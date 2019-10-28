@@ -65,7 +65,11 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["endpointKey-certificatePair"]
         )])
-    fun generateEndpointKeyAndCertificatePair(uuid: UUID): String{
+    fun generateEndpointKeyAndCertificatePair(uuidString: String): String{
+        val uuid = UUID.randomUUID()
+
+        mapper.readerForUpdating(uuid).readValue(uuidString) as UUID
+
         val keyPair = keyPairGenerator.generateKeyPair()
         val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuid.toString()).build()
         val serial = uuid.toBigInteger()
@@ -107,7 +111,12 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["certificateFromPublicKey"]
         )])
-    fun generateEndpointCertificateFromPublicKey(uuidAndPublicKey: UuidAndPublicKey): String{
+    fun generateEndpointCertificateFromPublicKey(uuidAndPublicKeyString: String): String{
+
+        val uuidAndPublicKey = UuidAndPublicKey(UUID.randomUUID(),"")
+
+        mapper.readerForUpdating(uuidAndPublicKey).readValue(uuidAndPublicKeyString) as UuidAndPublicKey
+
         val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuidAndPublicKey.uuid.toString()).build()
         val serial = uuidAndPublicKey.uuid.toBigInteger()
         val now = Date(System.currentTimeMillis())
@@ -120,30 +129,26 @@ class CertificateManagerService(environment: Environment) {
         val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, getKey(uuidAndPublicKey.publicKey))
         val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
-        val toReturn = StringWriter().let {
+        val toReturn = CertificateFromKey(StringWriter().let {
                         JcaPEMWriter(it).run {
                             writeObject(certificate)
                             flush()
                             close()
                         }
                         it
-                    }.toString()
-
+                    }.toString())
 
         return mapper.writeValueAsString(toReturn)
     }
 
     fun getKey(key: String): PublicKey? {
-        try {
-            val byteKey = Base64.getDecoder().decode(key.toByteArray())
-            val X509publicKey = X509EncodedKeySpec(byteKey)
-            val kf = KeyFactory.getInstance("RSA")
+        val formattedKey = key.replace("\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "")
 
-            return kf.generatePublic(X509publicKey)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        val keyBytes: ByteArray = Base64.getDecoder().decode(formattedKey)//, Base64.DEFAULT)
+        val spec = X509EncodedKeySpec(keyBytes)
+        val keyFactory = KeyFactory.getInstance("RSA")
 
-        return null
+        return keyFactory.generatePublic(spec)
     }
+
 }

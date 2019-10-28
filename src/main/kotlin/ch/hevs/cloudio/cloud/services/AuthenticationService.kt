@@ -1,14 +1,10 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
-import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
-import ch.hevs.cloudio.cloud.model.Priority
-import ch.hevs.cloudio.cloud.repo.authentication.*
+import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
+import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -22,8 +18,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import java.util.*
-import javax.annotation.PostConstruct
 
 @Service
 @Profile("authentication", "default")

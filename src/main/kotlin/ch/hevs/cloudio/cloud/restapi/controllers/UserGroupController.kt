@@ -2,7 +2,6 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Authority
-import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -16,9 +15,10 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/v1")
 class UserGroupController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
 
-    @RequestMapping("/api/v1/createUserGroup", method = [RequestMethod.POST])
+    @RequestMapping("/createUserGroup", method = [RequestMethod.POST])
     fun createUserGroup(@RequestBody userGroup : UserGroup){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -32,7 +32,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/api/v1/getUserGroup", method = [RequestMethod.GET])
+    @RequestMapping("/getUserGroup", method = [RequestMethod.GET])
     fun getUserGroup(@RequestBody  userGroupRequest: UserGroupRequest): UserGroup{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -46,7 +46,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/api/v1/getUserGroupList", method = [RequestMethod.GET])
+    @RequestMapping("/getUserGroupList", method = [RequestMethod.GET])
     fun getUserGroupList(): UserGroupList {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -56,7 +56,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/api/v1/addUserToGroup", method = [RequestMethod.POST])
+    @RequestMapping("/addUserToGroup", method = [RequestMethod.POST])
     fun addUserToGroup(@RequestBody userGroupRequestList: UserGroupUserRequestList){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -70,7 +70,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/api/v1/deleteUserToGroup", method = [RequestMethod.DELETE])
+    @RequestMapping("/deleteUserToGroup", method = [RequestMethod.DELETE])
     fun deleteUserToGroup(@RequestBody userGroupUserRequest: UserGroupUserRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -84,7 +84,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/api/v1/deleteUserGroup", method = [RequestMethod.DELETE])
+    @RequestMapping("/deleteUserGroup", method = [RequestMethod.DELETE])
     fun deleteUserGroup(@RequestBody userGroupRequest: UserGroupRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
