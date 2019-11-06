@@ -11,14 +11,12 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
 import ch.hevs.cloudio.cloud.restapi.CloudioOkException
 import ch.hevs.cloudio.cloud.restapi.CloudioTimeoutException
-import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.WotNode
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import com.rabbitmq.client.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.async.DeferredResult
 import java.util.concurrent.CompletableFuture
+import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("/api/v1")
@@ -93,7 +92,9 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
     }
 
     @RequestMapping("/getWotNode", method = [RequestMethod.GET])
-    fun getWotNode(@RequestBody nodeRequest: NodeRequest): WotNode? {
+    fun getWotNode(@RequestBody nodeRequest: NodeRequest, request: HttpServletRequest): WotNode {
+        val host = request.requestURL.toString().replace("/api/v1/getWotNode", "")
+
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromGroup(userRepository.findById(userName).get().permissions,
@@ -103,10 +104,11 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
             throw CloudioBadRequestException("You don't have permission to  access this node")
 
-        val splitedTopic = nodeRequest.nodeTopic.split("/")
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitedTopic[0])!!
-
-        return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.id, splitedTopic[1])
+        val wotNode = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
+        if(wotNode == null)
+            throw CloudioBadRequestException("Couldn't get WoT Node")
+        else
+            return wotNode
 
     }
 

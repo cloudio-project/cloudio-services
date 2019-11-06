@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.model
 
-data class CloudioLog(
+data class CloudioLogMessage(
         var level: LogLevel = LogLevel.OFF,
         var timestamp: Double = -1.0,
         var message: String ="empty",

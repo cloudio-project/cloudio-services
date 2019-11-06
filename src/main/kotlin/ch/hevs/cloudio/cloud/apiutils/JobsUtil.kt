@@ -7,7 +7,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 object JobsUtil{
 
     fun executeJob(rabbitTemplate: RabbitTemplate, jobExecuteRequest: JobExecuteRequest){
-        val jobsParameter = JobParameter(jobExecuteRequest.jobURI, jobExecuteRequest.getOutput)
+        val jobsParameter = JobParameter(jobExecuteRequest.jobURI, jobExecuteRequest.correlationID, jobExecuteRequest.getOutput)
 
         rabbitTemplate.convertAndSend("amq.topic",
                 "@exec." + jobExecuteRequest.endpointUuid, JsonSerializationFormat.serializeJobParameter(jobsParameter))

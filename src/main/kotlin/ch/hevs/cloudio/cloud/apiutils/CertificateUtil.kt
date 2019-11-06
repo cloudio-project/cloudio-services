@@ -49,7 +49,7 @@ object CertificateUtil{
     }
     //CertificateAndKeyRequest CertificateFromKeyRequest
 
-    fun getCaCertificate(environment: Environment): CaCertificateRequest{
-        return CaCertificateRequest(environment.getRequiredProperty("cloudio.caCertificate"))
+    fun getCaCertificate(environment: Environment): CaCertificate{
+        return CaCertificate(environment.getRequiredProperty("cloudio.caCertificate"))
     }
 }

@@ -1,9 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
-import ch.hevs.cloudio.cloud.apiutils.HistoryDateRequest
-import ch.hevs.cloudio.cloud.apiutils.HistoryDefaultRequest
-import ch.hevs.cloudio.cloud.apiutils.HistoryUtil
-import ch.hevs.cloudio.cloud.apiutils.HistoryWhereRequest
+import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -70,6 +67,23 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyWhereRequest.attributeTopic.split("/"))==Permission.DENY)
             throw CloudioBadRequestException("You don't have permission to  access this attribute")
         val queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
+
+        if (queryResult == null)
+            throw CloudioBadRequestException("Query didn't return a result")
+        else
+            return queryResult
+    }
+
+    @RequestMapping("/getAttributeHistoryExpert", method = [RequestMethod.GET])
+    fun getAttributeHistoryExpert(@RequestBody historyExpertRequest: HistoryExpertRequest): QueryResult{
+        val userName = SecurityContextHolder.getContext().authentication.name
+        val permissionMap = PermissionUtils
+                .permissionFromGroup(userRepository.findById(userName).get().permissions,
+                        userRepository.findById(userName).get().userGroups,
+                        userGroupRepository)
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyExpertRequest.attributeTopic.split("/"))==Permission.DENY)
+            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+        val queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
 
         if (queryResult == null)
             throw CloudioBadRequestException("Query didn't return a result")

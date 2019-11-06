@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class WotObject(
         @JsonProperty("@type")
         val type: String,
-        val properties: Map<String, WotObject>,
+        val properties: Map<String, WotObject>?,
         val forms: Set<Form>?
 )

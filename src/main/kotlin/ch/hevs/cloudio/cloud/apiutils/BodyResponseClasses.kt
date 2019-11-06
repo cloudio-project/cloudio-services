@@ -51,15 +51,21 @@ data class CertificateAndKeyRequest(val endpointUuid: String)
 
 data class CertificateFromKeyRequest(val endpointUuid: String, val publicKey: String)
 
-data class CaCertificateRequest(val caCertificate: String)
+data class CaCertificate(val caCertificate: String)
 
-data class HistoryDefaultRequest(val attributeTopic: String, val dataPointNumber: Long)
+data class HistoryDefaultRequest(val attributeTopic: String, val maxDataPoints: Long)
 
 data class HistoryDateRequest(val attributeTopic: String,val dateStart: String, val dateStop: String)
 
 data class HistoryWhereRequest(val attributeTopic: String, val where: String)
 
-data class LogsDefaultRequest(val endpointUuid: String, val dataPointNumber: Long)
+enum class AggregationInflux{COUNT, DISTINCT, INTEGRAL, MEAN, MEDIAN, MODE, SUM}
+
+enum class FillInflux(val value: String){NULL("null"), NONE("none"), ZERO("0"), PREVIOUS("previous"), LINEAR("linear")}
+
+data class HistoryExpertRequest(val attributeTopic: String, val aggregation: AggregationInflux, val dateStart: String, val dateStop: String, val interval: String, val fill: FillInflux, val maxDataPoints: Long)
+
+data class LogsDefaultRequest(val endpointUuid: String, val maxDataPoints: Long)
 
 data class LogsDateRequest(val endpointUuid: String,val dateStart: String, val dateStop: String)
 
@@ -71,4 +77,4 @@ data class LogsGetRequest(val endpointUuid: String)
 
 data class LogsGetAnswer(val level: LogLevel)
 
-data class JobExecuteRequest(val endpointUuid: String, val jobURI: String, val getOutput: Boolean, val timeout: Long)
+data class JobExecuteRequest(val endpointUuid: String, val jobURI: String, val getOutput: Boolean, val correlationID: String, val timeout: Long)

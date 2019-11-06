@@ -74,7 +74,7 @@ class CertificateManagerTest {
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val authority = CertificateManagerService(environment)
         val certAndKey = CertificateAndPrivateKey("","")
-        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(UUID.randomUUID())) as CertificateAndPrivateKey?
+        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(UUID.randomUUID()))) as CertificateAndPrivateKey?
 
         assert(certAndKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
         assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") || certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))

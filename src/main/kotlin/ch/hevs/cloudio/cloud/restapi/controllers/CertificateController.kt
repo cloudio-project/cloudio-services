@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
-import ch.hevs.cloudio.cloud.apiutils.CaCertificateRequest
+import ch.hevs.cloudio.cloud.apiutils.CaCertificate
 import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateUtil
@@ -58,7 +58,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
     }
 
     @RequestMapping("/getCaCertificate", method = [RequestMethod.GET])
-    fun getCaCertificate(): CaCertificateRequest {
+    fun getCaCertificate(): CaCertificate {
         return CertificateUtil.getCaCertificate(environment)
     }
 }
