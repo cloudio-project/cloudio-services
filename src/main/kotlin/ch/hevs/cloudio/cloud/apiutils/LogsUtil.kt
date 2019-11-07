@@ -35,7 +35,7 @@ object LogsUtil {
     fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest){
         val logParameter = LogParameter(logsSetRequest.level.toString())
         rabbitTemplate.convertAndSend("amq.topic",
-              "@logsLevelUnRetained." + logsSetRequest.endpointUuid, JsonSerializationFormat.serializeLogParameter(logParameter))
+              "@logsLevel." + logsSetRequest.endpointUuid, JsonSerializationFormat.serializeLogParameter(logParameter))
 
     }
 

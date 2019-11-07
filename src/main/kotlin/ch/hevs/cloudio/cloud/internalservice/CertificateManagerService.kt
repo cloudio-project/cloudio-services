@@ -1,5 +1,7 @@
 package ch.hevs.cloudio.cloud.internalservice
 
+import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
+import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.utils.toBigInteger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -65,10 +67,12 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["endpointKey-certificatePair"]
         )])
-    fun generateEndpointKeyAndCertificatePair(uuidString: String): String{
-        val uuid = UUID.randomUUID()
+    fun generateEndpointKeyAndCertificatePair(certificateAndKeyRequestString: String): String{
 
-        mapper.readerForUpdating(uuid).readValue(uuidString) as UUID
+        val certificateAndKeyRequest= CertificateAndKeyRequest("")
+
+        mapper.readerForUpdating(certificateAndKeyRequest).readValue(certificateAndKeyRequestString) as CertificateAndKeyRequest
+        val uuid = UUID.fromString(certificateAndKeyRequest.endpointUuid)
 
         val keyPair = keyPairGenerator.generateKeyPair()
         val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuid.toString()).build()
@@ -111,14 +115,15 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["certificateFromPublicKey"]
         )])
-    fun generateEndpointCertificateFromPublicKey(uuidAndPublicKeyString: String): String{
+    fun generateEndpointCertificateFromPublicKey(certificateFromKeyRequestString: String): String{
 
-        val uuidAndPublicKey = UuidAndPublicKey(UUID.randomUUID(),"")
+        val certificateFromKeyRequest = CertificateFromKeyRequest("","")
 
-        mapper.readerForUpdating(uuidAndPublicKey).readValue(uuidAndPublicKeyString) as UuidAndPublicKey
+        mapper.readerForUpdating(certificateFromKeyRequest).readValue(certificateFromKeyRequestString) as CertificateFromKeyRequest
+        val uuid = UUID.fromString(certificateFromKeyRequest.endpointUuid)
 
-        val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuidAndPublicKey.uuid.toString()).build()
-        val serial = uuidAndPublicKey.uuid.toBigInteger()
+        val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuid.toString()).build()
+        val serial = uuid.toBigInteger()
         val now = Date(System.currentTimeMillis())
         val expires = Calendar.getInstance().run {
             time = now
@@ -126,7 +131,7 @@ class CertificateManagerService(environment: Environment) {
             time
         }
         val signer = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
-        val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, getKey(uuidAndPublicKey.publicKey))
+        val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, getKey(certificateFromKeyRequest.publicKey))
         val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
         val toReturn = CertificateFromKey(StringWriter().let {
