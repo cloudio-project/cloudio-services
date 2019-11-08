@@ -81,4 +81,4 @@ data class LogsGetRequest(val endpointUuid: String)
 
 data class LogsGetAnswer(val level: LogLevel)
 
-data class JobExecuteRequest(val endpointUuid: String, val jobURI: String, val getOutput: Boolean, val correlationID: String, val timeout: Long)
+data class JobExecuteRequest(val endpointUuid: String, val jobURI: String, val getOutput: Boolean, val correlationID: String, val data: String = "", val timeout: Long)
