@@ -8,8 +8,10 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
+import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.core.env.Environment
 import org.springframework.core.io.UrlResource
 import org.springframework.http.HttpHeaders
@@ -20,11 +22,20 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.HandlerInterceptor
+import org.springframework.web.servlet.handler.MappedInterceptor
+import java.io.File
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 
 @RestController
 @RequestMapping("/api/v1")
 class CertificateController(var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository){
+
+    companion object {
+        private val log = LogFactory.getLog(CertificateController::class.java)
+    }
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -62,9 +73,37 @@ class CertificateController(var environment: Environment, var userGroupRepositor
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.filename + "\"")
+                .header("EndpointUuid",certificateAndKeyZipRequest.endpointUuid)
                 .body(resource)
 
+    }
+
+    @Bean
+    fun interceptor(): MappedInterceptor {
+        return MappedInterceptor(arrayOf("/api/v1/createCertificateAndKeyZip"), object : HandlerInterceptor {
+            @Throws(Exception::class)
+            override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
+                if(response.status == 200){
+                    val endpointUuid = response.getHeaders("EndpointUuid").toMutableList()[0]
+                    try{
+                        var myFile = File("$endpointUuid.properties")
+                        if (myFile.exists())
+                            myFile.delete()
+
+                        myFile = File("$endpointUuid.p12")
+                        if (myFile.exists())
+                            myFile.delete()
+
+                        myFile = File("$endpointUuid.zip")
+                        if (myFile.exists())
+                            myFile.delete()
+                    }catch (e: Exception){
+                        log.error("Exception while deleting old certificate files", e)
+                    }
+                }
+            }
+        })
     }
 
     @RequestMapping("/createCertificateFromKey", method = [RequestMethod.GET])
