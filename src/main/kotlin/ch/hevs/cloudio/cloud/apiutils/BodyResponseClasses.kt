@@ -49,6 +49,10 @@ data class AttributeSetRequest(val attributeTopic: String, val attribute: Attrib
 
 data class CertificateAndKeyRequest(val endpointUuid: String)
 
+enum class LibraryLanguage{JAVA}
+
+data class CertificateAndKeyZipRequest(val endpointUuid: String, val libraryLanguage: LibraryLanguage)
+
 data class CertificateFromKeyRequest(val endpointUuid: String, val publicKey: String)
 
 data class CaCertificate(val caCertificate: String)

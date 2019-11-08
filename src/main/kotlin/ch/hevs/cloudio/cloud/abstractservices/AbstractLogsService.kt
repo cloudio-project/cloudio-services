@@ -14,7 +14,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 abstract class AbstractLogsService{
 
     companion object {
-        private val log = LogFactory.getLog(AbstractSetService::class.java)
+        private val log = LogFactory.getLog(AbstractLogsService::class.java)
     }
 
     @RabbitListener(
@@ -25,16 +25,20 @@ abstract class AbstractLogsService{
     {
         log.info("@logsLevel.#")
 
-        val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
+        try{
+            val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
 
-        val data = message.body
-        val messageFormat = JsonSerializationFormat.detect(data)
-        if (messageFormat) {
-            val logParameter = LogParameter()
-            JsonSerializationFormat.deserializeLogParameter(logParameter, data)
-            logLevelChange(endpointUuid, logParameter)
-        } else {
-            log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
+            val data = message.body
+            val messageFormat = JsonSerializationFormat.detect(data)
+            if (messageFormat) {
+                val logParameter = LogParameter()
+                JsonSerializationFormat.deserializeLogParameter(logParameter, data)
+                logLevelChange(endpointUuid, logParameter)
+            } else {
+                log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
+            }
+        }catch (exception: Exception) {
+            log.error("Exception during @logsLevel message handling:", exception)
         }
     }
 
@@ -46,17 +50,22 @@ abstract class AbstractLogsService{
     {
         log.info("@logs.#")
 
-        val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
+        try{
+            val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
 
-        val data = message.body
-        val messageFormat = JsonSerializationFormat.detect(data)
-        if (messageFormat) {
-            val cloudioLog = CloudioLogMessage()
-            JsonSerializationFormat.deserializeCloudioLog(cloudioLog, data)
-            if (cloudioLog.timestamp != -1.0)
-                newLog(endpointUuid, cloudioLog)
-        } else {
-            log.error("Unrecognized message format in @logs message from $endpointUuid")
+            val data = message.body
+            val messageFormat = JsonSerializationFormat.detect(data)
+            if (messageFormat) {
+                val cloudioLog = CloudioLogMessage()
+                JsonSerializationFormat.deserializeCloudioLog(cloudioLog, data)
+                if (cloudioLog.timestamp != -1.0)
+                    newLog(endpointUuid, cloudioLog)
+            } else {
+                log.error("Unrecognized message format in @logs message from $endpointUuid")
+            }
+
+        }catch (exception: Exception) {
+            log.error("Exception during @logs message handling:", exception)
         }
     }
 

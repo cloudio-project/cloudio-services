@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateService
+import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateSetService
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
@@ -12,9 +12,9 @@ import java.util.*
 
 @Service
 @Profile("update-mongo", "default")
-class MongoUpdateService(val endpointEntityRepository: EndpointEntityRepository) : AbstractUpdateService(){
+class MongoUpdateSetService(val endpointEntityRepository: EndpointEntityRepository) : AbstractUpdateSetService(){
 
-    override fun attributeUpdated(attributeId: String, attribute: Attribute) {
+    override fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String) {
         val path = Stack<String>()
         path.addAll(attributeId.split(".").toList().reversed())
         if (path.size >= 3) {

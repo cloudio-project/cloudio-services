@@ -2,12 +2,10 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
-import ch.hevs.cloudio.cloud.internalservice.UuidAndPublicKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.core.env.Environment
-import java.util.*
 
 object CertificateUtil{
 
@@ -25,6 +23,20 @@ object CertificateUtil{
         rabbitTemplate.setReplyTimeout(0)
 
         return certificateAndPrivateKey
+    }
+
+    fun createCertificateAndKeyZip(rabbitTemplate: RabbitTemplate, certificateAndKeyZipRequest: CertificateAndKeyZipRequest): String?{
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+
+        //set waiting time to infinite --> wait until the Certificate manager service turns on
+        rabbitTemplate.setReplyTimeout(-1)
+        val certificateAndKeyRequestString = mapper.writeValueAsString(certificateAndKeyZipRequest)
+        val certificateFromUUID = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
+                "endpointKey-certificatePairZip", certificateAndKeyRequestString) as String?
+        //reset waiting time
+        rabbitTemplate.setReplyTimeout(0)
+
+        return certificateFromUUID
     }
 
     fun createCertificateFromKey(rabbitTemplate: RabbitTemplate, certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey{
