@@ -49,9 +49,11 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                         userRepository.findById(userName).get().userGroups,
                         userGroupRepository)
         val genericTopic = certificateAndKeyRequest.endpointUuid + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))!= Permission.OWN)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
-        return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
+        val endpointGeneralPermission = permissionMap.get(genericTopic)
+        if(endpointGeneralPermission?.permission == Permission.OWN)
+            return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
+        else
+            throw CloudioBadRequestException("You don't own this endpoint")
     }
 
     @RequestMapping("/createCertificateAndKeyZip", method = [RequestMethod.GET])
@@ -63,19 +65,23 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                         userRepository.findById(userName).get().userGroups,
                         userGroupRepository)
         val genericTopic = certificateAndKeyZipRequest.endpointUuid + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))!= Permission.OWN)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
-        val pathToReturn = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, certificateAndKeyZipRequest)!!.replace("\"","")
+        val endpointGeneralPermission = permissionMap.get(genericTopic)
+        if(endpointGeneralPermission?.permission == Permission.OWN){
+            val pathToReturn = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, certificateAndKeyZipRequest)!!.replace("\"","")
 
-        val resource = UrlResource("file:$pathToReturn")
+            val resource = UrlResource("file:$pathToReturn")
 
-        val contentType = "application/zip"
+            val contentType = "application/zip"
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.filename + "\"")
-                .header("EndpointUuid",certificateAndKeyZipRequest.endpointUuid)
-                .body(resource)
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.filename + "\"")
+                    .header("EndpointUuid",certificateAndKeyZipRequest.endpointUuid)
+                    .body(resource)
+        }
+        else
+            throw CloudioBadRequestException("You don't own this endpoint")
+
 
     }
 
@@ -115,9 +121,11 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                         userRepository.findById(userName).get().userGroups,
                         userGroupRepository)
         val genericTopic = certificateFromKeyRequest.endpointUuid + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))!=Permission.OWN)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
-        return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
+        val endpointGeneralPermission = permissionMap.get(genericTopic)
+        if(endpointGeneralPermission?.permission == Permission.OWN)
+            return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
+        else
+            throw CloudioBadRequestException("You don't own this endpoint")
 
     }
 

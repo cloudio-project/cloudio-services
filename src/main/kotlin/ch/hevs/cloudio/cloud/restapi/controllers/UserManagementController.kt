@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
+import ch.hevs.cloudio.cloud.apiutils.UserListAnswer
 import ch.hevs.cloudio.cloud.apiutils.UserManagementUtil
 import ch.hevs.cloudio.cloud.apiutils.UserRequest
 import ch.hevs.cloudio.cloud.model.Authority
@@ -57,6 +58,16 @@ class UserManagementController(var userRepository: UserRepository) {
                 throw CloudioOkException("Success")
             else
                 throw CloudioBadRequestException("Couldn't delete user: "+deleteAction.message)
+        }
+    }
+
+    @RequestMapping("/getUserList", method = [RequestMethod.GET])
+    fun getUserList(): UserListAnswer{
+        val userName = SecurityContextHolder.getContext().authentication.name
+        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
+            throw CloudioForbiddenException("You don't have http admin right to access this function")
+        else{
+            return UserManagementUtil.getUserList(userRepository)
         }
     }
 }

@@ -9,6 +9,8 @@ data class ApiActionAnswer(val success: Boolean, val message: String)
 
 data  class UserRequest(val userName : String)
 
+data class UserListAnswer(val userList: Set<String>)
+
 data  class UserTopicRequest(val userName : String, val topic : String)
 
 data class UserRightTopic(val topic: String, val permission : Permission, val priority : Priority)
@@ -46,6 +48,10 @@ data class AttributeRequest(val attributeTopic: String)
 data class AttributeRequestLongpoll(val attributeTopic: String, val timeout: Long)
 
 data class AttributeSetRequest(val attributeTopic: String, val attribute: Attribute)
+
+data class OwnedEndpointsAnswer(val ownedEndpoints: Set<String> )
+
+data class AccessibleAttributesAnswer(val accessibleAttributes:  Map<String, Permission> )
 
 data class CertificateAndKeyRequest(val endpointUuid: String)
 

@@ -29,4 +29,10 @@ object UserManagementUtil {
             ApiActionAnswer(false, userRequest.userName+" doesn't exist")
     }
 
+    fun getUserList(userRepository: UserRepository): UserListAnswer {
+        val userList : MutableSet<String> = mutableSetOf()
+        userRepository.findAll().forEach { user ->  userList.add(user.userName) }
+        return UserListAnswer(userList)
+    }
+
 }

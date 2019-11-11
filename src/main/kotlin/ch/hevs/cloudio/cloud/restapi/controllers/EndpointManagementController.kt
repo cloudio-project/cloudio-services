@@ -63,7 +63,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, endpointRequest)
         if(endpointEntity != null) {
 
-            PermissionUtils.censoreEndpointFromUserPermission(permissionMap,endpointEntity)
+            PermissionUtils.censorEndpointFromUserPermission(permissionMap,endpointEntity)
 
             return endpointEntity
         }
@@ -84,7 +84,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
 
         val node = EndpointManagementUtil.getNode(endpointEntityRepository, nodeRequest)
         if(node != null) {
-            PermissionUtils.censoreNodeFromUserPermission(permissionMap,nodeRequest.nodeTopic+"/", node)
+            PermissionUtils.censorNodeFromUserPermission(permissionMap,nodeRequest.nodeTopic+"/", node)
             return node
         }
         else
@@ -129,7 +129,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                     .permissionFromGroup(userRepository.findById(userName).get().permissions,
                             userRepository.findById(userName).get().userGroups,
                             userGroupRepository)
-            PermissionUtils.censoreObjectFromUserPermission(permissionMap,objectRequest.objectTopic+"/", cloudioObject)
+            PermissionUtils.censorObjectFromUserPermission(permissionMap,objectRequest.objectTopic+"/", cloudioObject)
             return cloudioObject
         }
         else
@@ -191,5 +191,18 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
             }
         }
         return result
+    }
+
+    @RequestMapping("/getOwnedEndpoints", method = [RequestMethod.GET])
+    fun getOwnedEndpoints(): OwnedEndpointsAnswer{
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, userName)
+    }
+
+    @RequestMapping("/getAccessibleAttributes", method = [RequestMethod.GET])
+    fun getAccessibleAttributes(): AccessibleAttributesAnswer{
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return EndpointManagementUtil.getAccessibleAttributes(userRepository, userGroupRepository, endpointEntityRepository, userName)
+
     }
 }
