@@ -33,7 +33,7 @@ abstract class AttributeChangeNotifier(connectionFactory: ConnectionFactory, top
                     channel.queueDelete(queueName)
                 }
             } else {
-                log.error("Unrecognized message format in @set message from "+topic)
+                log.error("Unrecognized message format in $topic message")
             }
         }
         channel.basicConsume(queueName, true, deliverCallback, CancelCallback{})

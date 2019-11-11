@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 import ch.hevs.cloudio.cloud.apiutils.ExecOutputNotifier
 import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
+import ch.hevs.cloudio.cloud.model.JobsLineOutput
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -56,8 +57,9 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
             executor.execute {
                 try {
                     val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
-                        override fun notifyExecOutput(message: String) {
-                            emitter.send(message)
+                        override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
+                            if(jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
+                            emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                         }
                     }
                     JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)

@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
-import ch.hevs.cloudio.cloud.model.CloudioLog
+import ch.hevs.cloudio.cloud.model.CloudioLogMessage
 import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
@@ -21,7 +21,7 @@ class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository): 
             endpointEntityRepository.save(endpointEntity)
         }
     }
-    override fun newLog(endpointUuid: String, cloudioLog: CloudioLog) {
+    override fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage) {
         //nothing to do in mongo
     }
 

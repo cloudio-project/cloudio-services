@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
-import ch.hevs.cloudio.cloud.model.CloudioLog
+import ch.hevs.cloudio.cloud.model.CloudioLogMessage
 import ch.hevs.cloudio.cloud.model.LogParameter
 import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
@@ -28,14 +28,14 @@ class InfluxLogsService(val env: Environment, val influx: InfluxDB): AbstractLog
         //nothing to do in influx
     }
 
-    override fun newLog(endpointUuid: String, cloudioLog: CloudioLog) {
+    override fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage) {
         influx.write(database, "autogen", Point
                 .measurement(endpointUuid + ".logs")
-                .time((cloudioLog.timestamp * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                .addField("level", cloudioLog.level.toString())
-                .addField("message", cloudioLog.message)
-                .addField("loggerName", cloudioLog.loggerName)
-                .addField("logSource", cloudioLog.logSource)
+                .time((cloudioLogMessage.timestamp * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
+                .addField("level", cloudioLogMessage.level.toString())
+                .addField("message", cloudioLogMessage.message)
+                .addField("loggerName", cloudioLogMessage.loggerName)
+                .addField("logSource", cloudioLogMessage.logSource)
                 .build())
 
     }

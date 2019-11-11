@@ -1,9 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
-import ch.hevs.cloudio.cloud.apiutils.CaCertificateRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateUtil
+import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import ch.hevs.cloudio.cloud.model.Permission
@@ -11,19 +8,34 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
+import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.core.env.Environment
+import org.springframework.core.io.UrlResource
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.HandlerInterceptor
+import org.springframework.web.servlet.handler.MappedInterceptor
+import java.io.File
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 
 @RestController
 @RequestMapping("/api/v1")
 class CertificateController(var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository){
+
+    companion object {
+        private val log = LogFactory.getLog(CertificateController::class.java)
+    }
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -42,6 +54,58 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
     }
 
+    @RequestMapping("/createCertificateAndKeyZip", method = [RequestMethod.GET])
+    fun createCertificateAndKeyZip(@RequestBody certificateAndKeyZipRequest: CertificateAndKeyZipRequest): ResponseEntity<UrlResource> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        val permissionMap = PermissionUtils
+                .permissionFromGroup(userRepository.findById(userName).get().permissions,
+                        userRepository.findById(userName).get().userGroups,
+                        userGroupRepository)
+        val genericTopic = certificateAndKeyZipRequest.endpointUuid + "/#"
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))!= Permission.OWN)
+            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
+        val pathToReturn = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, certificateAndKeyZipRequest)!!.replace("\"","")
+
+        val resource = UrlResource("file:$pathToReturn")
+
+        val contentType = "application/zip"
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.filename + "\"")
+                .header("EndpointUuid",certificateAndKeyZipRequest.endpointUuid)
+                .body(resource)
+
+    }
+
+    @Bean
+    fun interceptor(): MappedInterceptor {
+        return MappedInterceptor(arrayOf("/api/v1/createCertificateAndKeyZip"), object : HandlerInterceptor {
+            @Throws(Exception::class)
+            override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
+                if(response.status == 200){
+                    val endpointUuid = response.getHeaders("EndpointUuid").toMutableList()[0]
+                    try{
+                        var myFile = File("$endpointUuid.properties")
+                        if (myFile.exists())
+                            myFile.delete()
+
+                        myFile = File("$endpointUuid.p12")
+                        if (myFile.exists())
+                            myFile.delete()
+
+                        myFile = File("$endpointUuid.zip")
+                        if (myFile.exists())
+                            myFile.delete()
+                    }catch (e: Exception){
+                        log.error("Exception while deleting old certificate files", e)
+                    }
+                }
+            }
+        })
+    }
+
     @RequestMapping("/createCertificateFromKey", method = [RequestMethod.GET])
     fun createCertificateFromKey(@RequestBody certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey {
         val userName = SecurityContextHolder.getContext().authentication.name
@@ -58,7 +122,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
     }
 
     @RequestMapping("/getCaCertificate", method = [RequestMethod.GET])
-    fun getCaCertificate(): CaCertificateRequest {
+    fun getCaCertificate(): CaCertificate {
         return CertificateUtil.getCaCertificate(environment)
     }
 }

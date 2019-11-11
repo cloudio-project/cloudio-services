@@ -9,6 +9,8 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
+import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.wot.WotNode
 import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -34,8 +36,12 @@ object  EndpointManagementUtil{
         return endpointEntityRepository.findByIdOrNull(splittedTopic[0])?.endpoint?.nodes?.get(splittedTopic[1])
     }
 
-    fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest){
+    fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
 
+        val splitedTopic = nodeRequest.nodeTopic.split("/")
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitedTopic[0])!!
+
+        return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.id, splitedTopic[1], host)
     }
 
     fun getObject(endpointEntityRepository: EndpointEntityRepository, objectRequest: ObjectRequest): CloudioObject? {

@@ -152,3 +152,6 @@ gradle-app.setting
 
 # Other ignores
 out
+*.p12
+
+*.jks

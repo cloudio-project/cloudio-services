@@ -13,7 +13,7 @@ object LogsUtil {
 
     fun getEndpointLogsRequest(influx: InfluxDB, database: String, logsDefaultRequest: LogsDefaultRequest): QueryResult? {
         val logEntry = logsDefaultRequest.endpointUuid+".logs"
-        val number = logsDefaultRequest.dataPointNumber
+        val number = logsDefaultRequest.maxDataPoints
         return influx.query(Query("SELECT * FROM \"$logEntry\" WHERE time < now() order by time desc limit $number",database))
     }
 
@@ -35,7 +35,7 @@ object LogsUtil {
     fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest){
         val logParameter = LogParameter(logsSetRequest.level.toString())
         rabbitTemplate.convertAndSend("amq.topic",
-              "@logsLevelUnRetained." + logsSetRequest.endpointUuid, JsonSerializationFormat.serializeLogParameter(logParameter))
+              "@logsLevel." + logsSetRequest.endpointUuid, JsonSerializationFormat.serializeLogParameter(logParameter))
 
     }
 
