@@ -1,13 +1,16 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.LogLevel
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.Priority
+import ch.hevs.cloudio.cloud.model.*
 
 data class ApiActionAnswer(val success: Boolean, val message: String)
 
 data  class UserRequest(val userName : String)
+
+data class UserPasswordRequest(val userName: String,val passwordHash: String)
+
+data class AddAuthorityRequest(val userName: String, val authorities: Set<Authority>)
+
+data class RemoveAuthorityRequest(val userName: String, val authority: Authority)
 
 data class UserListAnswer(val userList: Set<String>)
 
