@@ -37,43 +37,44 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = jobExecuteRequest.endpointUuid + "/#"
-        if (PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/")) == Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
 
-
-
-        if (!jobExecuteRequest.getOutput){
-            JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
-            throw CloudioOkException("Success")
-        }
-        else {
-
-            val emitter = SseEmitter()
-
-            executor.execute {
-                try {
-                    val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
-                        override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
-                            if(jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
-                            emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
-                        }
-                    }
-                    JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
-                    Thread.sleep(jobExecuteRequest.timeout)
-                    emitter.complete()
-                    execOutputNotifier.deleteQueue()
-
-                } catch (e: Exception) {
-                    emitter.completeWithError(e)
-                }
+        val endpointGeneralPermission = permissionMap.get(genericTopic)
+        if(endpointGeneralPermission?.permission == Permission.OWN){
+            if (!jobExecuteRequest.getOutput){
+                JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+                throw CloudioOkException("Success")
             }
-            return emitter
+            else {
+
+                val emitter = SseEmitter()
+
+                executor.execute {
+                    try {
+                        val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
+                            override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
+                                if(jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
+                                    emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
+                            }
+                        }
+                        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+                        Thread.sleep(jobExecuteRequest.timeout)
+                        emitter.complete()
+                        execOutputNotifier.deleteQueue()
+
+                    } catch (e: Exception) {
+                        emitter.completeWithError(e)
+                    }
+                }
+                return emitter
+            }
         }
-
-
+        else{
+            if(endpointGeneralPermission==null)
+                throw CloudioBadRequestException("This endpoint doesn't exist")
+            else
+                throw CloudioBadRequestException("You don't own this endpoint")
+        }
     }
 }

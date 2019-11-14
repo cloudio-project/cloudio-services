@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 data class EndpointParameters (
     @Id
-    var UUID: String ="",
+    var endpointUuid: String ="",
     var friendlyName: String = ""
 
 )

@@ -106,9 +106,7 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                         }
                         false -> {
                             val permissionMap = PermissionUtils
-                                    .permissionFromGroup(userRepository.findById(id).get().permissions,
-                                        userRepository.findById(id).get().userGroups,
-                                        userGroupRepository)
+                                    .permissionFromUserAndGroup(id, userRepository, userGroupRepository)
 
                             val topicFilter = routingKey.drop(1) //drop the @...
 

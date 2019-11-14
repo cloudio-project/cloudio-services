@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
@@ -27,31 +26,48 @@ object  EndpointManagementUtil{
         return toReturn
     }
 
-    fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
-        return endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
+    fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointAnswer? {
+
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
+        return if(endpointEntity == null)
+            null
+        else
+            EndpointAnswer(endpointParametersRepository.findById(endpointRequest.endpointUuid).get().friendlyName, endpointEntity)
+
+
+    }
+
+    fun getEndpointFriendlyName(endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointFriendlyName?{
+        val endpointParameters = endpointParametersRepository.findByIdOrNull(endpointRequest.endpointUuid)
+
+        return if(endpointParameters == null)
+            null
+        else
+            EndpointFriendlyName(endpointParameters.friendlyName)
+
     }
 
     fun getNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest): Node? {
-        val splittedTopic = nodeRequest.nodeTopic.split("/")
-        return endpointEntityRepository.findByIdOrNull(splittedTopic[0])?.endpoint?.nodes?.get(splittedTopic[1])
+        val splitTopic = nodeRequest.nodeTopic.split("/")
+        return endpointEntityRepository.findByIdOrNull(splitTopic[0])?.endpoint?.nodes?.get(splitTopic[1])
     }
 
     fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
 
-        val splitedTopic = nodeRequest.nodeTopic.split("/")
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitedTopic[0])!!
+        val splitTopic = nodeRequest.nodeTopic.split("/")
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic[0])!!
 
-        return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.id, splitedTopic[1], host)
+        return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.endpointUuid, splitTopic[1], host)
     }
 
     fun getObject(endpointEntityRepository: EndpointEntityRepository, objectRequest: ObjectRequest): CloudioObject? {
-        val splittedTopic = Stack<String>()
-        splittedTopic.addAll(objectRequest.objectTopic.split("/").toList().reversed())
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splittedTopic.pop())
+        val splitTopic = Stack<String>()
+        splitTopic.addAll(objectRequest.objectTopic.split("/").toList().reversed())
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
         if (endpointEntity != null) {
-            val node = endpointEntity.endpoint.nodes[splittedTopic.pop()]
+            val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
             if (node != null) {
-                return CloudioModelUtils.findObjectInNode(node, splittedTopic)
+                return CloudioModelUtils.findObjectInNode(node, splitTopic)
             }
         }
         return null
@@ -59,13 +75,13 @@ object  EndpointManagementUtil{
     }
 
     fun getAttribute(endpointEntityRepository: EndpointEntityRepository, attributeRequest: AttributeRequest): Attribute? {
-        val splittedTopic = Stack<String>()
-        splittedTopic.addAll(attributeRequest.attributeTopic.split("/").toList().reversed())
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splittedTopic.pop())
+        val splitTopic = Stack<String>()
+        splitTopic.addAll(attributeRequest.attributeTopic.split("/").toList().reversed())
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
         if (endpointEntity != null) {
-            val node = endpointEntity.endpoint.nodes[splittedTopic.pop()]
+            val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
             if (node != null) {
-                return CloudioModelUtils.findAttributeInNode(node, splittedTopic)
+                return CloudioModelUtils.findAttributeInNode(node, splitTopic)
             }
         }
         return null
@@ -87,11 +103,9 @@ object  EndpointManagementUtil{
         }
     }
 
-    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, userName: String): OwnedEndpointsAnswer{
+    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointParametersRepository: EndpointParametersRepository, userName: String): OwnedEndpointsAnswer{
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val ownedEndpointsSet : MutableSet<String> = mutableSetOf()
         permissionMap.forEach { (topic, prioritizedPermission) ->
             val splitTopic = topic.split("/")
@@ -99,14 +113,18 @@ object  EndpointManagementUtil{
                 ownedEndpointsSet.add(splitTopic[0])
             }
         }
-        return OwnedEndpointsAnswer(ownedEndpointsSet)
+        val ownedEndpointParametersSet: MutableSet<EndpointParameters> = mutableSetOf()
+        ownedEndpointsSet.forEach { s ->
+            val endpointParameter = endpointParametersRepository.findByIdOrNull(s)
+                    ?: EndpointParameters(s, "Endpoint not in the database")
+            ownedEndpointParametersSet.add(endpointParameter)
+        }
+        return OwnedEndpointsAnswer(ownedEndpointParametersSet)
     }
 
     fun getAccessibleAttributes(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): AccessibleAttributesAnswer{
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val endpointsSet : MutableSet<String> = mutableSetOf()
         permissionMap.forEach { (topic, _) ->
             endpointsSet.add(topic.split("/")[0])
@@ -121,5 +139,6 @@ object  EndpointManagementUtil{
         }
         return AccessibleAttributesAnswer(toReturn)
     }
+
 }
 

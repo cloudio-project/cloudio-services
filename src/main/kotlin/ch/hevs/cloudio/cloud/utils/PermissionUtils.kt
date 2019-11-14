@@ -6,12 +6,17 @@ import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 
 object PermissionUtils {
 
-    fun permissionFromGroup(initialUserPermission:  Map<String, PrioritizedPermission>,userGroupSet: Set<String>, userGroupRepository: UserGroupRepository): Map<String, PrioritizedPermission>{
-        var toReturn = initialUserPermission.toMutableMap()
+    fun permissionFromUserAndGroup(userName: String, userRepository: UserRepository, userGroupRepository: UserGroupRepository): Map<String, PrioritizedPermission>{
+        val initialUserPermission = userRepository.findById(userName).get().permissions
+        val userGroupSet = userRepository.findById(userName).get().userGroups
+
+        val toReturn = initialUserPermission.toMutableMap()
+
         //iter through group
         userGroupSet.forEachIndexed{ _, userGroup->
             //get the group permission
@@ -54,14 +59,14 @@ object PermissionUtils {
         } else {
             //sort the permission by it's priority and only get the highest one
             val permissionList = relatedPermissionMap.toList()
-                    .sortedBy { (key, value) -> value.priority }
+                    .sortedBy { (_, value) -> value.priority }
 
             permissionList.last().second.permission
         }
     }
 
     fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity){
-        val topic = endpointEntity.id+"/"
+        val topic = endpointEntity.endpointUuid+"/"
 
         for(node in endpointEntity.endpoint.nodes){
             val topicNode = topic+node.key+"/"
@@ -93,7 +98,7 @@ object PermissionUtils {
     }
 
     fun getAccessibleAttributesFromEndpoint(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity): MutableMap<String, Permission> {
-        val topic = endpointEntity.id+"/"
+        val topic = endpointEntity.endpointUuid+"/"
 
         val attributesRight : MutableMap<String, Permission> = mutableMapOf()
         for(node in endpointEntity.endpoint.nodes){

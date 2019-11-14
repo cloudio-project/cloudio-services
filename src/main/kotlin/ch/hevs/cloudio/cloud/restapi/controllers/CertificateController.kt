@@ -45,15 +45,17 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateAndKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if(endpointGeneralPermission?.permission == Permission.OWN)
             return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
-        else
-            throw CloudioBadRequestException("You don't own this endpoint")
+        else{
+            if(endpointGeneralPermission==null)
+                throw CloudioBadRequestException("This endpoint doesn't exist")
+            else
+                throw CloudioBadRequestException("You don't own this endpoint")
+        }
     }
 
     @RequestMapping("/createCertificateAndKeyZip", method = [RequestMethod.GET])
@@ -61,9 +63,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateAndKeyZipRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if(endpointGeneralPermission?.permission == Permission.OWN){
@@ -79,10 +79,12 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                     .header("EndpointUuid",certificateAndKeyZipRequest.endpointUuid)
                     .body(resource)
         }
-        else
-            throw CloudioBadRequestException("You don't own this endpoint")
-
-
+        else{
+            if(endpointGeneralPermission==null)
+                throw CloudioBadRequestException("This endpoint doesn't exist")
+            else
+                throw CloudioBadRequestException("You don't own this endpoint")
+        }
     }
 
     @Bean
@@ -117,16 +119,17 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
-                .permissionFromGroup(userRepository.findById(userName).get().permissions,
-                        userRepository.findById(userName).get().userGroups,
-                        userGroupRepository)
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateFromKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if(endpointGeneralPermission?.permission == Permission.OWN)
             return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
-        else
-            throw CloudioBadRequestException("You don't own this endpoint")
-
+        else{
+            if(endpointGeneralPermission==null)
+                throw CloudioBadRequestException("This endpoint doesn't exist")
+            else
+                throw CloudioBadRequestException("You don't own this endpoint")
+        }
     }
 
     @RequestMapping("/getCaCertificate", method = [RequestMethod.GET])
