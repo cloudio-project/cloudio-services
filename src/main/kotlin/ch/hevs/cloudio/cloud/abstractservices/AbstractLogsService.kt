@@ -23,8 +23,6 @@ abstract class AbstractLogsService{
                     key = ["@logsLevel.#"])])
     fun handleLogLevelMessage(message: Message)
     {
-        log.info("@logsLevel.#")
-
         try{
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
 
@@ -48,8 +46,6 @@ abstract class AbstractLogsService{
                     key = ["@logs.#"])])
     fun handleLogsMessage(message: Message)
     {
-        log.info("@logs.#")
-
         try{
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
 

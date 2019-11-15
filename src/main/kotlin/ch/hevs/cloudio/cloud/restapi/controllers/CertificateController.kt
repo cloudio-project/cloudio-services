@@ -6,7 +6,7 @@ import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -52,9 +52,9 @@ class CertificateController(var environment: Environment, var userGroupRepositor
             return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -81,9 +81,9 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -126,9 +126,9 @@ class CertificateController(var environment: Environment, var userGroupRepositor
             return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 

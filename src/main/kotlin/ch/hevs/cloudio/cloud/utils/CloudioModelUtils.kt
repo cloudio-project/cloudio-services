@@ -15,7 +15,6 @@ object CloudioModelUtils {
                 return findAttributeInNode(node, path)
             }
         }
-
         return null
     }
 

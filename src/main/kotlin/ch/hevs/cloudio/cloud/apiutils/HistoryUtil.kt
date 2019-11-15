@@ -5,6 +5,7 @@ import org.influxdb.dto.Query
 import org.influxdb.dto.QueryResult
 
 object HistoryUtil{
+
     fun getAttributeHistoryRequest(influx: InfluxDB, database: String, historyDefaultRequest: HistoryDefaultRequest): QueryResult? {
         val attributeTopic = historyDefaultRequest.attributeTopic
         val number = historyDefaultRequest.maxDataPoints

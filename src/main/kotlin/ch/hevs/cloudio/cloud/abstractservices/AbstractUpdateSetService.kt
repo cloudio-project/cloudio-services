@@ -24,7 +24,6 @@ abstract class AbstractUpdateSetService{
     fun handleUpdateMessage(message: Message)
     {
         val prefix = message.messageProperties.receivedRoutingKey.split(".")[0]
-        log.info(prefix)
         try {
             val attributeId = message.messageProperties.receivedRoutingKey.removePrefix("$prefix.")
 

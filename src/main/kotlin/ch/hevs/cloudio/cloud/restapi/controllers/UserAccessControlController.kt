@@ -4,9 +4,9 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioForbiddenException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,11 +21,11 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun getUserAccessRight(@RequestBody userRightRequest: UserRequest): Map<String, PrioritizedPermission>{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val userRight =  UserAccessControlUtil.getUserAccessRight(userRepository, userRightRequest)
             if(userRight == null)
-                throw CloudioBadRequestException("Coudln't return userRight")
+                throw CloudioHttpExceptions.BadRequestException("Coudln't return userRight")
             else
                 return userRight
 
@@ -36,13 +36,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun addUserAccessRight(@RequestBody userRightRequestList: UserRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val createAction = UserAccessControlUtil.addUserAccessRight(userRepository, userRightRequestList)
             if(createAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't add user access right: "+createAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user access right: "+createAction.message)
 
         }
     }
@@ -51,13 +51,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun modifyUserAccessRight(@RequestBody userRightRequest: UserRightRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val modifyAction = UserAccessControlUtil.modifyUserAccessRight(userRepository, userRightRequest)
             if(modifyAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't modify user access right: "+modifyAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user access right: "+modifyAction.message)
         }
     }
 
@@ -65,13 +65,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun removeUserAccessRight(@RequestBody userTopicRequest: UserTopicRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val removeAction = UserAccessControlUtil.removeUserAccessRight(userRepository, userTopicRequest)
             if(removeAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't delete user access right: "+removeAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user access right: "+removeAction.message)
         }
     }
 
@@ -81,8 +81,8 @@ class UserAccessControlController(var userRepository: UserRepository) {
 
         val giveRightAction = UserAccessControlUtil.giveUserAccessRight(userRepository, userRightRequestList, userName)
         if(giveRightAction.success)
-            throw CloudioOkException("Success")
+            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
         else
-            throw CloudioBadRequestException("Couldn't add user access right: "+giveRightAction.message)
+            throw CloudioHttpExceptions.BadRequestException("Couldn't add user access right: "+giveRightAction.message)
     }
 }

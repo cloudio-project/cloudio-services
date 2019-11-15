@@ -5,8 +5,8 @@ import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.influxdb.dto.QueryResult
@@ -40,15 +40,15 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             val queryResult = LogsUtil.getEndpointLogsRequest(influx, database, logsDefaultRequest)
 
             if (queryResult == null)
-                throw CloudioBadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
             else
                 return queryResult
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -64,15 +64,15 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             val queryResult = LogsUtil.getEndpointLogsByDateRequest(influx, database, logsDateRequest)
 
             if (queryResult == null)
-                throw CloudioBadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
             else
                 return queryResult
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -88,15 +88,15 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             val queryResult = LogsUtil.getEndpointLogsWhereRequest(influx, database, logsWhereRequest)
 
             if (queryResult == null)
-                throw CloudioBadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
             else
                 return queryResult
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -110,13 +110,13 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if(endpointGeneralPermission?.permission == Permission.OWN){
             LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest)
-            throw CloudioOkException("Success")
+            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
         }
         else {
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 
@@ -133,13 +133,13 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             if(logLevel != null)
                 return logLevel
             else
-                throw CloudioBadRequestException("Couldn't retrieve log level")
+                throw CloudioHttpExceptions.BadRequestException("Couldn't retrieve log level")
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 }

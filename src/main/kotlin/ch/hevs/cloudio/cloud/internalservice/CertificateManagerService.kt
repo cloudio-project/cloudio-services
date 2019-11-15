@@ -155,6 +155,7 @@ class CertificateManagerService(environment: Environment) {
             val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, keyPair.public)
             val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
+            //create random password for p12 keystore
             val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
             val password: String = List(15) { alphabet.random() }.joinToString("")
 
@@ -162,6 +163,7 @@ class CertificateManagerService(environment: Environment) {
 
             when (certificateAndKeyZipRequest.libraryLanguage){
                 LibraryLanguage.JAVA ->{
+                    //properties file for java librarie
                     val propertiesContent = "ch.hevs.cloudio.endpoint.hostUri=ssl://localhost:8883\n" +
                                             "ch.hevs.cloudio.endpoint.ssl.authorityCert=file:ABSOLUTE_PATH/ca-cert.jks\n" +
                                             "ch.hevs.cloudio.endpoint.ssl.clientCert=file:ABSOLUTE_PATH/${certificateAndKeyZipRequest.endpointUuid}.p12\n" +
@@ -171,9 +173,11 @@ class CertificateManagerService(environment: Environment) {
                                             "ch.hevs.cloudio.endpoint.jobs.folder=ABSOLUTE_PATH"
                     File("${certificateAndKeyZipRequest.endpointUuid}.properties").writeText(propertiesContent)
 
+                    //list for the properties, p12 and cacert files
                     val files: Array<String> = arrayOf(File("${certificateAndKeyZipRequest.endpointUuid}.properties").absolutePath,
                             File("${certificateAndKeyZipRequest.endpointUuid}.p12").absolutePath,
                             File(caCertificatePath).absolutePath)
+                    //zip all files and return the serialized File object of zip file
                     val zipFile = File("${certificateAndKeyZipRequest.endpointUuid}.zip")
                     val out = ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile)))
                     for (file in files) {
@@ -242,6 +246,7 @@ class CertificateManagerService(environment: Environment) {
     }
 
     fun getKey(key: String): PublicKey? {
+        //convert PEM string Key to java.security.PublicKey
         val formattedKey = key.replace("\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "")
 
         val keyBytes: ByteArray = Base64.getDecoder().decode(formattedKey)//, Base64.DEFAULT)
@@ -257,12 +262,13 @@ class CertificateManagerService(environment: Environment) {
 
         pkcs12.setKeyEntry("", pair.private, "".toCharArray(), arrayOf(certificate))
 
-        try  {
+        try{
             val p12File = File("$endPointUuidString.p12")
             val p12 =  FileOutputStream(p12File)
             pkcs12.store(p12, keyStorePassword.toCharArray())
             return p12File.absoluteFile.toString()
         }catch (e: Exception){
+            log.error("Couldn't create P12 file", e)
             e.printStackTrace()
             return null
         }

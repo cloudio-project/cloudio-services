@@ -7,6 +7,7 @@ import org.springframework.data.repository.findByIdOrNull
 object UserManagementUtil {
 
     fun createUser(userRepository: UserRepository, newUser: User): ApiActionAnswer{
+        //prevent creation of two user with same username
         if(userRepository.findByIdOrNull(newUser.userName)!=null)
             return ApiActionAnswer(false, newUser.userName+" already exists")
         else {

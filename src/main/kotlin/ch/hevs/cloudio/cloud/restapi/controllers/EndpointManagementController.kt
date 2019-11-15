@@ -7,9 +7,8 @@ import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
-import ch.hevs.cloudio.cloud.restapi.CloudioTimeoutException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.serialization.wot.WotNode
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import com.rabbitmq.client.ConnectionFactory
@@ -39,7 +38,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val userName = SecurityContextHolder.getContext().authentication.name
         val user = userRepository.findById(userName).get()
         val permissions = user.permissions.toMutableMap()
-        permissions.put(toReturn.endpointUuid+"/#", PrioritizedPermission(Permission.OWN, Priority.HIGHEST))
+        permissions.put(toReturn.endpointUuid+"/#", PrioritizedPermission(Permission.OWN, PermissionPriority.HIGHEST))
         user.permissions = permissions.toMap()
         userRepository.save(user)
 
@@ -55,17 +54,15 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this endpoint")
 
         val endpointAnswer = EndpointManagementUtil.getEndpoint(endpointEntityRepository, endpointParametersRepository, endpointRequest)
         if(endpointAnswer != null) {
-
             PermissionUtils.censorEndpointFromUserPermission(permissionMap,endpointAnswer.endpointEntity)
-
             return endpointAnswer
         }
         else
-            throw CloudioBadRequestException("Couldn't get Endpoint")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Endpoint")
     }
 
     @RequestMapping("/getEndpointFriendlyName", method = [RequestMethod.GET])
@@ -76,13 +73,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this endpoint")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this endpoint")
 
         val endpointFriendlyName = EndpointManagementUtil.getEndpointFriendlyName(endpointParametersRepository, endpointRequest)
         if(endpointFriendlyName != null)
             return endpointFriendlyName
         else
-            throw CloudioBadRequestException("Couldn't get endpoint friendly name")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get endpoint friendly name")
 
     }
 
@@ -93,7 +90,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this node")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
         val node = EndpointManagementUtil.getNode(endpointEntityRepository, nodeRequest)
         if(node != null) {
@@ -101,7 +98,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
             return node
         }
         else
-            throw CloudioBadRequestException("Couldn't get Node")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Node")
     }
 
     @RequestMapping("/getWotNode", method = [RequestMethod.GET])
@@ -113,14 +110,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this node")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
         val wotNode = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
         if(wotNode == null)
-            throw CloudioBadRequestException("Couldn't get WoT Node")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node")
         else
             return wotNode
-
     }
 
     @RequestMapping("/getObject", method = [RequestMethod.GET])
@@ -130,7 +126,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = objectRequest.objectTopic + "/#"
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this object")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this object")
 
         val cloudioObject = EndpointManagementUtil.getObject(endpointEntityRepository, objectRequest)
         if(cloudioObject != null) {
@@ -138,7 +134,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
             return cloudioObject
         }
         else
-            throw CloudioBadRequestException("Couldn't get Object")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Object")
     }
 
     @RequestMapping("/getAttribute", method = [RequestMethod.GET])
@@ -147,13 +143,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeRequest.attributeTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, attributeRequest)
         if(attribute != null)
             return attribute
         else
-            throw CloudioBadRequestException("Couldn't get Attribute")
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Attribute")
     }
 
     @RequestMapping("/setAttribute", method = [RequestMethod.GET])
@@ -162,13 +158,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeSetRequest.attributeTopic.split("/"))<Permission.WRITE)
-            throw CloudioBadRequestException("You don't have permission to write this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to write this attribute")
 
         val setAction = EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
         if(setAction.success)
-            throw CloudioOkException("Success")
+            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
         else
-            throw CloudioBadRequestException("Couldn't set attribute: "+setAction.message)
+            throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: "+setAction.message)
     }
 
     @RequestMapping("/notifyAttributeChange", method = [RequestMethod.GET])
@@ -177,10 +173,10 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeRequestLongpoll.attributeTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
-                CloudioTimeoutException("No attribute change after "+attributeRequestLongpoll.timeout+"ms on topic: "+attributeRequestLongpoll.attributeTopic))
+                CloudioHttpExceptions.TimeoutException("No attribute change after "+attributeRequestLongpoll.timeout+"ms on topic: "+attributeRequestLongpoll.attributeTopic))
 
         CompletableFuture.runAsync {
             object :  AttributeChangeNotifier(connectionFactory, "@set."+attributeRequestLongpoll.attributeTopic.replace("/", ".")){
@@ -202,6 +198,5 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
     fun getAccessibleAttributes(): AccessibleAttributesAnswer{
         val userName = SecurityContextHolder.getContext().authentication.name
         return EndpointManagementUtil.getAccessibleAttributes(userRepository, userGroupRepository, endpointEntityRepository, userName)
-
     }
 }

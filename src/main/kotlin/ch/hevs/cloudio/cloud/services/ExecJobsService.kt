@@ -24,8 +24,6 @@ class ExecJobsService{
             key = ["@exec.*"])])
     fun handleExecMessage(message: Message)
     {
-        log.info("@exec.*")
-
         try {
             message.messageProperties.receivedRoutingKey.split(".")
         } catch (exception: Exception) {
@@ -38,8 +36,6 @@ class ExecJobsService{
             key = ["@execOutput.*"])])
     fun handleExecOutputMessage(message: Message)
     {
-        log.info("@execOutput.*")
-
         try {
             message.messageProperties.receivedRoutingKey
         } catch (exception: Exception) {

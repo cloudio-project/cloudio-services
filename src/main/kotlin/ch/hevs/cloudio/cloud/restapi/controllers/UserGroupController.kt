@@ -5,9 +5,9 @@ import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioForbiddenException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,13 +22,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun createUserGroup(@RequestBody userGroup : UserGroup){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val creatAction = UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroup)
             if(creatAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't create userGroup: "+creatAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't create userGroup: "+creatAction.message)
         }
     }
 
@@ -36,11 +36,11 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun getUserGroup(@RequestBody  userGroupRequest: UserGroupRequest): UserGroup{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val userGroup = UserGroupUtil.getUserGroup(userGroupRepository, userGroupRequest)
             if(userGroup == null)
-                throw CloudioBadRequestException("UserGroup doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("UserGroup doesn't exist")
             else
                 return userGroup
         }
@@ -50,7 +50,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun getUserGroupList(): UserGroupList {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             return UserGroupUtil.getUserGroupList(userGroupRepository)
         }
@@ -60,13 +60,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun addUserToGroup(@RequestBody userGroupRequestList: UserGroupUserRequestList){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val addAction = UserGroupUtil.addUserToGroup(userGroupRepository, userRepository, userGroupRequestList)
             if(addAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't add user to userGroup: "+addAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user to userGroup: "+addAction.message)
         }
     }
 
@@ -74,13 +74,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun deleteUserToGroup(@RequestBody userGroupUserRequest: UserGroupUserRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val deleteAction = UserGroupUtil.deleteUserToGroup(userGroupRepository, userRepository, userGroupUserRequest)
             if(deleteAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't delete userGroup: "+deleteAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete userGroup: "+deleteAction.message)
         }
     }
 
@@ -88,13 +88,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     fun deleteUserGroup(@RequestBody userGroupRequest: UserGroupRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val deleteAction = UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, userGroupRequest)
             if(deleteAction.success)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             else
-                throw CloudioBadRequestException("Couldn't delete userGroup: "+deleteAction.message)
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete userGroup: "+deleteAction.message)
         }
     }
 

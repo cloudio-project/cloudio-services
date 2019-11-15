@@ -20,31 +20,25 @@ object  EndpointManagementUtil{
 
     fun createEndpoint(endpointParametersRepository: EndpointParametersRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
         val toReturn = EndpointParameters(UUID.randomUUID().toString(), endpointCreateRequest.endpointFriendlyName)
-
+        //create endpoint in endpoint parameters repo
         endpointParametersRepository.save(toReturn)
-
         return toReturn
     }
 
     fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointAnswer? {
-
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
         return if(endpointEntity == null)
             null
-        else
+        else    //return endpoint entity and endpoint friendly name
             EndpointAnswer(endpointParametersRepository.findById(endpointRequest.endpointUuid).get().friendlyName, endpointEntity)
-
-
     }
 
     fun getEndpointFriendlyName(endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointFriendlyName?{
         val endpointParameters = endpointParametersRepository.findByIdOrNull(endpointRequest.endpointUuid)
-
         return if(endpointParameters == null)
             null
         else
             EndpointFriendlyName(endpointParameters.friendlyName)
-
     }
 
     fun getNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest): Node? {
@@ -53,7 +47,6 @@ object  EndpointManagementUtil{
     }
 
     fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
-
         val splitTopic = nodeRequest.nodeTopic.split("/")
         val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic[0])!!
 
@@ -71,7 +64,6 @@ object  EndpointManagementUtil{
             }
         }
         return null
-
     }
 
     fun getAttribute(endpointEntityRepository: EndpointEntityRepository, attributeRequest: AttributeRequest): Attribute? {
@@ -91,13 +83,16 @@ object  EndpointManagementUtil{
 
         val attribute = getAttribute(endpointEntityRepository, AttributeRequest(attributeSetRequest.attributeTopic))
 
+        //only set attribute if setpoint or parameter
         if (attribute == null)
             return ApiActionAnswer(false, "Attribute doesn't exist")
         else if(attribute.constraint != AttributeConstraint.SetPoint && attribute.constraint != AttributeConstraint.Parameter)
             return ApiActionAnswer(false, "Attribute is nor a SetPoint, neither a Parameter")
         else {
+            //send message to amq.topic queue
             rabbitTemplate.convertSendAndReceive("amq.topic",
-                    "@set." + attributeSetRequest.attributeTopic.replace("/", "."), serializeAttribute(attributeSetRequest.attribute))
+                    "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
+                    serializeAttribute(attributeSetRequest.attribute))
 
             return ApiActionAnswer(true, "")
         }
@@ -106,7 +101,9 @@ object  EndpointManagementUtil{
     fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointParametersRepository: EndpointParametersRepository, userName: String): OwnedEndpointsAnswer{
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
+
         val ownedEndpointsSet : MutableSet<String> = mutableSetOf()
+        //search for permission looking like topic = endpointUuid/#, permission = OWN
         permissionMap.forEach { (topic, prioritizedPermission) ->
             val splitTopic = topic.split("/")
             if(splitTopic.size==2 && splitTopic.getOrNull(1).equals("#") && prioritizedPermission.permission == Permission.OWN){
@@ -114,6 +111,7 @@ object  EndpointManagementUtil{
             }
         }
         val ownedEndpointParametersSet: MutableSet<EndpointParameters> = mutableSetOf()
+        //search for friendly name of each owned endpoint
         ownedEndpointsSet.forEach { s ->
             val endpointParameter = endpointParametersRepository.findByIdOrNull(s)
                     ?: EndpointParameters(s, "Endpoint not in the database")
@@ -126,12 +124,13 @@ object  EndpointManagementUtil{
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val endpointsSet : MutableSet<String> = mutableSetOf()
+        //get every endpointUuid found in the permission map of user
         permissionMap.forEach { (topic, _) ->
             endpointsSet.add(topic.split("/")[0])
         }
 
         val toReturn : MutableMap<String, Permission> = mutableMapOf()
-
+        //will search for every attributes in the endpointUuid set
         endpointsSet.forEach { endpointUuid ->
             val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointUuid)
             if (endpointEntity != null)

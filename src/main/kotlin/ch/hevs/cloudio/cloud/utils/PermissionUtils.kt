@@ -25,11 +25,9 @@ object PermissionUtils {
                 if(toReturn[topicKey] != null) {
                     if (prioritizedPermission.priority > toReturn[topicKey]!!.priority) //test if priority of permission is higher
                         toReturn[topicKey] = prioritizedPermission
-
                 }
                 else    //if doesn't exist, create it
                     toReturn[topicKey] = prioritizedPermission
-
             }
         }
         return toReturn

@@ -7,8 +7,8 @@ import ch.hevs.cloudio.cloud.model.JobsLineOutput
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import com.rabbitmq.client.ConnectionFactory
 import org.influxdb.InfluxDB
@@ -44,7 +44,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
         if(endpointGeneralPermission?.permission == Permission.OWN){
             if (!jobExecuteRequest.getOutput){
                 JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
-                throw CloudioOkException("Success")
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
             }
             else {
 
@@ -52,9 +52,11 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
 
                 executor.execute {
                     try {
+                        //create a listener for the correct execOutput topic
                         val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
                             override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
                                 if(jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
+                                    //send the output as a Sse event
                                     emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                             }
                         }
@@ -72,9 +74,9 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
         }
         else{
             if(endpointGeneralPermission==null)
-                throw CloudioBadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
-                throw CloudioBadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
         }
     }
 }

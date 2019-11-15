@@ -8,5 +8,3 @@ enum class Permission (val value: Int) {
     GRANT(4),
     OWN(5);
 }
-
-// Permission.DENY.value == 0

@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.influxdb.dto.QueryResult
@@ -28,12 +28,12 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyDefaultRequest.attributeTopic.split("/"))== Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val queryResult = HistoryUtil.getAttributeHistoryRequest(influx, database, historyDefaultRequest)
 
         if (queryResult == null)
-            throw CloudioBadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
         else
             return queryResult
     }
@@ -43,15 +43,14 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyDateRequest.attributeTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, database, historyDateRequest)
 
         if (queryResult == null)
-            throw CloudioBadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
         else
             return queryResult
-
     }
 
     @RequestMapping("/getAttributeHistoryWhere", method = [RequestMethod.GET])
@@ -60,11 +59,11 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyWhereRequest.attributeTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
         val queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
 
         if (queryResult == null)
-            throw CloudioBadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
         else
             return queryResult
     }
@@ -75,11 +74,11 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyExpertRequest.attributeTopic.split("/"))==Permission.DENY)
-            throw CloudioBadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
         val queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
 
         if (queryResult == null)
-            throw CloudioBadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
         else
             return queryResult
     }

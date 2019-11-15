@@ -5,9 +5,8 @@ import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
-@Document
+@Document(collection = "User")
 data class User (
-
     @Id
     var userName: String = "",
     var passwordHash: String = "",
