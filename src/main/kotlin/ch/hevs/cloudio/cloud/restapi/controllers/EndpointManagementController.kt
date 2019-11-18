@@ -92,7 +92,14 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
-        val node = EndpointManagementUtil.getNode(endpointEntityRepository, nodeRequest)
+        val node: Node?
+        try{
+            node = EndpointManagementUtil.getNode(endpointEntityRepository, nodeRequest)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Node: "+e.message)
+        }
+
         if(node != null) {
             PermissionUtils.censorNodeFromUserPermission(permissionMap,nodeRequest.nodeTopic+"/", node)
             return node
@@ -112,7 +119,14 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
-        val wotNode = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
+        val wotNode: WotNode?
+        try{
+            wotNode = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node: "+e.message)
+        }
+
         if(wotNode == null)
             throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node")
         else
@@ -128,7 +142,14 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this object")
 
-        val cloudioObject = EndpointManagementUtil.getObject(endpointEntityRepository, objectRequest)
+        val cloudioObject: CloudioObject?
+        try{
+            cloudioObject = EndpointManagementUtil.getObject(endpointEntityRepository, objectRequest)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node: "+e.message)
+        }
+
         if(cloudioObject != null) {
             PermissionUtils.censorObjectFromUserPermission(permissionMap,objectRequest.objectTopic+"/", cloudioObject)
             return cloudioObject
@@ -145,7 +166,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeRequest.attributeTopic.split("/"))==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
-        val attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, attributeRequest)
+        val attribute: Attribute?
+        try{
+            attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, attributeRequest)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Attribute: "+e.message)
+        }
         if(attribute != null)
             return attribute
         else
@@ -160,11 +187,14 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeSetRequest.attributeTopic.split("/"))<Permission.WRITE)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to write this attribute")
 
-        val setAction = EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
-        if(setAction.success)
+        try{
+            EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
             throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-        else
-            throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: "+setAction.message)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: "+e.message)
+        }
+
     }
 
     @RequestMapping("/notifyAttributeChange", method = [RequestMethod.GET])

@@ -24,11 +24,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val creatAction = UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroup)
-            if(creatAction.success)
+            try{
+                UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroup)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't create userGroup: "+creatAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't create userGroup: "+e.message)
+            }
         }
     }
 
@@ -62,11 +64,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val addAction = UserGroupUtil.addUserToGroup(userGroupRepository, userRepository, userGroupRequestList)
-            if(addAction.success)
+            try{
+                UserGroupUtil.addUserToGroup(userGroupRepository, userRepository, userGroupRequestList)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't add user to userGroup: "+addAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user to userGroup: "+e.message)
+            }
         }
     }
 
@@ -76,11 +80,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val deleteAction = UserGroupUtil.deleteUserToGroup(userGroupRepository, userRepository, userGroupUserRequest)
-            if(deleteAction.success)
+            try{
+                UserGroupUtil.deleteUserToGroup(userGroupRepository, userRepository, userGroupUserRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete userGroup: "+deleteAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user from userGroup: "+e.message)
+            }
         }
     }
 
@@ -90,11 +96,13 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val deleteAction = UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, userGroupRequest)
-            if(deleteAction.success)
+            try{
+                UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, userGroupRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete userGroup: "+deleteAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete userGroup: "+e.message)
+            }
         }
     }
 

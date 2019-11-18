@@ -3,8 +3,10 @@ package ch.hevs.cloudio.cloud.apiutils
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
+import java.lang.Exception
 
-data class ApiActionAnswer(val success: Boolean, val message: String)
+// ------ Exception used in the API ------------------------------------------------------------------------------------
+class CloudioApiException(message : String) : Exception(message)
 
 // ------ User Management data class -----------------------------------------------------------------------------------
 data  class UserRequest(val userName : String)

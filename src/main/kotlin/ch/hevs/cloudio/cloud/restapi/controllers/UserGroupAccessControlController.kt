@@ -39,11 +39,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            val createAction = UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
-            if(createAction.success)
+           try{
+                UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+createAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+e.message)
+            }
 
         }
     }
@@ -54,11 +56,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            val modifyAction = UserGroupAccessControlUtil.modifyUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
-            if(modifyAction.success)
+            try{
+                UserGroupAccessControlUtil.modifyUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user group access right: "+modifyAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user group access right: "+e.message)
+            }
         }
     }
 
@@ -68,11 +72,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            val removeAction = UserGroupAccessControlUtil.removeUserGroupAccessRight(userGroupRepository, userGroupTopicRequest)
-            if(removeAction.success)
+            try{
+                UserGroupAccessControlUtil.removeUserGroupAccessRight(userGroupRepository, userGroupTopicRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user group access right: "+removeAction.message)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user group access right: "+e.message)
+            }
         }
     }
 
@@ -80,10 +86,12 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     fun giveUserGroupAccessRight(@RequestBody userGroupRightRequestList: UserGroupRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
 
-        val giveRightAction = UserGroupAccessControlUtil.giveUserGroupAccessRight(userGroupRepository, userRepository, userGroupRightRequestList, userName)
-        if(giveRightAction.success)
+        try{
+            UserGroupAccessControlUtil.giveUserGroupAccessRight(userGroupRepository, userRepository, userGroupRightRequestList, userName)
             throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-        else
-            throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+giveRightAction.message)
+        }
+        catch(e: CloudioApiException){
+            throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+e.message)
+        }
     }
 }

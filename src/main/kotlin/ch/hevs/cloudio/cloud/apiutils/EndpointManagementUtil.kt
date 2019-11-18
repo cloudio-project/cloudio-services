@@ -41,60 +41,80 @@ object  EndpointManagementUtil{
             EndpointFriendlyName(endpointParameters.friendlyName)
     }
 
+    @Throws(CloudioApiException::class)
     fun getNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest): Node? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
+        if(splitTopic.size<2)
+            throw CloudioApiException("Node topic wasn't formatted correctly")
         return endpointEntityRepository.findByIdOrNull(splitTopic[0])?.endpoint?.nodes?.get(splitTopic[1])
     }
 
+    @Throws(CloudioApiException::class)
     fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
+        if(splitTopic.size<2)
+            throw CloudioApiException("Node topic wasn't formatted correctly")
         val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic[0])!!
 
         return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.endpointUuid, splitTopic[1], host)
     }
 
+    @Throws(CloudioApiException::class)
     fun getObject(endpointEntityRepository: EndpointEntityRepository, objectRequest: ObjectRequest): CloudioObject? {
         val splitTopic = Stack<String>()
         splitTopic.addAll(objectRequest.objectTopic.split("/").toList().reversed())
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
-        if (endpointEntity != null) {
-            val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
-            if (node != null) {
-                return CloudioModelUtils.findObjectInNode(node, splitTopic)
+        try {
+            val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
+            if (endpointEntity != null) {
+                val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
+                if (node != null) {
+                    return CloudioModelUtils.findObjectInNode(node, splitTopic)
+                }
             }
+            throw CloudioApiException("Endpoint doesn't exist")
+        }catch (e: EmptyStackException){
+            throw CloudioApiException("Object topic wasn't formatted correctly")
         }
-        return null
     }
 
+    @Throws(CloudioApiException::class)
     fun getAttribute(endpointEntityRepository: EndpointEntityRepository, attributeRequest: AttributeRequest): Attribute? {
         val splitTopic = Stack<String>()
         splitTopic.addAll(attributeRequest.attributeTopic.split("/").toList().reversed())
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
-        if (endpointEntity != null) {
-            val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
-            if (node != null) {
-                return CloudioModelUtils.findAttributeInNode(node, splitTopic)
+        try {
+            val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic.pop())
+            if (endpointEntity != null) {
+                val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
+                if (node != null) {
+                    return CloudioModelUtils.findAttributeInNode(node, splitTopic)
+                }
             }
+            throw CloudioApiException("Endpoint doesn't exist")
+        }catch (e: EmptyStackException){
+            throw CloudioApiException("Attribute topic wasn't formatted correctly")
         }
-        return null
     }
 
-    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest){
+        val attribute : Attribute?
 
-        val attribute = getAttribute(endpointEntityRepository, AttributeRequest(attributeSetRequest.attributeTopic))
+        try {
+            attribute = getAttribute(endpointEntityRepository, AttributeRequest(attributeSetRequest.attributeTopic))
+        }catch (e: CloudioApiException){
+            throw e
+        }
 
         //only set attribute if setpoint or parameter
         if (attribute == null)
-            return ApiActionAnswer(false, "Attribute doesn't exist")
+            throw CloudioApiException( "Attribute doesn't exist")
         else if(attribute.constraint != AttributeConstraint.SetPoint && attribute.constraint != AttributeConstraint.Parameter)
-            return ApiActionAnswer(false, "Attribute is nor a SetPoint, neither a Parameter")
+            throw CloudioApiException("Attribute is nor a SetPoint, neither a Parameter")
         else {
             //send message to amq.topic queue
-            rabbitTemplate.convertSendAndReceive("amq.topic",
+            rabbitTemplate.convertAndSend("amq.topic",
                     "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
                     serializeAttribute(attributeSetRequest.attribute))
-
-            return ApiActionAnswer(true, "")
         }
     }
 

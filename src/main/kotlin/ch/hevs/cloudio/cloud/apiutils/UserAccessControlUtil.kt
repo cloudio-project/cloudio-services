@@ -11,7 +11,8 @@ object UserAccessControlUtil{
         return userRepository.findByIdOrNull(userRequest.userName)?.permissions
     }
 
-    fun addUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun addUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList) {
         val user = userRepository.findByIdOrNull(userRightRequestList.userName)
 
         if(user!=null){
@@ -24,12 +25,13 @@ object UserAccessControlUtil{
             user.permissions = permissions.toMap()
 
             userRepository.save(user)
-            return ApiActionAnswer(true,"")
         }
-        return ApiActionAnswer(false,"User "+userRightRequestList.userName+"doesn't exist")
+        else
+            throw CloudioApiException("User "+userRightRequestList.userName+" doesn't exist")
     }
 
-    fun modifyUserAccessRight(userRepository: UserRepository, userRightRequest: UserRightRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun modifyUserAccessRight(userRepository: UserRepository, userRightRequest: UserRightRequest) {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
@@ -40,16 +42,17 @@ object UserAccessControlUtil{
                 permissions[userRightRequest.userRight.topic] = PrioritizedPermission(userRightRequest.userRight.permission, userRightRequest.userRight.priority)
                 user.permissions = permissions.toMap()
                 userRepository.save(user)
-                return ApiActionAnswer(true,"")
             }
             else{
-                return ApiActionAnswer(false,userRightRequest.userRight.topic+" permission doesn't exist in "+ userRightRequest.userName)
+                throw CloudioApiException(userRightRequest.userRight.topic+" permission doesn't exist in "+ userRightRequest.userName)
             }
         }
-        return ApiActionAnswer(false,"User "+userRightRequest.userName+"doesn't exist")
+        else
+            throw CloudioApiException("User "+userRightRequest.userName+" doesn't exist")
     }
 
-    fun removeUserAccessRight(userRepository: UserRepository, userRightRequest: UserTopicRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun removeUserAccessRight(userRepository: UserRepository, userRightRequest: UserTopicRequest) {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
@@ -59,24 +62,25 @@ object UserAccessControlUtil{
                 permissions.remove(userRightRequest.topic)
                 user.permissions = permissions.toMap()
                 userRepository.save(user)
-                return ApiActionAnswer(true,"")
             }
             else{
-                return ApiActionAnswer(false, userRightRequest.topic+" permission doesn't exist in "+ userRightRequest.userName)
+                throw CloudioApiException(userRightRequest.topic+" permission doesn't exist in "+ userRightRequest.userName)
             }
         }
-        return ApiActionAnswer(false,"User "+userRightRequest.userName+"doesn't exist")
+        else
+            throw CloudioApiException("User "+userRightRequest.userName+" doesn't exist")
     }
 
-    fun giveUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList, requestUserName: String): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun giveUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList, requestUserName: String){
 
         val requestUser = userRepository.findById(requestUserName).get()
 
         userRightRequestList.userRights.forEach { userRight ->
             val keyToCheck = userRight.topic.split("/")[0]+"/#"
             if(requestUser.permissions[keyToCheck] == null || requestUser.permissions[keyToCheck]?.permission != Permission.OWN)
-                return ApiActionAnswer(false,"You don't have OWN permission on "+userRight.topic)
+                throw CloudioApiException("You don't have OWN permission on "+userRight.topic)
         }
-        return addUserAccessRight(userRepository, userRightRequestList)
+        addUserAccessRight(userRepository, userRightRequestList)
     }
 }

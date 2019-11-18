@@ -12,7 +12,8 @@ object UserGroupAccessControlUtil{
         return userGroupRepository.findByIdOrNull(userGroupRequest.userGroupName)?.permissions
     }
 
-    fun addUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequestList: UserGroupRightRequestList): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun addUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequestList: UserGroupRightRequestList){
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequestList.userGroupName)
 
         if(userGroup!=null){
@@ -25,12 +26,13 @@ object UserGroupAccessControlUtil{
             userGroup.permissions = permissions.toMap()
 
             userGroupRepository.save(userGroup)
-            return ApiActionAnswer(true,"")
         }
-        return ApiActionAnswer(false,"UserGroup "+userGroupRightRequestList.userGroupName+"doesn't exist")
+        else
+            throw CloudioApiException("UserGroup "+userGroupRightRequestList.userGroupName+" doesn't exist")
     }
 
-    fun modifyUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupRightRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun modifyUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupRightRequest){
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
@@ -41,16 +43,17 @@ object UserGroupAccessControlUtil{
                 permissions[userGroupRightRequest.userGroupRight.topic] = PrioritizedPermission(userGroupRightRequest.userGroupRight.permission, userGroupRightRequest.userGroupRight.priority)
                 userGroup.permissions = permissions.toMap()
                 userGroupRepository.save(userGroup)
-                return ApiActionAnswer(true,"")
             }
             else{
-                return ApiActionAnswer(false,userGroupRightRequest.userGroupRight.topic+" permission doesn't exist in "+ userGroupRightRequest.userGroupName)
+                throw CloudioApiException(userGroupRightRequest.userGroupRight.topic+" permission doesn't exist in "+ userGroupRightRequest.userGroupName)
             }
         }
-        return ApiActionAnswer(false,"UserGroup "+userGroupRightRequest.userGroupName+"doesn't exist")
+        else
+            throw CloudioApiException("UserGroup "+userGroupRightRequest.userGroupName+" doesn't exist")
     }
 
-    fun removeUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupTopicRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun removeUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupTopicRequest){
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
@@ -60,24 +63,25 @@ object UserGroupAccessControlUtil{
                 permissions.remove(userGroupRightRequest.topic)
                 userGroup.permissions = permissions.toMap()
                 userGroupRepository.save(userGroup)
-                return ApiActionAnswer(true,"")
             }
             else{
-                return ApiActionAnswer(false, userGroupRightRequest.topic+" permission doesn't exist in "+ userGroupRightRequest.userGroupName)
+                throw CloudioApiException(userGroupRightRequest.topic+" permission doesn't exist in "+ userGroupRightRequest.userGroupName)
             }
         }
-        return ApiActionAnswer(false,"User "+userGroupRightRequest.userGroupName+"doesn't exist")
+        else
+            throw CloudioApiException("User "+userGroupRightRequest.userGroupName+" doesn't exist")
     }
 
-    fun giveUserGroupAccessRight(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRightRequestList: UserGroupRightRequestList, requestUserName: String): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun giveUserGroupAccessRight(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRightRequestList: UserGroupRightRequestList, requestUserName: String){
 
         val requestUser = userRepository.findById(requestUserName).get()
 
         userGroupRightRequestList.userGroupRights.forEach { userGroupRight ->
             val keyToCheck = userGroupRight.topic.split("/")[0]+"/#"
             if(requestUser.permissions[keyToCheck] == null || requestUser.permissions[keyToCheck]?.permission != Permission.OWN)
-                return ApiActionAnswer(false,"You don't have OWN permission on "+userGroupRight.topic)
+                throw CloudioApiException("You don't have OWN permission on "+userGroupRight.topic)
         }
-        return addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
+        addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
     }
 }

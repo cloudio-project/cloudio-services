@@ -6,13 +6,13 @@ import org.springframework.data.repository.findByIdOrNull
 
 object UserManagementUtil {
 
-    fun createUser(userRepository: UserRepository, newUser: User): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun createUser(userRepository: UserRepository, newUser: User){
         //prevent creation of two user with same username
         if(userRepository.findByIdOrNull(newUser.userName)!=null)
-            return ApiActionAnswer(false, newUser.userName+" already exists")
+            throw CloudioApiException(newUser.userName+" already exists")
         else {
             userRepository.save(newUser)
-            return ApiActionAnswer(true, "")
         }
     }
 
@@ -20,56 +20,55 @@ object UserManagementUtil {
         return userRepository.findByIdOrNull(userRequest.userName)
     }
 
-    fun deleteUser(userRepository: UserRepository, userRequest: UserRequest):ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun deleteUser(userRepository: UserRepository, userRequest: UserRequest){
         val userToDelete = userRepository.findByIdOrNull(userRequest.userName)
         return if(userToDelete != null) {
             userRepository.delete(userToDelete)
-            ApiActionAnswer(true, "")
         }
         else
-            ApiActionAnswer(false, userRequest.userName+" doesn't exist")
+            throw CloudioApiException(userRequest.userName+" doesn't exist")
     }
-    fun modifyUserPassword(userRepository: UserRepository, userPasswordRequest: UserPasswordRequest): ApiActionAnswer {
+
+    @Throws(CloudioApiException::class)
+    fun modifyUserPassword(userRepository: UserRepository, userPasswordRequest: UserPasswordRequest){
         val userToModify = userRepository.findByIdOrNull(userPasswordRequest.userName)
-        return if(userToModify != null) {
+        if(userToModify != null) {
             userToModify.passwordHash = userPasswordRequest.passwordHash
             userRepository.save(userToModify)
-
-            ApiActionAnswer(true, "")
         }
         else
-            ApiActionAnswer(false, userPasswordRequest.userName+" doesn't exist")
+            throw CloudioApiException(userPasswordRequest.userName+" doesn't exist")
     }
 
-    fun addUserAuthority(userRepository: UserRepository, addAuthorityRequest: AddAuthorityRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun addUserAuthority(userRepository: UserRepository, addAuthorityRequest: AddAuthorityRequest){
         val userToModify = userRepository.findByIdOrNull(addAuthorityRequest.userName)
-        return if(userToModify != null) {
+        if(userToModify != null) {
             val authorities = userToModify.authorities.toMutableSet()
             authorities.addAll(addAuthorityRequest.authorities)
             userToModify.authorities = authorities
             userRepository.save(userToModify)
-
-            ApiActionAnswer(true, "")
         }
         else
-            ApiActionAnswer(false, addAuthorityRequest.userName+" doesn't exist")
+            throw CloudioApiException(addAuthorityRequest.userName+" doesn't exist")
     }
 
-    fun removeUserAuthority(userRepository: UserRepository, removeAuthorityRequest: RemoveAuthorityRequest): ApiActionAnswer {
+    @Throws(CloudioApiException::class)
+    fun removeUserAuthority(userRepository: UserRepository, removeAuthorityRequest: RemoveAuthorityRequest){
         val userToModify = userRepository.findByIdOrNull(removeAuthorityRequest.userName)
-        return if(userToModify != null) {
+        if(userToModify != null) {
             val authorities = userToModify.authorities.toMutableSet()
             val removeResult = authorities.remove(removeAuthorityRequest.authority)
             if(removeResult){
                 userToModify.authorities = authorities
                 userRepository.save(userToModify)
-                ApiActionAnswer(true, "")
             }
             else
-                ApiActionAnswer(false, removeAuthorityRequest.userName+" doesn't have Authority ${removeAuthorityRequest.authority}")
+                throw CloudioApiException(removeAuthorityRequest.userName+" doesn't have Authority ${removeAuthorityRequest.authority}")
         }
         else
-            ApiActionAnswer(false, removeAuthorityRequest.userName+" doesn't exist")
+            throw CloudioApiException(removeAuthorityRequest.userName+" doesn't exist")
     }
 
     fun getUserList(userRepository: UserRepository): UserListAnswer {
