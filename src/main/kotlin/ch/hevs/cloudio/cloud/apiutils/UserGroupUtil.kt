@@ -7,14 +7,15 @@ import org.springframework.data.repository.findByIdOrNull
 
 object UserGroupUtil{
 
-    fun createUserGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroup : UserGroup): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun createUserGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroup : UserGroup){
         if(userGroupRepository.findByIdOrNull(userGroup.userGroupName) != null)
-            return ApiActionAnswer(false, userGroup.userGroupName+" already exist")
+            throw CloudioApiException(userGroup.userGroupName+" already exist")
 
         //check that every user exist
         userGroup.usersList.forEach { userName ->
             if(userRepository.findByIdOrNull(userName) == null)
-                return ApiActionAnswer(false, userName+" user doesn't exist")
+                throw CloudioApiException(userName+" user doesn't exist")
         }
         //save the userGroup
         userGroupRepository.save(userGroup)
@@ -27,7 +28,6 @@ object UserGroupUtil{
             user.userGroups = userUserGroup
             userRepository.save(user)
         }
-        return ApiActionAnswer(true,"")
     }
 
     fun getUserGroup(userGroupRepository: UserGroupRepository, userGroupRequest: UserGroupRequest): UserGroup?{
@@ -42,7 +42,8 @@ object UserGroupUtil{
         return UserGroupList(userGroupNames.toSet())
     }
 
-    fun addUserToGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRequestList: UserGroupUserRequestList): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun addUserToGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRequestList: UserGroupUserRequestList){
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRequestList.userGroupName)
 
         if (userGroup != null) {
@@ -63,13 +64,13 @@ object UserGroupUtil{
                     userRepository.save(user)
                 }
             }
-            return ApiActionAnswer(true,"")
         }
         else
-            return ApiActionAnswer(false,userGroupRequestList.userGroupName+" userGroup doesn't exist")
+            throw CloudioApiException(userGroupRequestList.userGroupName+" userGroup doesn't exist")
     }
 
-    fun deleteUserToGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupUserRequest: UserGroupUserRequest): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun deleteUserToGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupUserRequest: UserGroupUserRequest){
         val userGroup = userGroupRepository.findByIdOrNull(userGroupUserRequest.userGroupName)
 
         if (userGroup != null) {
@@ -89,18 +90,17 @@ object UserGroupUtil{
                     user.userGroups = userUserGroup
                     userRepository.save(user)
                 }
-
-                return ApiActionAnswer(true,"")
             }
             else{
-                return ApiActionAnswer(false, userGroupUserRequest.user+" user doesn't exist")
+                throw CloudioApiException(userGroupUserRequest.user+" user not in userGroup")
             }
         }
         else
-            return ApiActionAnswer(false,userGroupUserRequest.userGroupName+" userGroup doesn't exist")
+            throw CloudioApiException(userGroupUserRequest.userGroupName+" userGroup doesn't exist")
     }
 
-    fun deleteUserGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRequest: UserGroupRequest): ApiActionAnswer{
+    @Throws(CloudioApiException::class)
+    fun deleteUserGroup(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRequest: UserGroupRequest){
         val userGroupToDelete = userGroupRepository.findByIdOrNull(userGroupRequest.userGroupName)
         return if(userGroupToDelete != null) {
 
@@ -109,16 +109,15 @@ object UserGroupUtil{
                 val user = userRepository.findByIdOrNull(userName)
                 if(user!=null){
                     val userUserGroup = user.userGroups.toMutableSet()
-                    userUserGroup.add(userGroupRequest.userGroupName)
+                    userUserGroup.remove(userGroupRequest.userGroupName)
                     user.userGroups = userUserGroup
                     userRepository.save(user)
                 }
             }
 
             userGroupRepository.delete(userGroupToDelete)
-            return ApiActionAnswer(true,"")
         }
         else
-            return ApiActionAnswer(false,userGroupRequest.userGroupName+" userGroup doesn't exist")
+            throw CloudioApiException(userGroupRequest.userGroupName+" userGroup doesn't exist")
     }
 }

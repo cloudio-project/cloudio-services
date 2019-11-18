@@ -1,13 +1,13 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
-import ch.hevs.cloudio.cloud.apiutils.UserManagementUtil
-import ch.hevs.cloudio.cloud.apiutils.UserRequest
+import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioBadRequestException
-import ch.hevs.cloudio.cloud.restapi.CloudioForbiddenException
-import ch.hevs.cloudio.cloud.restapi.CloudioOkException
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,13 +22,15 @@ class UserManagementController(var userRepository: UserRepository) {
     fun createUser(@RequestBody user : User){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val createAction = UserManagementUtil.createUser(userRepository,user)
-            if(createAction.success)
-                throw CloudioOkException("Success")
-            else
-                throw CloudioBadRequestException("Couldn't create user: "+createAction.message)
+            try{
+                UserManagementUtil.createUser(userRepository,user)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't create user: "+e.message)
+            }
         }
     }
 
@@ -36,11 +38,11 @@ class UserManagementController(var userRepository: UserRepository) {
     fun getUser(@RequestBody userRequest : UserRequest): User{
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
             val user = UserManagementUtil.getUser(userRepository, userRequest)
             if(user == null)
-                throw CloudioBadRequestException("User doesn't exist")
+                throw CloudioHttpExceptions.BadRequestException("User doesn't exist")
             else
                 return user
         }
@@ -50,13 +52,75 @@ class UserManagementController(var userRepository: UserRepository) {
     fun deleteUser(@RequestBody userRequest : UserRequest){
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioForbiddenException("You don't have http admin right to access this function")
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else{
-            val deleteAction = UserManagementUtil.deleteUser(userRepository,userRequest)
-            if(deleteAction.success)
-                throw CloudioOkException("Success")
-            else
-                throw CloudioBadRequestException("Couldn't delete user: "+deleteAction.message)
+            try{
+                UserManagementUtil.deleteUser(userRepository,userRequest)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user: "+e.message)
+            }
+        }
+    }
+
+    @RequestMapping("/modifyUserPassword", method = [RequestMethod.POST])
+    fun modifyUserPassword(@RequestBody userPasswordRequest: UserPasswordRequest){
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN) &&
+            (userName != userPasswordRequest.userName))
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE)
+        else{
+            try{
+                UserManagementUtil.modifyUserPassword(userRepository, userPasswordRequest)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user password: "+e.message)
+            }
+        }
+    }
+
+    @RequestMapping("/addUserAuthority", method = [RequestMethod.POST])
+    fun addUserAuthority(@RequestBody addAuthorityRequest: AddAuthorityRequest){
+        val userName = SecurityContextHolder.getContext().authentication.name
+        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+        else{
+            try{
+                UserManagementUtil.addUserAuthority(userRepository, addAuthorityRequest)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user authority: "+e.message)
+            }
+        }
+    }
+
+    @RequestMapping("/removeUserAuthority", method = [RequestMethod.DELETE])
+    fun removeUserAuthority(@RequestBody removeAuthorityRequest: RemoveAuthorityRequest){
+        val userName = SecurityContextHolder.getContext().authentication.name
+        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+        else{
+            try{
+                UserManagementUtil.removeUserAuthority(userRepository, removeAuthorityRequest)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't remove user authority: "+e.message)
+            }
+        }
+    }
+
+    @RequestMapping("/getUserList", method = [RequestMethod.GET])
+    fun getUserList(): UserListAnswer{
+        val userName = SecurityContextHolder.getContext().authentication.name
+        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
+            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+        else{
+            return UserManagementUtil.getUserList(userRepository)
         }
     }
 }

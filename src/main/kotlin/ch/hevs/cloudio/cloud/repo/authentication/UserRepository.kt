@@ -2,5 +2,4 @@ package ch.hevs.cloudio.cloud.repo.authentication
 
 import org.springframework.data.mongodb.repository.MongoRepository
 
-interface UserRepository : MongoRepository<User, String>{
-}
+interface UserRepository : MongoRepository<User, String>

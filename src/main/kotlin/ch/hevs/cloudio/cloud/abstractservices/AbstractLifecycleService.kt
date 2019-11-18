@@ -22,8 +22,6 @@ abstract class AbstractLifecycleService{
                     key = ["@online.*"])])
     fun handleOnlineMessage(message: Message)
     {
-        log.info("@online.*")
-
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
@@ -45,8 +43,6 @@ abstract class AbstractLifecycleService{
                     key = ["@offline.*"])])
     fun handleOfflineMessage(message: Message)
     {
-        log.info("@offline.*")
-
         try {
             endpointIsOffline(message.messageProperties.receivedRoutingKey.split(".")[1])
         } catch (exception: Exception) {
@@ -59,7 +55,6 @@ abstract class AbstractLifecycleService{
                     key = ["@nodeAdded.*.*"])])
     fun handleNodeAddedMessage(message: Message)
     {
-        log.info("@nodeAdded.*.*")
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
@@ -82,8 +77,6 @@ abstract class AbstractLifecycleService{
                     key = ["@nodeRemoved.*.*"])])
     fun handleNodeRemovedMessage(message: Message)
     {
-        log.info("@nodeRemoved.*.*")
-
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]

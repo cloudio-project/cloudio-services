@@ -13,7 +13,7 @@ object CertificateUtil{
         val mapper = ObjectMapper().registerModule(KotlinModule())
 
         //set waiting time to infinite --> wait until the Certificate manager service turns on
-        rabbitTemplate.setReplyTimeout(-1)
+        rabbitTemplate.setReplyTimeout(15000)
         val certificateAndPrivateKey = CertificateAndPrivateKey("","")
         val certificateAndKeyRequestString = mapper.writeValueAsString(certificateAndKeyRequest)
         val certificateFromUUID = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
@@ -29,20 +29,21 @@ object CertificateUtil{
         val mapper = ObjectMapper().registerModule(KotlinModule())
 
         //set waiting time to infinite --> wait until the Certificate manager service turns on
-        rabbitTemplate.setReplyTimeout(-1)
+        rabbitTemplate.setReplyTimeout(15000)
         val certificateAndKeyRequestString = mapper.writeValueAsString(certificateAndKeyZipRequest)
-        val certificateFromUUID = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
+        val certificateZipFromUUID = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
                 "endpointKey-certificatePairZip", certificateAndKeyRequestString) as String?
         //reset waiting time
         rabbitTemplate.setReplyTimeout(0)
 
-        return certificateFromUUID
+        return certificateZipFromUUID
+
     }
 
     fun createCertificateFromKey(rabbitTemplate: RabbitTemplate, certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey{
                val mapper = ObjectMapper().registerModule(KotlinModule())
         //set waiting time to infinite --> wait until the Certificate manager service turns on
-        rabbitTemplate.setReplyTimeout(-1)
+        rabbitTemplate.setReplyTimeout(15000)
 
         val certificateOutput = CertificateFromKey("")
         val uuidAndPublicKeyString = mapper.writeValueAsString(certificateFromKeyRequest)

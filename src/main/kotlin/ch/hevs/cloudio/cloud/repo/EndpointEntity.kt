@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document(collection = "Endpoint")
 data class EndpointEntity(
         @Id
-        var id: String = "INVALID",
+        var endpointUuid: String = "INVALID",
         var blocked: Boolean = false,
         var online: Boolean = false,
         var logLevel: LogLevel = LogLevel.ERROR,

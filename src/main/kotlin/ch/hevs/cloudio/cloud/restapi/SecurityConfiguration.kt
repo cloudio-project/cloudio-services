@@ -17,9 +17,8 @@ class SecurityConfiguration(var customUserDetailsService : MongoCustomUserDetail
     @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
         http.csrf().disable()
-            .authorizeRequests().anyRequest().authenticated()
+            .authorizeRequests().anyRequest().permitAll()
             .and().httpBasic()
-            .and().exceptionHandling().authenticationEntryPoint(CustomAuthenticationEntryPoint())
             .and().sessionManagement().disable()
     }
 
