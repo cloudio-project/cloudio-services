@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
+import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -15,13 +15,14 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
 @Profile("authentication", "default")
-class AuthenticationService(var userRepository: UserRepository,var userGroupRepository: UserGroupRepository, var endpointParametersRepository: EndpointParametersRepository) {
+class AuthenticationService(var userRepository: UserRepository,var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository ) {
 
     companion object {
         private val log = LogFactory.getLog(AuthenticationService::class.java)
@@ -60,7 +61,7 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                     {   //authentication with certificates --> Endpoint
                         log.info("Endpoint authentication with certificates")
 
-                        val endpoint = endpointParametersRepository.findById(id)
+                        val endpoint = endpointEntityRepository.findById(id)
                         if (endpoint.isPresent) {
                             "allow"
                         } else {
@@ -99,9 +100,12 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
 
                     when(uuidPattern.matches(id)) {
                         true -> {
-                            if(id == routingKey[1] && endpointParametersRepository.existsById(id))
-                                "allow"
-                            else
+                            if(id == routingKey[1] && endpointEntityRepository.existsById(id)) {
+                                if(!endpointEntityRepository.findByIdOrNull(id)!!.blocked)
+                                    "allow"
+                                else
+                                    "deny"
+                            }else
                                 "deny"
                         }
                         false -> {
@@ -113,10 +117,12 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                             //check if there is permission linked to topic
                             val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
 
-                            when {
-                                endpointPermission == Permission.DENY -> "deny"
-                                routingKey[0][0] != '@' -> "deny"
-                                endpointPermission.value >= permission.value -> "allow"
+                            when{
+                                !endpointEntityRepository.existsById(routingKey[1]) ->"deny"
+                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked ->"deny"
+                                endpointPermission == Permission.DENY ->"deny"
+                                routingKey[0][0] != '@' ->"deny"
+                                endpointPermission.value >= permission.value ->"allow"
                                 else -> "deny"
                             }
                         }

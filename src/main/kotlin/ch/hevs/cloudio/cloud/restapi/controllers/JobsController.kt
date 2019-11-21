@@ -5,6 +5,7 @@ import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
 import ch.hevs.cloudio.cloud.model.Permission
+import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
@@ -15,6 +16,7 @@ import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -25,7 +27,7 @@ import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository){
+class JobsController(var connectionFactory: ConnectionFactory, val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository){
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -42,6 +44,10 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
 
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if(endpointGeneralPermission?.permission == Permission.OWN){
+
+            if (endpointEntityRepository.findByIdOrNull(jobExecuteRequest.endpointUuid)!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+
             if (!jobExecuteRequest.getOutput){
                 JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)

@@ -1,9 +1,8 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
@@ -18,23 +17,23 @@ import java.util.*
 
 object  EndpointManagementUtil{
 
-    fun createEndpoint(endpointParametersRepository: EndpointParametersRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
+    fun createEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
         val toReturn = EndpointParameters(UUID.randomUUID().toString(), endpointCreateRequest.endpointFriendlyName)
         //create endpoint in endpoint parameters repo
-        endpointParametersRepository.save(toReturn)
+        endpointEntityRepository.save(EndpointEntity(endpointUuid = toReturn.endpointUuid, friendlyName = toReturn.friendlyName))
         return toReturn
     }
 
-    fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointAnswer? {
+    fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
         return if(endpointEntity == null)
             null
         else    //return endpoint entity and endpoint friendly name
-            EndpointAnswer(endpointParametersRepository.findById(endpointRequest.endpointUuid).get().friendlyName, endpointEntity)
+            endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
     }
 
-    fun getEndpointFriendlyName(endpointParametersRepository: EndpointParametersRepository, endpointRequest: EndpointRequest): EndpointFriendlyName?{
-        val endpointParameters = endpointParametersRepository.findByIdOrNull(endpointRequest.endpointUuid)
+    fun getEndpointFriendlyName(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointFriendlyName?{
+        val endpointParameters = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
         return if(endpointParameters == null)
             null
         else
@@ -118,7 +117,29 @@ object  EndpointManagementUtil{
         }
     }
 
-    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointParametersRepository: EndpointParametersRepository, userName: String): OwnedEndpointsAnswer{
+    fun blockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean{
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
+        if(endpointEntity != null){
+            endpointEntity.blocked = true
+            endpointEntityRepository.save(endpointEntity)
+            return true
+        }
+        else
+            return false
+    }
+
+    fun unblockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean{
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
+        if(endpointEntity != null){
+            endpointEntity.blocked = false
+            endpointEntityRepository.save(endpointEntity)
+            return true
+        }
+        else
+            return false
+    }
+
+    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): OwnedEndpointsAnswer{
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
@@ -130,12 +151,13 @@ object  EndpointManagementUtil{
                 ownedEndpointsSet.add(splitTopic[0])
             }
         }
-        val ownedEndpointParametersSet: MutableSet<EndpointParameters> = mutableSetOf()
+        val ownedEndpointParametersSet: MutableSet<EndpointParametersAndBlock> = mutableSetOf()
         //search for friendly name of each owned endpoint
         ownedEndpointsSet.forEach { s ->
-            val endpointParameter = endpointParametersRepository.findByIdOrNull(s)
-                    ?: EndpointParameters(s, "Endpoint not in the database")
-            ownedEndpointParametersSet.add(endpointParameter)
+            val endpointEntity = endpointEntityRepository.findByIdOrNull(s)
+            val friendlyName = endpointEntity?.friendlyName?: "Endpoint not in the database"
+            val blocked = endpointEntity?.blocked
+            ownedEndpointParametersSet.add(EndpointParametersAndBlock(s, friendlyName, blocked))
         }
         return OwnedEndpointsAnswer(ownedEndpointParametersSet)
     }
