@@ -96,14 +96,19 @@ object PermissionUtils {
     }
 
     fun getAccessibleAttributesFromEndpoint(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity): MutableMap<String, Permission> {
-        val topic = endpointEntity.endpointUuid+"/"
+        if(endpointEntity.blocked)
+            return mutableMapOf()
+        else{
 
-        val attributesRight : MutableMap<String, Permission> = mutableMapOf()
-        for(node in endpointEntity.endpoint.nodes){
-            val topicNode = topic+node.key+"/"
-            attributesRight.putAll(getAccessibleAttributesFromNode(permissionMap, topicNode, node.value, attributesRight))
+            val topic = endpointEntity.endpointUuid+"/"
+
+            val attributesRight : MutableMap<String, Permission> = mutableMapOf()
+            for(node in endpointEntity.endpoint.nodes){
+                val topicNode = topic+node.key+"/"
+                attributesRight.putAll(getAccessibleAttributesFromNode(permissionMap, topicNode, node.value, attributesRight))
+            }
+            return attributesRight
         }
-        return attributesRight
 
     }
     fun getAccessibleAttributesFromNode(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node, previousAttributesRight : MutableMap<String, Permission>): MutableMap<String, Permission> {

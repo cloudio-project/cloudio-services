@@ -2,8 +2,6 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
-import java.lang.Exception
 
 // ------ Exception used in the API ------------------------------------------------------------------------------------
 class CloudioApiException(message : String) : Exception(message)
@@ -65,7 +63,11 @@ data class AttributeRequestLongpoll(val attributeTopic: String, val timeout: Lon
 
 data class AttributeSetRequest(val attributeTopic: String, val attribute: Attribute)
 
-data class OwnedEndpointsAnswer(val ownedEndpoints: Set<EndpointParameters> )
+data class EndpointParameters (var endpointUuid: String,var friendlyName: String)
+
+data class EndpointParametersAndBlock (var endpointUuid: String,var friendlyName: String, var blocked: Boolean?)
+
+data class OwnedEndpointsAnswer(val ownedEndpoints: Set<EndpointParametersAndBlock> )
 
 data class AccessibleAttributesAnswer(val accessibleAttributes:  Map<String, Permission> )
 

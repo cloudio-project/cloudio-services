@@ -2,9 +2,8 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParameters
-import ch.hevs.cloudio.cloud.repo.authentication.EndpointParametersRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
@@ -15,6 +14,7 @@ import com.rabbitmq.client.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,14 +26,14 @@ import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("/api/v1")
-class EndpointManagementController(var connectionFactory: ConnectionFactory, var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, var endpointParametersRepository: EndpointParametersRepository) {
+class EndpointManagementController(var connectionFactory: ConnectionFactory, var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
 
     @RequestMapping("/createEndpoint", method = [RequestMethod.POST])
     fun createEndpoint(@RequestBody endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
-        val toReturn = EndpointManagementUtil.createEndpoint(endpointParametersRepository, endpointCreateRequest)
+        val toReturn = EndpointManagementUtil.createEndpoint(endpointEntityRepository, endpointCreateRequest)
 
         val userName = SecurityContextHolder.getContext().authentication.name
         val user = userRepository.findById(userName).get()
@@ -47,19 +47,24 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
     }
 
     @RequestMapping("/getEndpoint", method = [RequestMethod.GET])
-    fun getEndpoint(@RequestBody endpointRequest: EndpointRequest): EndpointAnswer {
+    fun getEndpoint(@RequestBody endpointRequest: EndpointRequest): EndpointEntity{
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
+        val splitTopic = genericTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this endpoint")
 
-        val endpointAnswer = EndpointManagementUtil.getEndpoint(endpointEntityRepository, endpointParametersRepository, endpointRequest)
-        if(endpointAnswer != null) {
-            PermissionUtils.censorEndpointFromUserPermission(permissionMap,endpointAnswer.endpointEntity)
-            return endpointAnswer
+        val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, endpointRequest)
+        if(endpointEntity != null) {
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else{
+                PermissionUtils.censorEndpointFromUserPermission(permissionMap, endpointEntity)
+                return endpointEntity
+            }
         }
         else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Endpoint")
@@ -72,12 +77,17 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
+        val splitTopic = genericTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this endpoint")
 
-        val endpointFriendlyName = EndpointManagementUtil.getEndpointFriendlyName(endpointParametersRepository, endpointRequest)
-        if(endpointFriendlyName != null)
-            return endpointFriendlyName
+        val endpointFriendlyName = EndpointManagementUtil.getEndpointFriendlyName(endpointEntityRepository, endpointRequest)
+        if(endpointFriendlyName != null) {
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else
+                return endpointFriendlyName
+        }
         else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get endpoint friendly name")
 
@@ -89,7 +99,8 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
+        val splitTopic = genericTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
         val node: Node?
@@ -101,8 +112,13 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         }
 
         if(node != null) {
-            PermissionUtils.censorNodeFromUserPermission(permissionMap,nodeRequest.nodeTopic+"/", node)
-            return node
+
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else {
+                PermissionUtils.censorNodeFromUserPermission(permissionMap, nodeRequest.nodeTopic + "/", node)
+                return node
+            }
         }
         else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Node")
@@ -116,7 +132,8 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
+        val splitTopic = genericTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
         val wotNode: WotNode?
@@ -127,10 +144,15 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
             throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node: "+e.message)
         }
 
-        if(wotNode == null)
+        if(wotNode == null) {
             throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node")
-        else
-            return wotNode
+        }
+        else{
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else
+                return wotNode
+        }
     }
 
     @RequestMapping("/getObject", method = [RequestMethod.GET])
@@ -139,7 +161,8 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = objectRequest.objectTopic + "/#"
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, genericTopic.split("/"))==Permission.DENY)
+        val splitTopic = genericTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this object")
 
         val cloudioObject: CloudioObject?
@@ -151,8 +174,12 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         }
 
         if(cloudioObject != null) {
-            PermissionUtils.censorObjectFromUserPermission(permissionMap,objectRequest.objectTopic+"/", cloudioObject)
-            return cloudioObject
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else{
+                PermissionUtils.censorObjectFromUserPermission(permissionMap,objectRequest.objectTopic+"/", cloudioObject)
+                return cloudioObject
+            }
         }
         else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Object")
@@ -163,7 +190,9 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeRequest.attributeTopic.split("/"))==Permission.DENY)
+
+        val splitTopic = attributeRequest.attributeTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val attribute: Attribute?
@@ -173,8 +202,12 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         catch(e: CloudioApiException){
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Attribute: "+e.message)
         }
-        if(attribute != null)
-            return attribute
+        if(attribute != null){
+            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            else
+                return attribute
+        }
         else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Attribute")
     }
@@ -184,15 +217,21 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeSetRequest.attributeTopic.split("/"))<Permission.WRITE)
+
+        val splitTopic = attributeSetRequest.attributeTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)<Permission.WRITE)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to write this attribute")
 
-        try{
-            EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
-            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-        }
-        catch(e: CloudioApiException){
-            throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: "+e.message)
+        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+        else{
+            try{
+                EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            }
+            catch(e: CloudioApiException){
+                throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: "+e.message)
+            }
         }
 
     }
@@ -202,26 +241,101 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, attributeRequestLongpoll.attributeTopic.split("/"))==Permission.DENY)
+
+        val splitTopic = attributeRequestLongpoll.attributeTopic.split("/")
+        if(PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic)==Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
-        val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
-                CloudioHttpExceptions.TimeoutException("No attribute change after "+attributeRequestLongpoll.timeout+"ms on topic: "+attributeRequestLongpoll.attributeTopic))
+        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+        else{
+            val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
+                    CloudioHttpExceptions.TimeoutException("No attribute change after "+attributeRequestLongpoll.timeout+"ms on topic: "+attributeRequestLongpoll.attributeTopic))
 
-        CompletableFuture.runAsync {
-            object :  AttributeChangeNotifier(connectionFactory, "@set."+attributeRequestLongpoll.attributeTopic.replace("/", ".")){
-                override fun notifyAttributeChange(attribute: Attribute){
-                    result.setResult(attribute)
+            CompletableFuture.runAsync {
+                object :  AttributeChangeNotifier(connectionFactory, "@set."+attributeRequestLongpoll.attributeTopic.replace("/", ".")){
+                    override fun notifyAttributeChange(attribute: Attribute){
+                        result.setResult(attribute)
+                    }
                 }
             }
+            return result
         }
-        return result
+    }
+
+    @RequestMapping("/blockEndpoint", method = [RequestMethod.POST])
+    fun blockEndpoint(@RequestBody endpointRequest: EndpointRequest){
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        //if http admin, can block any endpoint
+        if (userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN)){
+            val success = EndpointManagementUtil.blockEndpoint(endpointEntityRepository, endpointRequest)
+            if(success)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            else
+                throw CloudioHttpExceptions.BadRequestException("Couldn't block endpoint")
+        }
+        else{
+            //else need to check user permission on endpoint --> user need to own
+            val permissionMap = PermissionUtils
+                    .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
+            val genericTopic = endpointRequest.endpointUuid + "/#"
+
+            val endpointGeneralPermission = permissionMap.get(genericTopic)
+            if(endpointGeneralPermission?.permission == Permission.OWN){
+                val success = EndpointManagementUtil.blockEndpoint(endpointEntityRepository, endpointRequest)
+                if(success)
+                    throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                else
+                    throw CloudioHttpExceptions.BadRequestException("Couldn't block endpoint")
+            }
+            else{
+                if(endpointGeneralPermission==null)
+                    throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                else
+                    throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+            }
+        }
+    }
+
+    @RequestMapping("/unblockEndpoint", method = [RequestMethod.POST])
+    fun unblockEndpoint(@RequestBody endpointRequest: EndpointRequest){
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        //if http admin, can unblock any endpoint
+        if (userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN)){
+            val success = EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, endpointRequest)
+            if(success)
+                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            else
+                throw CloudioHttpExceptions.BadRequestException("Couldn't block endpoint")
+        }
+        else {
+            //else need to check user permission on endpoint --> user need to own
+            val permissionMap = PermissionUtils
+                    .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
+            val genericTopic = endpointRequest.endpointUuid + "/#"
+
+            val endpointGeneralPermission = permissionMap.get(genericTopic)
+            if (endpointGeneralPermission?.permission == Permission.OWN) {
+                val success = EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, endpointRequest)
+                if (success)
+                    throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                else
+                    throw CloudioHttpExceptions.BadRequestException("Couldn't unblock endpoint")
+            } else {
+                if (endpointGeneralPermission == null)
+                    throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                else
+                    throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+            }
+        }
     }
 
     @RequestMapping("/getOwnedEndpoints", method = [RequestMethod.GET])
     fun getOwnedEndpoints(): OwnedEndpointsAnswer{
         val userName = SecurityContextHolder.getContext().authentication.name
-        return EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointParametersRepository, userName)
+        return EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointEntityRepository, userName)
     }
 
     @RequestMapping("/getAccessibleAttributes", method = [RequestMethod.GET])
