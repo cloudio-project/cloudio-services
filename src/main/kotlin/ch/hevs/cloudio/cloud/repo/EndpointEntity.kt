@@ -12,6 +12,6 @@ data class EndpointEntity(
         var friendlyName: String = "INVALID",
         var blocked: Boolean = false,
         var online: Boolean = false,
-        var logLevel: LogLevel = LogLevel.DEBUG,
+        var logLevel: LogLevel = LogLevel.ERROR,
         var endpoint: Endpoint = Endpoint()
 )

@@ -1,3 +1,3 @@
 package ch.hevs.cloudio.cloud.model
 
-data class LogParameter(val level: String = "DEBUG")
+data class LogParameter(val level: String = "ERROR")
