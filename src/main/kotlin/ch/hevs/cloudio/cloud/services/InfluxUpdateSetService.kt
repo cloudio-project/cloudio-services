@@ -4,20 +4,15 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateSetService
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
 import org.apache.commons.logging.LogFactory
+import org.influxdb.BatchOptions
 import org.influxdb.InfluxDB
-import org.influxdb.dto.BatchPoints
 import org.influxdb.dto.Point
 import org.influxdb.dto.Query
 import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
-import org.springframework.scheduling.annotation.Scheduled
-import kotlin.concurrent.schedule
-import kotlin.concurrent.scheduleAtFixedRate
 
 
 @Service
@@ -30,10 +25,8 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
     //get database to write by environment property, has default value
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    val pointsSet: MutableSet<Point> = mutableSetOf()
-
-    val influxBatchEnable by lazy { env.getProperty("cloudio.influxBatchEnable", "false").toBoolean() }
-    val influxBatchTimeMs : Long by lazy { env.getProperty("cloudio.influxBatchIntervallMs", "1000").toLong() }
+    val influxBatchTimeMs : Int by lazy { env.getProperty("cloudio.influxBatchIntervallMs", "10000").toInt() }
+    val influxBatchSize : Int by lazy { env.getProperty("cloudio.influxBatchSize", "2000").toInt() }
 
 
     @PostConstruct
@@ -43,29 +36,7 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
         if(influx.query(Query("SHOW DATABASES","")).toString().indexOf(database)==-1)
             influx.query(Query("CREATE DATABASE $database",""))
 
-        try{
-            if(influxBatchEnable) {
-                Timer("InfluxBatchTimer", false).scheduleAtFixedRate(influxBatchTimeMs,influxBatchTimeMs) {
-                    synchronized(pointsSet) {
-                        if(pointsSet.size != 0){
-                            val batchPoints = BatchPoints.database(database)
-                                    .retentionPolicy("autogen")
-                                    .points()
-                                    .build()
-
-                            pointsSet.forEach { point ->
-                                batchPoints.point(point)
-                            }
-                            influx.write(batchPoints)
-                            pointsSet.clear()
-                        }
-                    }
-                }
-            }
-        }catch (e: Exception)
-        {
-            log.error("Error while launching influx batch data sending timer",e)
-        }
+        influx.enableBatch(BatchOptions.DEFAULTS.actions(influxBatchSize).flushDuration(influxBatchTimeMs))
     }
 
     override fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String) {
@@ -95,13 +66,8 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
             val myPoint =  point.build()
 
             //if batch enabled, save point in set, either send it
-            if(influxBatchEnable){
-                synchronized(pointsSet) {
-                    pointsSet.add(myPoint)
-                }
-            }else{
-                influx.write(database, "autogen",myPoint)
-            }
+            influx.write(database, "autogen",myPoint)
+
         } catch (e: ClassCastException){
             log.error("The attribute $attributeId has been updated with wrong data type")
         }
