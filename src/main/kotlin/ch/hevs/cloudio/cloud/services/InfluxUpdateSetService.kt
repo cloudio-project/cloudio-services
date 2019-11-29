@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateSetService
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
 import org.apache.commons.logging.LogFactory
+import org.influxdb.BatchOptions
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.influxdb.dto.Query
@@ -12,6 +13,7 @@ import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
+
 
 @Service
 @Profile("update-influx", "default")
@@ -23,12 +25,18 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
     //get database to write by environment property, has default value
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
+    val influxBatchTimeMs : Int by lazy { env.getProperty("cloudio.influxBatchIntervallMs", "10000").toInt() }
+    val influxBatchSize : Int by lazy { env.getProperty("cloudio.influxBatchSize", "2000").toInt() }
+
+
     @PostConstruct
     fun initialize()
     {
         // Create database if needed
         if(influx.query(Query("SHOW DATABASES","")).toString().indexOf(database)==-1)
             influx.query(Query("CREATE DATABASE $database",""))
+
+        influx.enableBatch(BatchOptions.DEFAULTS.actions(influxBatchSize).flushDuration(influxBatchTimeMs))
     }
 
     override fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String) {
@@ -56,11 +64,12 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
             }
             //write the actual point in influx
             val myPoint =  point.build()
+
+            //if batch enabled, save point in set, either send it
             influx.write(database, "autogen",myPoint)
 
         } catch (e: ClassCastException){
             log.error("The attribute $attributeId has been updated with wrong data type")
         }
     }
-
 }

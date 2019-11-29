@@ -6,5 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class Form(
         val href: String,
         val op: String,
-        val subprotocol: String?
+        val subprotocol: String?,
+        val contentType: String
 )

@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.serialization
 
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.AttributeType
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.serialization.wot.*
@@ -61,7 +62,8 @@ object JsonWotSerializationFormat {
                     forms.add(Form(
                             href = "$host/api/v1/getAttribute",
                             op = "readproperty",
-                            subprotocol=null
+                            subprotocol=null,
+                            contentType = "application/json"
                     ))
                 }
                 AttributeConstraint.Parameter,
@@ -69,24 +71,33 @@ object JsonWotSerializationFormat {
                     forms.add(Form(
                             href = "$host/api/v1/getAttribute",
                             op = "readproperty",
-                            subprotocol=null
+                            subprotocol=null,
+                            contentType = "application/json"
                     ))
                     forms.add(Form(
                             href =mqttHost+"/@set/"+cloudioObjectTopic+"/"+cloudioAttribute.key,
                             op = "writeproperty",
-                            subprotocol=null
+                            subprotocol=null,
+                            contentType = "application/json"
                     ))
                     forms.add(Form(
                             href = "$host/api/v1/setAttribute",
                             op = "writeproperty",
-                            subprotocol=null
+                            subprotocol=null,
+                            contentType = "application/json"
                     ))
                 }
 
             }
 
             var wotAttribute = WotObject(
-                    type=cloudioAttribute.value.type.toString(),
+                    type= when(cloudioAttribute.value.type){
+                        AttributeType.Boolean -> "boolean"
+                        AttributeType.Integer -> "integer"
+                        AttributeType.Number -> "double"
+                        AttributeType.String -> "string"
+                        else -> ""
+                    },
                     properties = null,
                     forms = forms
             )
@@ -96,7 +107,12 @@ object JsonWotSerializationFormat {
         var wotObject = WotObject(
                 type="object",
                 properties = propertiesMap,
-                forms = null
+                forms = setOf(Form(
+                        href = "$host/api/v1/getObject",
+                        op = "readproperty",
+                        subprotocol=null,
+                        contentType = "application/json")
+                )
         )
 
         return wotObject
@@ -120,29 +136,45 @@ object JsonWotSerializationFormat {
                 AttributeConstraint.Parameter,
                 AttributeConstraint.SetPoint->{
                     eventSet.put("update"+cloudioObjectName.capitalize()+cloudioAttribute.key.capitalize(),Event(
-                            data= Data( type = cloudioAttribute.value.type.toString()),
+                            data= Data( when(cloudioAttribute.value.type){
+                                            AttributeType.Boolean -> "boolean"
+                                            AttributeType.Integer -> "integer"
+                                            AttributeType.Number -> "double"
+                                            AttributeType.String -> "string"
+                                            else -> ""
+                                        }),
                             forms = setOf(Form(
                                     href = "$host/api/v1/notifyAttributeChange",
-                                    op = "longpoll",
-                                    subprotocol="observeProperty"),
+                                    op = "subscribeevent",
+                                    subprotocol="longpoll",
+                                    contentType = "application/json"),
                                     Form(
                                             href = mqttHost+"/@set/"+cloudioNodeObjectTopic+cloudioAttribute.key,
-                                            op = "subscribeEvent",
-                                            subprotocol=null))))
+                                            op = "subscribeevent",
+                                            subprotocol=null,
+                                            contentType = "application/json"))))
 
                 }
                 AttributeConstraint.Status,
                 AttributeConstraint.Measure->{
                     eventSet.put("update"+cloudioObjectName.capitalize()+cloudioAttribute.key.capitalize(),Event(
-                            data= Data( type = cloudioAttribute.value.type.toString()),
+                            data= Data( type = when(cloudioAttribute.value.type){
+                                                AttributeType.Boolean -> "boolean"
+                                                AttributeType.Integer -> "integer"
+                                                AttributeType.Number -> "double"
+                                                AttributeType.String -> "string"
+                                                else -> ""
+                                            }),
                             forms = setOf(Form(
                                     href = "$host/api/v1/notifyAttributeChange",
-                                    op = "longpoll",
-                                    subprotocol="observeProperty"),
+                                    op = "subscribeevent",
+                                    subprotocol="longpoll",
+                                    contentType = "application/json"),
                                     Form(
                                             href = mqttHost+"/@update/"+cloudioNodeObjectTopic+cloudioAttribute.key,
-                                            op = "subscribeEvent",
-                                            subprotocol=null))))
+                                            op = "subscribeevent",
+                                            subprotocol=null,
+                                            contentType = "application/json"))))
                 }
             }
         }
