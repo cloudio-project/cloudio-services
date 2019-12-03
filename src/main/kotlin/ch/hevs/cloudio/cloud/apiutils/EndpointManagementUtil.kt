@@ -15,7 +15,7 @@ import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
 
-object  EndpointManagementUtil{
+object EndpointManagementUtil {
 
     fun createEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
         val toReturn = EndpointParameters(UUID.randomUUID().toString(), endpointCreateRequest.endpointFriendlyName)
@@ -26,15 +26,15 @@ object  EndpointManagementUtil{
 
     fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
-        return if(endpointEntity == null)
+        return if (endpointEntity == null)
             null
         else    //return endpoint entity and endpoint friendly name
             endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
     }
 
-    fun getEndpointFriendlyName(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointFriendlyName?{
+    fun getEndpointFriendlyName(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointFriendlyName? {
         val endpointParameters = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
-        return if(endpointParameters == null)
+        return if (endpointParameters == null)
             null
         else
             EndpointFriendlyName(endpointParameters.friendlyName)
@@ -43,7 +43,7 @@ object  EndpointManagementUtil{
     @Throws(CloudioApiException::class)
     fun getNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest): Node? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
-        if(splitTopic.size<2)
+        if (splitTopic.size < 2)
             throw CloudioApiException("Node topic wasn't formatted correctly")
         return endpointEntityRepository.findByIdOrNull(splitTopic[0])?.endpoint?.nodes?.get(splitTopic[1])
     }
@@ -51,7 +51,7 @@ object  EndpointManagementUtil{
     @Throws(CloudioApiException::class)
     fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
-        if(splitTopic.size<2)
+        if (splitTopic.size < 2)
             throw CloudioApiException("Node topic wasn't formatted correctly")
         val endpointEntity = endpointEntityRepository.findByIdOrNull(splitTopic[0])!!
 
@@ -68,10 +68,11 @@ object  EndpointManagementUtil{
                 val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
                 if (node != null) {
                     return CloudioModelUtils.findObjectInNode(node, splitTopic)
-                }
-            }
-            throw CloudioApiException("Endpoint doesn't exist")
-        }catch (e: EmptyStackException){
+                } else
+                    throw CloudioApiException("Object doesn't exist")
+            } else
+                throw CloudioApiException("Endpoint doesn't exist")
+        } catch (e: EmptyStackException) {
             throw CloudioApiException("Object topic wasn't formatted correctly")
         }
     }
@@ -86,28 +87,29 @@ object  EndpointManagementUtil{
                 val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
                 if (node != null) {
                     return CloudioModelUtils.findAttributeInNode(node, splitTopic)
-                }
-            }
-            throw CloudioApiException("Endpoint doesn't exist")
-        }catch (e: EmptyStackException){
+                } else
+                    throw CloudioApiException("Attribute doesn't exist")
+            } else
+                throw CloudioApiException("Endpoint doesn't exist")
+        } catch (e: EmptyStackException) {
             throw CloudioApiException("Attribute topic wasn't formatted correctly")
         }
     }
 
     @Throws(CloudioApiException::class)
-    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest){
-        val attribute : Attribute?
+    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest) {
+        val attribute: Attribute?
 
         try {
             attribute = getAttribute(endpointEntityRepository, AttributeRequest(attributeSetRequest.attributeTopic))
-        }catch (e: CloudioApiException){
+        } catch (e: CloudioApiException) {
             throw e
         }
 
         //only set attribute if setpoint or parameter
         if (attribute == null)
-            throw CloudioApiException( "Attribute doesn't exist")
-        else if(attribute.constraint != AttributeConstraint.SetPoint && attribute.constraint != AttributeConstraint.Parameter)
+            throw CloudioApiException("Attribute doesn't exist")
+        else if (attribute.constraint != AttributeConstraint.SetPoint && attribute.constraint != AttributeConstraint.Parameter)
             throw CloudioApiException("Attribute is nor a SetPoint, neither a Parameter")
         else {
             //send message to amq.topic queue
@@ -117,37 +119,35 @@ object  EndpointManagementUtil{
         }
     }
 
-    fun blockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean{
+    fun blockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
-        if(endpointEntity != null){
+        if (endpointEntity != null) {
             endpointEntity.blocked = true
             endpointEntityRepository.save(endpointEntity)
             return true
-        }
-        else
+        } else
             return false
     }
 
-    fun unblockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean{
+    fun unblockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointRequest.endpointUuid)
-        if(endpointEntity != null){
+        if (endpointEntity != null) {
             endpointEntity.blocked = false
             endpointEntityRepository.save(endpointEntity)
             return true
-        }
-        else
+        } else
             return false
     }
 
-    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): OwnedEndpointsAnswer{
+    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): OwnedEndpointsAnswer {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
-        val ownedEndpointsSet : MutableSet<String> = mutableSetOf()
+        val ownedEndpointsSet: MutableSet<String> = mutableSetOf()
         //search for permission looking like topic = endpointUuid/#, permission = OWN
         permissionMap.forEach { (topic, prioritizedPermission) ->
             val splitTopic = topic.split("/")
-            if(splitTopic.size==2 && splitTopic.getOrNull(1).equals("#") && prioritizedPermission.permission == Permission.OWN){
+            if (splitTopic.size == 2 && splitTopic.getOrNull(1).equals("#") && prioritizedPermission.permission == Permission.OWN) {
                 ownedEndpointsSet.add(splitTopic[0])
             }
         }
@@ -155,23 +155,23 @@ object  EndpointManagementUtil{
         //search for friendly name of each owned endpoint
         ownedEndpointsSet.forEach { s ->
             val endpointEntity = endpointEntityRepository.findByIdOrNull(s)
-            val friendlyName = endpointEntity?.friendlyName?: "Endpoint not in the database"
+            val friendlyName = endpointEntity?.friendlyName ?: "Endpoint not in the database"
             val blocked = endpointEntity?.blocked
             ownedEndpointParametersSet.add(EndpointParametersAndBlock(s, friendlyName, blocked))
         }
         return OwnedEndpointsAnswer(ownedEndpointParametersSet)
     }
 
-    fun getAccessibleAttributes(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): AccessibleAttributesAnswer{
+    fun getAccessibleAttributes(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): AccessibleAttributesAnswer {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        val endpointsSet : MutableSet<String> = mutableSetOf()
+        val endpointsSet: MutableSet<String> = mutableSetOf()
         //get every endpointUuid found in the permission map of user
         permissionMap.forEach { (topic, _) ->
             endpointsSet.add(topic.split("/")[0])
         }
 
-        val toReturn : MutableMap<String, Permission> = mutableMapOf()
+        val toReturn: MutableMap<String, Permission> = mutableMapOf()
         //will search for every attributes in the endpointUuid set
         endpointsSet.forEach { endpointUuid ->
             val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointUuid)

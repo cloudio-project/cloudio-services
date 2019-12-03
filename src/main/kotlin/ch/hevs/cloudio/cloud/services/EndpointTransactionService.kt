@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("transaction", "default")
-class EndpointTransactionService{
+class EndpointTransactionService {
 
     companion object {
         private val log = LogFactory.getLog(EndpointTransactionService::class.java)
@@ -25,11 +25,10 @@ class EndpointTransactionService{
     @Autowired
     val rabbitTemplate = RabbitTemplate()
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
             exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
             key = ["@transaction.*"])])
-    fun handleTransactionMessage(message: Message)
-    {
+    fun handleTransactionMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
@@ -38,12 +37,11 @@ class EndpointTransactionService{
                 val transaction = Transaction()
                 JsonSerializationFormat.deserializeTransaction(transaction, data)
 
-                transaction.attributes.forEach{ (topic, attribute) ->
+                transaction.attributes.forEach { (topic, attribute) ->
                     rabbitTemplate.convertAndSend("amq.topic",
-                            "@update." + topic.replace("/","."),  JsonSerializationFormat.serializeAttribute(attribute))
+                            "@update." + topic.replace("/", "."), JsonSerializationFormat.serializeAttribute(attribute))
                 }
-            }
-            else {
+            } else {
                 log.error("Unrecognized message format in @transaction message from $endpointId")
             }
         } catch (exception: Exception) {

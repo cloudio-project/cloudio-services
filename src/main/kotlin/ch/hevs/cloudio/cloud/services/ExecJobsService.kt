@@ -13,17 +13,16 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("execJobs", "default")
-class ExecJobsService{
+class ExecJobsService {
 
     companion object {
         private val log = LogFactory.getLog(AbstractLifecycleService::class.java)
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
             exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
             key = ["@exec.*"])])
-    fun handleExecMessage(message: Message)
-    {
+    fun handleExecMessage(message: Message) {
         try {
             message.messageProperties.receivedRoutingKey.split(".")
         } catch (exception: Exception) {
@@ -31,11 +30,10 @@ class ExecJobsService{
         }
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
             exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
             key = ["@execOutput.*"])])
-    fun handleExecOutputMessage(message: Message)
-    {
+    fun handleExecOutputMessage(message: Message) {
         try {
             message.messageProperties.receivedRoutingKey
         } catch (exception: Exception) {

@@ -34,7 +34,7 @@ import javax.servlet.http.HttpServletResponse
 
 @RestController
 @RequestMapping("/api/v1")
-class CertificateController(var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository){
+class CertificateController(var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     companion object {
         private val log = LogFactory.getLog(CertificateController::class.java)
@@ -51,14 +51,13 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateAndKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
-        if(endpointGeneralPermission?.permission == Permission.OWN) {
-            if(endpointEntityRepository.findByIdOrNull(certificateAndKeyRequest.endpointUuid)!!.blocked)
+        if (endpointGeneralPermission?.permission == Permission.OWN) {
+            if (endpointEntityRepository.findByIdOrNull(certificateAndKeyRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
-        }
-        else{
-            if(endpointGeneralPermission==null)
+        } else {
+            if (endpointGeneralPermission == null)
                 throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
                 throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
@@ -73,10 +72,10 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateAndKeyZipRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
-        if(endpointGeneralPermission?.permission == Permission.OWN) {
+        if (endpointGeneralPermission?.permission == Permission.OWN) {
             if (endpointEntityRepository.findByIdOrNull(certificateAndKeyZipRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
-            else{
+            else {
                 val pathToReturn = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, certificateAndKeyZipRequest)!!.replace("\"", "")
 
                 val resource = UrlResource("file:$pathToReturn")
@@ -89,9 +88,8 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                         .header("EndpointUuid", certificateAndKeyZipRequest.endpointUuid)
                         .body(resource)
             }
-        }
-        else{
-            if(endpointGeneralPermission==null)
+        } else {
+            if (endpointGeneralPermission == null)
                 throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
                 throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
@@ -103,9 +101,9 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         return MappedInterceptor(arrayOf("/api/v1/createCertificateAndKeyZip"), object : HandlerInterceptor {
             @Throws(Exception::class)
             override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
-                if(response.status == 200){
+                if (response.status == 200) {
                     val endpointUuid = response.getHeaders("EndpointUuid").toMutableList()[0]
-                    try{
+                    try {
                         var myFile = File("$endpointUuid.properties")
                         if (myFile.exists())
                             myFile.delete()
@@ -117,7 +115,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                         myFile = File("$endpointUuid.zip")
                         if (myFile.exists())
                             myFile.delete()
-                    }catch (e: Exception){
+                    } catch (e: Exception) {
                         log.error("Exception while deleting old certificate files", e)
                     }
                 }
@@ -133,13 +131,13 @@ class CertificateController(var environment: Environment, var userGroupRepositor
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = certificateFromKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
-        if(endpointGeneralPermission?.permission == Permission.OWN)
+        if (endpointGeneralPermission?.permission == Permission.OWN)
             if (endpointEntityRepository.findByIdOrNull(certificateFromKeyRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
-        else{
-            if(endpointGeneralPermission==null)
+        else {
+            if (endpointGeneralPermission == null)
                 throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
                 throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")

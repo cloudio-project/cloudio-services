@@ -12,14 +12,14 @@ import org.springframework.security.crypto.password.PasswordEncoder
 
 @Configuration
 @EnableConfigurationProperties
-class SecurityConfiguration(var customUserDetailsService : MongoCustomUserDetailsService) : WebSecurityConfigurerAdapter() {
+class SecurityConfiguration(var customUserDetailsService: MongoCustomUserDetailsService) : WebSecurityConfigurerAdapter() {
 
     @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
         http.csrf().disable()
-            .authorizeRequests().anyRequest().permitAll()
-            .and().httpBasic()
-            .and().sessionManagement().disable()
+                .authorizeRequests().anyRequest().permitAll()
+                .and().httpBasic()
+                .and().sessionManagement().disable()
     }
 
     @Bean

@@ -27,7 +27,7 @@ import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository){
+class JobsController(var connectionFactory: ConnectionFactory, val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -43,16 +43,15 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
         val genericTopic = jobExecuteRequest.endpointUuid + "/#"
 
         val endpointGeneralPermission = permissionMap.get(genericTopic)
-        if(endpointGeneralPermission?.permission == Permission.OWN){
+        if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(jobExecuteRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-            if (!jobExecuteRequest.getOutput){
+            if (!jobExecuteRequest.getOutput) {
                 JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            }
-            else {
+            } else {
 
                 val emitter = SseEmitter()
 
@@ -61,8 +60,8 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
                         //create a listener for the correct execOutput topic
                         val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
                             override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
-                                if(jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
-                                    //send the output as a Sse event
+                                if (jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
+                                //send the output as a Sse event
                                     emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                             }
                         }
@@ -77,9 +76,8 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
                 }
                 return emitter
             }
-        }
-        else{
-            if(endpointGeneralPermission==null)
+        } else {
+            if (endpointGeneralPermission == null)
                 throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
             else
                 throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")

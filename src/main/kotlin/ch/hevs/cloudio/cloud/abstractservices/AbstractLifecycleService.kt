@@ -11,17 +11,16 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 
-abstract class AbstractLifecycleService{
+abstract class AbstractLifecycleService {
 
     companion object {
         private val log = LogFactory.getLog(AbstractLifecycleService::class.java)
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@online.*"])])
-    fun handleOnlineMessage(message: Message)
-    {
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
+            exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
+            key = ["@online.*"])])
+    fun handleOnlineMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
@@ -38,11 +37,10 @@ abstract class AbstractLifecycleService{
         }
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@offline.*"])])
-    fun handleOfflineMessage(message: Message)
-    {
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
+            exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
+            key = ["@offline.*"])])
+    fun handleOfflineMessage(message: Message) {
         try {
             endpointIsOffline(message.messageProperties.receivedRoutingKey.split(".")[1])
         } catch (exception: Exception) {
@@ -50,11 +48,10 @@ abstract class AbstractLifecycleService{
         }
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@nodeAdded.*.*"])])
-    fun handleNodeAddedMessage(message: Message)
-    {
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
+            exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
+            key = ["@nodeAdded.*.*"])])
+    fun handleNodeAddedMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
@@ -72,11 +69,10 @@ abstract class AbstractLifecycleService{
         }
     }
 
-    @RabbitListener(bindings = [QueueBinding(value= Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@nodeRemoved.*.*"])])
-    fun handleNodeRemovedMessage(message: Message)
-    {
+    @RabbitListener(bindings = [QueueBinding(value = Queue(),
+            exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
+            key = ["@nodeRemoved.*.*"])])
+    fun handleNodeRemovedMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]

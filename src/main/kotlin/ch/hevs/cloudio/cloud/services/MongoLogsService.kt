@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("logs-mongo", "default")
-class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository): AbstractLogsService(){
+class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository) : AbstractLogsService() {
 
 
     override fun logLevelChange(endpointUuid: String, logParameter: LogParameter) {
@@ -21,10 +21,10 @@ class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository): 
             endpointEntityRepository.save(endpointEntity)
         }
     }
+
     override fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage) {
         //nothing to do in mongo
     }
-
 
 
 }

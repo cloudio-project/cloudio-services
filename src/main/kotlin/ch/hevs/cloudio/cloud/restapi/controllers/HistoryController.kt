@@ -19,17 +19,17 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1")
-class HistoryController(val env: Environment,val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository){
+class HistoryController(val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
     @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.GET])
-    fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult{
+    fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyDefaultRequest.attributeTopic.split("/"))== Permission.DENY)
+        if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyDefaultRequest.attributeTopic.split("/")) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val splitTopic = historyDefaultRequest.attributeTopic.split("/")
@@ -45,10 +45,11 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
     }
 
     @RequestMapping("/getAttributeHistoryByDateRequest", method = [RequestMethod.GET])
-    fun getAttributeHistoryByDateRequest(@RequestBody historyDateRequest: HistoryDateRequest): QueryResult{val userName = SecurityContextHolder.getContext().authentication.name
+    fun getAttributeHistoryByDateRequest(@RequestBody historyDateRequest: HistoryDateRequest): QueryResult {
+        val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyDateRequest.attributeTopic.split("/"))==Permission.DENY)
+        if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyDateRequest.attributeTopic.split("/")) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val splitTopic = historyDateRequest.attributeTopic.split("/")
@@ -64,11 +65,11 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
     }
 
     @RequestMapping("/getAttributeHistoryWhere", method = [RequestMethod.GET])
-    fun getAttributeHistoryWhere(@RequestBody historyWhereRequest: HistoryWhereRequest): QueryResult{
+    fun getAttributeHistoryWhere(@RequestBody historyWhereRequest: HistoryWhereRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyWhereRequest.attributeTopic.split("/"))==Permission.DENY)
+        if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyWhereRequest.attributeTopic.split("/")) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val splitTopic = historyWhereRequest.attributeTopic.split("/")
@@ -84,11 +85,11 @@ class HistoryController(val env: Environment,val influx: InfluxDB, var userRepos
     }
 
     @RequestMapping("/getAttributeHistoryExpert", method = [RequestMethod.GET])
-    fun getAttributeHistoryExpert(@RequestBody historyExpertRequest: HistoryExpertRequest): QueryResult{
+    fun getAttributeHistoryExpert(@RequestBody historyExpertRequest: HistoryExpertRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        if(PermissionUtils.getHigherPriorityPermission(permissionMap, historyExpertRequest.attributeTopic.split("/"))==Permission.DENY)
+        if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyExpertRequest.attributeTopic.split("/")) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
 
         val splitTopic = historyExpertRequest.attributeTopic.split("/")

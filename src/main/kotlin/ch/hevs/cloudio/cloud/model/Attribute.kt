@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.model
 
-data class Attribute  (
+data class Attribute(
         var constraint: AttributeConstraint = AttributeConstraint.Invalid,
         var type: AttributeType = AttributeType.Invalid,
         var timestamp: Double = -1.0,

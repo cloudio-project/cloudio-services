@@ -36,11 +36,10 @@ abstract class AttributeChangeNotifier(connectionFactory: ConnectionFactory, top
                 log.error("Unrecognized message format in $topic message")
             }
         }
-        channel.basicConsume(queueName, true, deliverCallback, CancelCallback{})
+        channel.basicConsume(queueName, true, deliverCallback, CancelCallback {})
     }
 
-    open fun notifyAttributeChange(attribute: Attribute)
-    {
+    open fun notifyAttributeChange(attribute: Attribute) {
         log.error("function not overridden")
     }
 

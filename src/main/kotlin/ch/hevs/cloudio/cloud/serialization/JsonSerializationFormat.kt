@@ -34,7 +34,7 @@ internal object JsonSerializationFormat {
         return mapper.readerForUpdating(transaction).readValue(data)
     }
 
-    fun deserializeCloudioLog(cloudioLogMessage: CloudioLogMessage, data: ByteArray){
+    fun deserializeCloudioLog(cloudioLogMessage: CloudioLogMessage, data: ByteArray) {
         return mapper.readerForUpdating(cloudioLogMessage).readValue(data)
     }
 
@@ -42,9 +42,10 @@ internal object JsonSerializationFormat {
         return mapper.writeValueAsBytes(logParameter)
     }
 
-    fun deserializeLogParameter(logParameter: LogParameter, data: ByteArray){
+    fun deserializeLogParameter(logParameter: LogParameter, data: ByteArray) {
         return mapper.readerForUpdating(logParameter).readValue(data)
     }
+
     fun serializeJobParameter(jobParameter: JobParameter): ByteArray {
         return mapper.writeValueAsBytes(jobParameter)
     }

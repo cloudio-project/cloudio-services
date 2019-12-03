@@ -5,9 +5,9 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "UserGroup")
-data class UserGroup (
+data class UserGroup(
         @Id
         var userGroupName: String = "",
-        var usersList: Set<String> =emptySet(),
+        var usersList: Set<String> = emptySet(),
         var permissions: Map<String, PrioritizedPermission> = emptyMap()
 )
