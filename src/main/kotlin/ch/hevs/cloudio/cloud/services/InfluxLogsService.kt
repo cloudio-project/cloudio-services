@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("logs-influx", "default")
-class InfluxLogsService(val env: Environment, val influx: InfluxDB): AbstractLogsService() {
+class InfluxLogsService(val env: Environment, val influx: InfluxDB) : AbstractLogsService() {
 
 
     //get database to write by environment property, has default value

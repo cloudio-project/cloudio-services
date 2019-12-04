@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController
 class UserGroupAccessControlController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
 
     @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.GET])
-    fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission>{
+    fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            val userRight =  UserGroupAccessControlUtil.getUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
-            if(userRight == null)
+            val userRight = UserGroupAccessControlUtil.getUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
+            if (userRight == null)
                 throw CloudioHttpExceptions.BadRequestException("Coudln't return userGroup Right")
             else
                 return userRight
@@ -39,12 +39,11 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-           try{
+            try {
                 UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            }
-            catch(e: CloudioApiException){
-                throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+e.message)
+            } catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: " + e.message)
             }
 
         }
@@ -56,12 +55,11 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            try{
+            try {
                 UserGroupAccessControlUtil.modifyUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            }
-            catch(e: CloudioApiException){
-                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user group access right: "+e.message)
+            } catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user group access right: " + e.message)
             }
         }
     }
@@ -72,12 +70,11 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            try{
+            try {
                 UserGroupAccessControlUtil.removeUserGroupAccessRight(userGroupRepository, userGroupTopicRequest)
                 throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-            }
-            catch(e: CloudioApiException){
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user group access right: "+e.message)
+            } catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user group access right: " + e.message)
             }
         }
     }
@@ -86,12 +83,11 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     fun giveUserGroupAccessRight(@RequestBody userGroupRightRequestList: UserGroupRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
 
-        try{
+        try {
             UserGroupAccessControlUtil.giveUserGroupAccessRight(userGroupRepository, userRepository, userGroupRightRequestList, userName)
             throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
-        }
-        catch(e: CloudioApiException){
-            throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: "+e.message)
+        } catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: " + e.message)
         }
     }
 }

@@ -37,14 +37,14 @@ abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: S
                 log.error("Unrecognized message format in $topic message")
             }
         }
-        channel.basicConsume(queueName, true, deliverCallback, CancelCallback{})
+        channel.basicConsume(queueName, true, deliverCallback, CancelCallback {})
     }
 
-    open fun notifyExecOutput(jobsLineOutput: JobsLineOutput){
+    open fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
         log.error("function not overridden")
     }
 
-    open fun deleteQueue(){
+    open fun deleteQueue() {
         channel.queueDelete(queueName)
     }
 

@@ -12,25 +12,25 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("lifecycle-mongo", "default")
-class MongoLifecycleService(val endpointEntityRepository: EndpointEntityRepository): AbstractLifecycleService(){
+class MongoLifecycleService(val endpointEntityRepository: EndpointEntityRepository) : AbstractLifecycleService() {
 
     companion object {
         private val log = LogFactory.getLog(CertificateController::class.java)
     }
 
-    override  fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {
+    override fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointId)
-        if(endpointEntity != null){ //To prevent endpoint creation without the api
+        if (endpointEntity != null) { //To prevent endpoint creation without the api
             endpointEntity.online = true
             endpointEntity.endpoint = endpoint
             endpointEntityRepository.save(endpointEntity)
-        }else
+        } else
             log.error("Endpoint tried to use @online on $endpointId whose hasn't been created by using cloud.iO API")
 
 
     }
 
-    override  fun endpointIsOffline(endpointId: String) {
+    override fun endpointIsOffline(endpointId: String) {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointId)
         if (endpointEntity != null) {
             endpointEntity.online = false
@@ -38,7 +38,7 @@ class MongoLifecycleService(val endpointEntityRepository: EndpointEntityReposito
         }
     }
 
-    override  fun nodeAdded(endpointId: String, nodeName: String, node: Node) {
+    override fun nodeAdded(endpointId: String, nodeName: String, node: Node) {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointId)
         if (endpointEntity != null) {
             endpointEntity.endpoint.nodes[nodeName] = node

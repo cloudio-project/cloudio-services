@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("authentication", "default")
-class AuthenticationService(var userRepository: UserRepository,var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository ) {
+class AuthenticationService(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     companion object {
         private val log = LogFactory.getLog(AuthenticationService::class.java)
@@ -34,31 +34,27 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
 
     private var encoder: PasswordEncoder = BCryptPasswordEncoder()
 
-    @RabbitListener(bindings = [QueueBinding(value=Queue("authentication"),
+    @RabbitListener(bindings = [QueueBinding(value = Queue("authentication"),
             exchange = Exchange(value = "authentication", type = ExchangeTypes.FANOUT, ignoreDeclarationExceptions = "true"))])
-    fun authenticate (message: Message): String
-    {
-        val action =  message.messageProperties.headers["action"]?.toString()
-        val id =  message.messageProperties.headers["username"].toString()
+    fun authenticate(message: Message): String {
+        val action = message.messageProperties.headers["action"]?.toString()
+        val id = message.messageProperties.headers["username"].toString()
 
         try {
             return when (action) {
                 "login" -> {
                     val password = message.messageProperties.headers["password"]?.toString()
 
-                    if(password != null)
-                    {   //authentication with password --> User
+                    if (password != null) {   //authentication with password --> User
                         log.info("User authentication with password")
 
                         val user = userRepository.findById(id)
                         if (user.isPresent && encoder.matches(password, user.get().passwordHash)) {
-                            user.get().authorities.joinToString(separator = ",") {it.value}
+                            user.get().authorities.joinToString(separator = ",") { it.value }
                         } else {
                             "refused"
                         }
-                    }
-                    else
-                    {   //authentication with certificates --> Endpoint
+                    } else {   //authentication with certificates --> Endpoint
                         log.info("Endpoint authentication with certificates")
 
                         val endpoint = endpointEntityRepository.findById(id)
@@ -95,17 +91,17 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                     val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
                     val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
 
-                    if(routingKey.size<2)
-                       return "deny"
+                    if (routingKey.size < 2)
+                        return "deny"
 
-                    when(uuidPattern.matches(id)) {
+                    when (uuidPattern.matches(id)) {
                         true -> {
-                            if(id == routingKey[1] && endpointEntityRepository.existsById(id)) {
-                                if(!endpointEntityRepository.findByIdOrNull(id)!!.blocked)
+                            if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
+                                if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked)
                                     "allow"
                                 else
                                     "deny"
-                            }else
+                            } else
                                 "deny"
                         }
                         false -> {
@@ -117,12 +113,12 @@ class AuthenticationService(var userRepository: UserRepository,var userGroupRepo
                             //check if there is permission linked to topic
                             val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
 
-                            when{
-                                !endpointEntityRepository.existsById(routingKey[1]) ->"deny"
-                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked ->"deny"
-                                endpointPermission == Permission.DENY ->"deny"
-                                routingKey[0][0] != '@' ->"deny"
-                                endpointPermission.value >= permission.value ->"allow"
+                            when {
+                                !endpointEntityRepository.existsById(routingKey[1]) -> "deny"
+                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> "deny"
+                                endpointPermission == Permission.DENY -> "deny"
+                                routingKey[0][0] != '@' -> "deny"
+                                endpointPermission.value >= permission.value -> "allow"
                                 else -> "deny"
                             }
                         }

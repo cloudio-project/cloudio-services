@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class WotNode(
         @JsonProperty("@context")
-        val context : String = "",
-        val id : String,
+        val context: String = "",
+        val id: String,
         val title: String,
         val securityDefinitions: Map<String, SecurityDefinition>,
         val security: Set<String>,

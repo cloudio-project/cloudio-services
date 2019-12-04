@@ -22,19 +22,19 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
     companion object {
         private val log = LogFactory.getLog(InfluxUpdateSetService::class.java)
     }
+
     //get database to write by environment property, has default value
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    val influxBatchTimeMs : Int by lazy { env.getProperty("cloudio.influxBatchIntervallMs", "10000").toInt() }
-    val influxBatchSize : Int by lazy { env.getProperty("cloudio.influxBatchSize", "2000").toInt() }
+    val influxBatchTimeMs: Int by lazy { env.getProperty("cloudio.influxBatchIntervallMs", "10000").toInt() }
+    val influxBatchSize: Int by lazy { env.getProperty("cloudio.influxBatchSize", "2000").toInt() }
 
 
     @PostConstruct
-    fun initialize()
-    {
+    fun initialize() {
         // Create database if needed
-        if(influx.query(Query("SHOW DATABASES","")).toString().indexOf(database)==-1)
-            influx.query(Query("CREATE DATABASE $database",""))
+        if (influx.query(Query("SHOW DATABASES", "")).toString().indexOf(database) == -1)
+            influx.query(Query("CREATE DATABASE $database", ""))
 
         influx.enableBatch(BatchOptions.DEFAULTS.actions(influxBatchSize).flushDuration(influxBatchTimeMs))
     }
@@ -43,7 +43,7 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
         // create the influxDB point
         val point = Point
                 .measurement(attributeId)
-                .time((attribute.timestamp *(1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
+                .time((attribute.timestamp * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
                 .tag("constraint", attribute.constraint.toString())
                 .tag("type", attribute.type.toString())
 
@@ -63,12 +63,12 @@ class InfluxUpdateSetService(val env: Environment, val influx: InfluxDB) : Abstr
                 }
             }
             //write the actual point in influx
-            val myPoint =  point.build()
+            val myPoint = point.build()
 
             //if batch enabled, save point in set, either send it
-            influx.write(database, "autogen",myPoint)
+            influx.write(database, "autogen", myPoint)
 
-        } catch (e: ClassCastException){
+        } catch (e: ClassCastException) {
             log.error("The attribute $attributeId has been updated with wrong data type")
         }
     }

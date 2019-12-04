@@ -11,19 +11,18 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 
-abstract class AbstractLogsService{
+abstract class AbstractLogsService {
 
     companion object {
         private val log = LogFactory.getLog(AbstractLogsService::class.java)
     }
 
     @RabbitListener(
-            bindings = [QueueBinding(value= Queue(),
+            bindings = [QueueBinding(value = Queue(),
                     exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
                     key = ["@logsLevel.#"])])
-    fun handleLogLevelMessage(message: Message)
-    {
-        try{
+    fun handleLogLevelMessage(message: Message) {
+        try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
 
             val data = message.body
@@ -35,18 +34,17 @@ abstract class AbstractLogsService{
             } else {
                 log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
             }
-        }catch (exception: Exception) {
+        } catch (exception: Exception) {
             log.error("Exception during @logsLevel message handling:", exception)
         }
     }
 
     @RabbitListener(
-            bindings = [QueueBinding(value= Queue(),
+            bindings = [QueueBinding(value = Queue(),
                     exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
                     key = ["@logs.#"])])
-    fun handleLogsMessage(message: Message)
-    {
-        try{
+    fun handleLogsMessage(message: Message) {
+        try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
 
             val data = message.body
@@ -60,13 +58,14 @@ abstract class AbstractLogsService{
                 log.error("Unrecognized message format in @logs message from $endpointUuid")
             }
 
-        }catch (exception: Exception) {
+        } catch (exception: Exception) {
             log.error("Exception during @logs message handling:", exception)
         }
     }
 
     //Abstract method to handle log level change messages
     abstract fun logLevelChange(endpointUuid: String, logParameter: LogParameter)
+
     //Abstract method to handle logs messages
     abstract fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage)
 }

@@ -9,24 +9,24 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 
+
 object PermissionUtils {
 
-    fun permissionFromUserAndGroup(userName: String, userRepository: UserRepository, userGroupRepository: UserGroupRepository): Map<String, PrioritizedPermission>{
+    fun permissionFromUserAndGroup(userName: String, userRepository: UserRepository, userGroupRepository: UserGroupRepository): Map<String, PrioritizedPermission> {
         val initialUserPermission = userRepository.findById(userName).get().permissions
         val userGroupSet = userRepository.findById(userName).get().userGroups
 
         val toReturn = initialUserPermission.toMutableMap()
 
         //iter through group
-        userGroupSet.forEachIndexed{ _, userGroup->
+        userGroupSet.forEachIndexed { _, userGroup ->
             //get the group permission
             userGroupRepository.findByIdOrNull(userGroup)?.permissions?.forEach { topicKey, prioritizedPermission ->
                 //if topic permission exist
-                if(toReturn[topicKey] != null) {
+                if (toReturn[topicKey] != null) {
                     if (prioritizedPermission.priority > toReturn[topicKey]!!.priority) //test if priority of permission is higher
                         toReturn[topicKey] = prioritizedPermission
-                }
-                else    //if doesn't exist, create it
+                } else    //if doesn't exist, create it
                     toReturn[topicKey] = prioritizedPermission
             }
         }
@@ -63,78 +63,80 @@ object PermissionUtils {
         }
     }
 
-    fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity){
-        val topic = endpointEntity.endpointUuid+"/"
+    fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity) {
+        val topic = endpointEntity.endpointUuid + "/"
 
-        for(node in endpointEntity.endpoint.nodes){
-            val topicNode = topic+node.key+"/"
+        for (node in endpointEntity.endpoint.nodes) {
+            val topicNode = topic + node.key + "/"
             censorNodeFromUserPermission(permissionMap, topicNode, node.value)
         }
 
     }
-    fun censorNodeFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node){
 
-        for(cloudioObject in node.objects){
-            val topicObject = topic+cloudioObject.key+"/"
+    fun censorNodeFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node) {
+
+        for (cloudioObject in node.objects) {
+            val topicObject = topic + cloudioObject.key + "/"
             censorObjectFromUserPermission(permissionMap, topicObject, cloudioObject.value)
         }
     }
 
-    fun censorObjectFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject){
+    fun censorObjectFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject) {
         val innerTopic = topic
-        for(attribute in cloudioObject.attributes){
-            val innerTopicAttribute = innerTopic+attribute.key
+        for (attribute in cloudioObject.attributes) {
+            val innerTopicAttribute = innerTopic + attribute.key
             val endpointPermission = getHigherPriorityPermission(permissionMap, innerTopicAttribute.split("/"))
-            if(endpointPermission == Permission.DENY)
+            if (endpointPermission == Permission.DENY)
                 attribute.value.value = "You don't have the right to see this attribute value"
         }
 
-        for(innerCloudioObject in cloudioObject.objects){
-            val innerTopicObject = innerTopic+innerCloudioObject.key+"/"
+        for (innerCloudioObject in cloudioObject.objects) {
+            val innerTopicObject = innerTopic + innerCloudioObject.key + "/"
             censorObjectFromUserPermission(permissionMap, innerTopicObject, innerCloudioObject.value)
         }
     }
 
     fun getAccessibleAttributesFromEndpoint(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity): MutableMap<String, Permission> {
-        if(endpointEntity.blocked)
+        if (endpointEntity.blocked)
             return mutableMapOf()
-        else{
+        else {
 
-            val topic = endpointEntity.endpointUuid+"/"
+            val topic = endpointEntity.endpointUuid + "/"
 
-            val attributesRight : MutableMap<String, Permission> = mutableMapOf()
-            for(node in endpointEntity.endpoint.nodes){
-                val topicNode = topic+node.key+"/"
+            val attributesRight: MutableMap<String, Permission> = mutableMapOf()
+            for (node in endpointEntity.endpoint.nodes) {
+                val topicNode = topic + node.key + "/"
                 attributesRight.putAll(getAccessibleAttributesFromNode(permissionMap, topicNode, node.value, attributesRight))
             }
             return attributesRight
         }
 
     }
-    fun getAccessibleAttributesFromNode(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node, previousAttributesRight : MutableMap<String, Permission>): MutableMap<String, Permission> {
 
-        val attributesRight : MutableMap<String, Permission> = mutableMapOf()
+    fun getAccessibleAttributesFromNode(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node, previousAttributesRight: MutableMap<String, Permission>): MutableMap<String, Permission> {
+
+        val attributesRight: MutableMap<String, Permission> = mutableMapOf()
         attributesRight.putAll(previousAttributesRight)
-        for(cloudioObject in node.objects){
-            val topicObject = topic+cloudioObject.key+"/"
+        for (cloudioObject in node.objects) {
+            val topicObject = topic + cloudioObject.key + "/"
             attributesRight.putAll(getAccessibleAttributesFromObject(permissionMap, topicObject, cloudioObject.value, attributesRight))
         }
         return attributesRight
     }
 
-    fun getAccessibleAttributesFromObject(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject, previousAttributesRight : MutableMap<String, Permission>): MutableMap<String, Permission> {
+    fun getAccessibleAttributesFromObject(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject, previousAttributesRight: MutableMap<String, Permission>): MutableMap<String, Permission> {
         val innerTopic = topic
-        val attributesRight : MutableMap<String, Permission> = mutableMapOf()
+        val attributesRight: MutableMap<String, Permission> = mutableMapOf()
         attributesRight.putAll(previousAttributesRight)
-        for(attribute in cloudioObject.attributes){
-            val innerTopicAttribute = innerTopic+attribute.key
+        for (attribute in cloudioObject.attributes) {
+            val innerTopicAttribute = innerTopic + attribute.key
             val endpointPermission = getHigherPriorityPermission(permissionMap, innerTopicAttribute.split("/"))
-            if(endpointPermission != Permission.DENY)
+            if (endpointPermission != Permission.DENY)
                 attributesRight[innerTopicAttribute] = endpointPermission
         }
 
-        for(innerCloudioObject in cloudioObject.objects){
-            val innerTopicObject = innerTopic+innerCloudioObject.key+"/"
+        for (innerCloudioObject in cloudioObject.objects) {
+            val innerTopicObject = innerTopic + innerCloudioObject.key + "/"
             getAccessibleAttributesFromObject(permissionMap, innerTopicObject, innerCloudioObject.value, attributesRight)
         }
         return attributesRight

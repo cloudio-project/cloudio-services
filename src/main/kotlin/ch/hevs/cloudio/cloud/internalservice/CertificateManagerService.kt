@@ -83,7 +83,7 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["endpointKey-certificatePair"]
         )])
-    fun generateEndpointKeyAndCertificatePair(certificateAndKeyRequestString: String): String?{
+    fun generateEndpointKeyAndCertificatePair(certificateAndKeyRequestString: String): String? {
         try {
             val certificateAndKeyRequest = CertificateAndKeyRequest("")
 
@@ -123,7 +123,7 @@ class CertificateManagerService(environment: Environment) {
             )
 
             return mapper.writeValueAsString(toReturn)
-        }catch (exception: Exception) {
+        } catch (exception: Exception) {
             log.error("Exception during endpointKey-certificatePair", exception)
         }
         return null
@@ -135,9 +135,9 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["endpointKey-certificatePairZip"]
         )])
-    fun generateEndpointKeyCertificateZip(certificateAndKeyRequestString: String): String?{
-        try{
-            val certificateAndKeyZipRequest= CertificateAndKeyZipRequest("",LibraryLanguage.JAVA)
+    fun generateEndpointKeyCertificateZip(certificateAndKeyRequestString: String): String? {
+        try {
+            val certificateAndKeyZipRequest = CertificateAndKeyZipRequest("", LibraryLanguage.JAVA)
 
             mapper.readerForUpdating(certificateAndKeyZipRequest).readValue(certificateAndKeyRequestString) as CertificateAndKeyZipRequest
             val uuid = UUID.fromString(certificateAndKeyZipRequest.endpointUuid)
@@ -161,16 +161,16 @@ class CertificateManagerService(environment: Environment) {
 
             createPKCS12File(certificateAndKeyZipRequest.endpointUuid, password, keyPair, certificate)
 
-            when (certificateAndKeyZipRequest.libraryLanguage){
-                LibraryLanguage.JAVA ->{
+            when (certificateAndKeyZipRequest.libraryLanguage) {
+                LibraryLanguage.JAVA -> {
                     //properties file for java librarie
                     val propertiesContent = "ch.hevs.cloudio.endpoint.hostUri=ssl://localhost:8883\n" +
-                                            "ch.hevs.cloudio.endpoint.ssl.authorityCert=file:ABSOLUTE_PATH/ca-cert.jks\n" +
-                                            "ch.hevs.cloudio.endpoint.ssl.clientCert=file:ABSOLUTE_PATH/${certificateAndKeyZipRequest.endpointUuid}.p12\n" +
-                                            "ch.hevs.cloudio.endpoint.ssl.clientPassword=$password\n" +
-                                            "ch.hevs.cloudio.endpoint.ssl.authorityPassword=$caCertificatePassword\n" +
-                                            "ch.hevs.cloudio.endpoint.persistence=memory\n" +
-                                            "ch.hevs.cloudio.endpoint.jobs.folder=ABSOLUTE_PATH"
+                            "ch.hevs.cloudio.endpoint.ssl.authorityCert=file:ABSOLUTE_PATH/ca-cert.jks\n" +
+                            "ch.hevs.cloudio.endpoint.ssl.clientCert=file:ABSOLUTE_PATH/${certificateAndKeyZipRequest.endpointUuid}.p12\n" +
+                            "ch.hevs.cloudio.endpoint.ssl.clientPassword=$password\n" +
+                            "ch.hevs.cloudio.endpoint.ssl.authorityPassword=$caCertificatePassword\n" +
+                            "ch.hevs.cloudio.endpoint.persistence=memory\n" +
+                            "ch.hevs.cloudio.endpoint.jobs.folder=ABSOLUTE_PATH"
                     File("${certificateAndKeyZipRequest.endpointUuid}.properties").writeText(propertiesContent)
 
                     //list for the properties, p12 and cacert files
@@ -198,7 +198,7 @@ class CertificateManagerService(environment: Environment) {
 
 
             return mapper.writeValueAsString(true)
-        }catch (exception: Exception) {
+        } catch (exception: Exception) {
             log.error("endpointKey-certificatePairZip", exception)
         }
         return null
@@ -210,7 +210,7 @@ class CertificateManagerService(environment: Environment) {
                 exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
                 key = ["certificateFromPublicKey"]
         )])
-    fun generateEndpointCertificateFromPublicKey(certificateFromKeyRequestString: String): String?{
+    fun generateEndpointCertificateFromPublicKey(certificateFromKeyRequestString: String): String? {
         try {
             val certificateFromKeyRequest = CertificateFromKeyRequest("", "")
 
@@ -239,7 +239,7 @@ class CertificateManagerService(environment: Environment) {
             }.toString())
 
             return mapper.writeValueAsString(toReturn)
-        }catch (exception: Exception) {
+        } catch (exception: Exception) {
             log.error("endpointKey-certificateFromPublicKey", exception)
         }
         return null
@@ -262,12 +262,12 @@ class CertificateManagerService(environment: Environment) {
 
         pkcs12.setKeyEntry("", pair.private, "".toCharArray(), arrayOf(certificate))
 
-        try{
+        try {
             val p12File = File("$endPointUuidString.p12")
-            val p12 =  FileOutputStream(p12File)
+            val p12 = FileOutputStream(p12File)
             pkcs12.store(p12, keyStorePassword.toCharArray())
             return p12File.absoluteFile.toString()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             log.error("Couldn't create P12 file", e)
             e.printStackTrace()
             return null

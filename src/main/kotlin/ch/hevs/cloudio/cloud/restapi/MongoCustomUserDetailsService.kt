@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Component
 
 @Component
-class MongoCustomUserDetailsService (var userRepository: UserRepository) : UserDetailsService {
+class MongoCustomUserDetailsService(var userRepository: UserRepository) : UserDetailsService {
 
     companion object {
         private val log = LogFactory.getLog(MongoCustomUserDetailsService::class.java)
@@ -21,14 +21,13 @@ class MongoCustomUserDetailsService (var userRepository: UserRepository) : UserD
     override fun loadUserByUsername(username: String?): UserDetails {
 
         val user = userRepository.findByIdOrNull(username)
-        if(user == null) {
+        if (user == null) {
             log.error("User not found")
             throw UsernameNotFoundException("User not found")
-        }
-        else {
+        } else {
             val authorities = listOf(SimpleGrantedAuthority("user"))
 
-            if(!user.authorities.contains(Authority.HTTP_ACCESS)){
+            if (!user.authorities.contains(Authority.HTTP_ACCESS)) {
                 log.error("$username tried to log in without HTTP_ACCES authority")
                 throw CloudioAuthorityException("User don't have http access as authority")
             }

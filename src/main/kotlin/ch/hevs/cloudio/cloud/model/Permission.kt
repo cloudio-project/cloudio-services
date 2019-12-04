@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.model
 
-enum class Permission (val value: Int) {
+enum class Permission(val value: Int) {
     DENY(0),
     READ(1),
     WRITE(2),
