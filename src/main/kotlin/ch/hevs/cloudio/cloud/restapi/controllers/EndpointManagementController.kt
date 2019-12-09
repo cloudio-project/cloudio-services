@@ -212,8 +212,9 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Attribute doesn't exist")
     }
 
-    @RequestMapping("/setAttribute", method = [RequestMethod.GET])
+    @RequestMapping("/setAttribute", method = [RequestMethod.POST])
     fun setAttribute(@RequestBody attributeSetRequest: AttributeSetRequest) {
+        println(attributeSetRequest)
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)

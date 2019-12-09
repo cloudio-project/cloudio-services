@@ -7,7 +7,9 @@ import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
+import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.format.DateTimeParseException
 import java.util.*
 
 object CloudioModelUtils {
@@ -118,12 +120,26 @@ object CloudioModelUtils {
 
         if (queryResult.results[0].series != null) {
 
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-            val dt = sdf.parse(queryResult.results[0].series[0].values[0][0].toString())
-            val epoch = dt.time
+            val sdfMili = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            var dt : Date? = null
+            
+            try{
+                dt = sdf.parse(queryResult.results[0].series[0].values[0][0].toString())
+            }catch (e: ParseException){
+                try {
+                    dt = sdfMili.parse(queryResult.results[0].series[0].values[0][0].toString())
+                }catch(e2: ParseException){
+                    e2.printStackTrace()
+                }
+            }
+            
+            if(dt!=null){
+                val epoch = dt.time
 
-            attribute.value = queryResult.results[0].series[0].values[0][1]
-            attribute.timestamp = epoch.toDouble()
+                attribute.value = queryResult.results[0].series[0].values[0][1]
+                attribute.timestamp = epoch.toDouble()
+            }
         }
     }
 
