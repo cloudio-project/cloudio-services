@@ -7,7 +7,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
 import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
-import ch.hevs.cloudio.cloud.serialization.wot.WotNode
+import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -49,7 +49,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): WotNode? {
+    fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): NodeThingDescription? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
         if (splitTopic.size < 2)
             throw CloudioApiException("Node topic wasn't formatted correctly")

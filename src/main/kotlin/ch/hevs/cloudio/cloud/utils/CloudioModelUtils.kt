@@ -9,7 +9,6 @@ import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.format.DateTimeParseException
 import java.util.*
 
 object CloudioModelUtils {

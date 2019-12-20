@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.serialization
 
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.model.AttributeType
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.serialization.wot.*
@@ -9,14 +8,14 @@ import ch.hevs.cloudio.cloud.serialization.wot.*
 
 object JsonWotSerializationFormat {
 
-    fun wotNodeFromCloudioNode(endpoint: Endpoint, endpointName: String, nodeName: String, host: String): WotNode? {
+    fun wotNodeFromCloudioNode(endpoint: Endpoint, endpointName: String, nodeName: String, host: String): NodeThingDescription? {
 
-        val mqttHost = host.replace("https", "mqtts").replace("8081", "8883")
+        val mqttHost = host.replace("https", "mqtts").replace("http", "mqtts").replace("8081", "8883")
         val node = endpoint.nodes.get(nodeName)
         if (node != null) {
 
-            val propertiesMap: MutableMap<String, WotObject> = mutableMapOf()
-            val eventMap: MutableMap<String, Event> = mutableMapOf()
+            val propertiesMap: MutableMap<String, PropertyAffordance> = mutableMapOf()
+            val eventMap: MutableMap<String, EventAffordance> = mutableMapOf()
 
 
             for (cloudioObject in node.objects) {
@@ -28,7 +27,7 @@ object JsonWotSerializationFormat {
             val securityDefinition = mapOf("https_sc" to SecurityDefinition(scheme = "basic", input = "query"),
                     "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null))
 
-            return WotNode(
+            return NodeThingDescription(
                     context = "https://www.w3.org/2019/wot/td/v1",
                     id = "urn:$endpointName:$nodeName",
                     title = nodeName,
@@ -42,9 +41,9 @@ object JsonWotSerializationFormat {
         }
     }
 
-    private fun buildProperties(cloudioObjectTopic: String, cloudioObject: CloudioObject, host: String, mqttHost: String): WotObject {
+    private fun buildProperties(cloudioObjectTopic: String, cloudioObject: CloudioObject, host: String, mqttHost: String): PropertyAffordance {
 
-        val propertiesMap: MutableMap<String, WotObject> = mutableMapOf()
+        val propertiesMap: MutableMap<String, PropertyAffordance> = mutableMapOf()
 
         for (innerCloudioObject in cloudioObject.objects) {
             val properties = buildProperties(cloudioObjectTopic + "/" + innerCloudioObject.key, innerCloudioObject.value, host, mqttHost)
@@ -60,7 +59,7 @@ object JsonWotSerializationFormat {
                 AttributeConstraint.Status,
                 AttributeConstraint.Measure -> {
                     forms.add(Form(
-                            href = "$host/api/v1/getAttribute",
+                            href = "$host/api/v1/getAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
                             contentType = "application/json"
@@ -69,7 +68,7 @@ object JsonWotSerializationFormat {
                 AttributeConstraint.Parameter,
                 AttributeConstraint.SetPoint -> {
                     forms.add(Form(
-                            href = "$host/api/v1/getAttribute",
+                            href = "$host/api/v1/getAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
                             contentType = "application/json"
@@ -81,7 +80,7 @@ object JsonWotSerializationFormat {
                             contentType = "application/json"
                     ))
                     forms.add(Form(
-                            href = "$host/api/v1/setAttribute",
+                            href = "$host/api/v1/setAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
                             op = "writeproperty",
                             subprotocol = null,
                             contentType = "application/json"
@@ -90,21 +89,22 @@ object JsonWotSerializationFormat {
 
             }
 
-            var wotAttribute = WotObject(
-                    type = when (cloudioAttribute.value.type) {
-                        AttributeType.Boolean -> "boolean"
-                        AttributeType.Integer -> "integer"
-                        AttributeType.Number -> "double"
-                        AttributeType.String -> "string"
-                        else -> ""
-                    },
-                    properties = null,
-                    forms = forms
+            var wotAttribute = PropertyAffordance(
+                    type = "object",
+                    properties = mapOf(
+                            "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
+                            "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
+                            "timestamp" to DataSchema("number", null),
+                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                    ),
+                    forms = forms,
+                    required = setOf("constraint", "type", "timestamp", "value"),
+                    enum = null
             )
             propertiesMap[cloudioAttribute.key] = wotAttribute
         }
 
-        var wotObject = WotObject(
+        var wotObject = PropertyAffordance(
                 type = "object",
                 properties = propertiesMap,
                 forms = setOf(Form(
@@ -112,15 +112,17 @@ object JsonWotSerializationFormat {
                         op = "readproperty",
                         subprotocol = null,
                         contentType = "application/json")
-                )
+                ),
+                enum = null,
+                required = null
         )
 
         return wotObject
     }
 
-    private fun buildEvents(cloudioObjectName: String, cloudioNodeObjectTopic: String, cloudioObject: CloudioObject, host: String, mqttHost: String): MutableMap<String, Event> {
+    private fun buildEvents(cloudioObjectName: String, cloudioNodeObjectTopic: String, cloudioObject: CloudioObject, host: String, mqttHost: String): MutableMap<String, EventAffordance> {
 
-        val eventSet: MutableMap<String, Event> = mutableMapOf()
+        val eventSet: MutableMap<String, EventAffordance> = mutableMapOf()
 
         for (innerCloudioObject in cloudioObject.objects) {
             eventSet.putAll(buildEvents(cloudioObjectName + innerCloudioObject.key.capitalize(),
@@ -136,21 +138,24 @@ object JsonWotSerializationFormat {
                 }
                 AttributeConstraint.Parameter,
                 AttributeConstraint.SetPoint -> {
-                    eventSet.put("update" + cloudioObjectName.capitalize() + cloudioAttribute.key.capitalize(), Event(
-                            data = Data(when (cloudioAttribute.value.type) {
-                                AttributeType.Boolean -> "boolean"
-                                AttributeType.Integer -> "integer"
-                                AttributeType.Number -> "double"
-                                AttributeType.String -> "string"
-                                else -> ""
-                            }),
+                    eventSet.put("update" + cloudioObjectName.capitalize() + cloudioAttribute.key.capitalize(), EventAffordance(
+                            data = ObjectSchema(type = "object",
+                                    properties = mapOf(
+                                            "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
+                                            "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
+                                            "timestamp" to DataSchema("number", null),
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                    ),
+                                    required = setOf("constraint", "type", "timestamp", "value"),
+                                    enum = null
+                            ),
                             forms = setOf(Form(
-                                    href = "$host/api/v1/notifyAttributeChange",
+                                    href = "$host/api/v1/notifyAttributeChange" + cloudioNodeObjectTopic.replace("/", ".") + "." + cloudioAttribute.key + "/15000",
                                     op = "subscribeevent",
                                     subprotocol = "longpoll",
                                     contentType = "application/json"),
                                     Form(
-                                            href = mqttHost + "/@set/" + cloudioNodeObjectTopic + cloudioAttribute.key,
+                                            href = mqttHost + "/@set/" + cloudioNodeObjectTopic + "/" + cloudioAttribute.key,
                                             op = "subscribeevent",
                                             subprotocol = null,
                                             contentType = "application/json"))))
@@ -158,21 +163,24 @@ object JsonWotSerializationFormat {
                 }
                 AttributeConstraint.Status,
                 AttributeConstraint.Measure -> {
-                    eventSet.put("update" + cloudioObjectName.capitalize() + cloudioAttribute.key.capitalize(), Event(
-                            data = Data(type = when (cloudioAttribute.value.type) {
-                                AttributeType.Boolean -> "boolean"
-                                AttributeType.Integer -> "integer"
-                                AttributeType.Number -> "double"
-                                AttributeType.String -> "string"
-                                else -> ""
-                            }),
+                    eventSet.put("update" + cloudioObjectName.capitalize() + cloudioAttribute.key.capitalize(), EventAffordance(
+                            data = ObjectSchema(type = "object",
+                                    properties = mapOf(
+                                            "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
+                                            "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
+                                            "timestamp" to DataSchema("number", null),
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                    ),
+                                    required = setOf("constraint", "type", "timestamp", "value"),
+                                    enum = null
+                            ),
                             forms = setOf(Form(
-                                    href = "$host/api/v1/notifyAttributeChange",
+                                    href = "$host/api/v1/notifyAttributeChange/" + cloudioNodeObjectTopic.replace("/", ".") + "." + cloudioAttribute.key + "/15000",
                                     op = "subscribeevent",
                                     subprotocol = "longpoll",
                                     contentType = "application/json"),
                                     Form(
-                                            href = mqttHost + "/@update/" + cloudioNodeObjectTopic + cloudioAttribute.key,
+                                            href = mqttHost + "/@update/" + cloudioNodeObjectTopic + "/" + cloudioAttribute.key,
                                             op = "subscribeevent",
                                             subprotocol = null,
                                             contentType = "application/json"))))
