@@ -8,7 +8,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
-import ch.hevs.cloudio.cloud.serialization.wot.WotNode
+import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import com.rabbitmq.client.ConnectionFactory
@@ -18,10 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
@@ -54,6 +51,17 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
     fun getEndpoint(@RequestBody endpointRequest: EndpointRequest): EndpointEntity {
         val userName = SecurityContextHolder.getContext().authentication.name
 
+        return getEndpoint(userName, endpointRequest)
+    }
+
+    @RequestMapping("/getEndpoint/{endpointUuid}", method = [RequestMethod.GET])
+    fun getEndpoint(@PathVariable endpointUuid: String): EndpointEntity {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getEndpoint(userName, EndpointRequest(endpointUuid))
+    }
+
+    fun getEndpoint(userName: String, endpointRequest: EndpointRequest): EndpointEntity{
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
@@ -79,6 +87,17 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
     fun getEndpointFriendlyName(@RequestBody endpointRequest: EndpointRequest): EndpointFriendlyName {
         val userName = SecurityContextHolder.getContext().authentication.name
 
+        return getEndpointFriendlyName(userName, endpointRequest)
+    }
+
+    @RequestMapping("/getEndpointFriendlyName/{endpointUuid}", method = [RequestMethod.GET])
+    fun getEndpointFriendlyName(@PathVariable endpointUuid: String): EndpointFriendlyName {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getEndpointFriendlyName(userName, EndpointRequest(endpointUuid))
+    }
+
+    fun getEndpointFriendlyName(userName: String, endpointRequest: EndpointRequest): EndpointFriendlyName{
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = endpointRequest.endpointUuid + "/#"
@@ -94,12 +113,23 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
                 return endpointFriendlyName
         } else
             throw CloudioHttpExceptions.BadRequestException("Couldn't get endpoint friendly name")
-
     }
 
     @RequestMapping("/getNode", method = [RequestMethod.GET])
     fun getNode(@RequestBody nodeRequest: NodeRequest): Node {
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getNode(userName, nodeRequest)
+    }
+
+    @RequestMapping("/getNode/{nodeTopic}", method = [RequestMethod.GET])
+    fun getNode(@PathVariable nodeTopic: String): Node {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getNode(userName, NodeRequest(nodeTopic.replace(".","/")))
+    }
+
+    fun getNode(userName: String, nodeRequest: NodeRequest): Node {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
@@ -128,10 +158,23 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
     }
 
     @RequestMapping("/getWotNode", method = [RequestMethod.GET])
-    fun getWotNode(@RequestBody nodeRequest: NodeRequest, request: HttpServletRequest): WotNode {
+    fun getWotNode(@RequestBody nodeRequest: NodeRequest, request: HttpServletRequest): NodeThingDescription {
         val host = request.requestURL.toString().replace("/api/v1/getWotNode", "")
 
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getWotNode(userName, host, nodeRequest)
+
+    }
+    @RequestMapping("/getWotNode/{nodeTopic}", method = [RequestMethod.GET])
+    fun getWotNode(@PathVariable nodeTopic: String, request: HttpServletRequest): NodeThingDescription {
+        val host = request.requestURL.toString().replace("/api/v1/getWotNode/$nodeTopic", "")
+
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getWotNode(userName, host, NodeRequest(nodeTopic.replace(".","/")))
+    }
+    fun getWotNode(userName: String, host: String, nodeRequest: NodeRequest): NodeThingDescription {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = nodeRequest.nodeTopic + "/#"
@@ -139,26 +182,38 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this node")
 
-        val wotNode: WotNode?
+        val nodeThingDescription: NodeThingDescription?
         try {
-            wotNode = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
+            nodeThingDescription = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
         } catch (e: CloudioApiException) {
             throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node: " + e.message)
         }
 
-        if (wotNode == null) {
+        if (nodeThingDescription == null) {
             throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node")
         } else {
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else
-                return wotNode
+                return nodeThingDescription
         }
     }
 
     @RequestMapping("/getObject", method = [RequestMethod.GET])
     fun getObject(@RequestBody objectRequest: ObjectRequest): CloudioObject {
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        return  getObject(userName, objectRequest)
+    }
+
+    @RequestMapping("/getObject/{objectTopic}", method = [RequestMethod.GET])
+    fun getObject(@PathVariable objectTopic: String): CloudioObject {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return  getObject(userName, ObjectRequest(objectTopic.replace(".", "/")))
+    }
+
+    fun getObject(userName: String, objectRequest: ObjectRequest): CloudioObject {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = objectRequest.objectTopic + "/#"
@@ -170,7 +225,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
         try {
             cloudioObject = EndpointManagementUtil.getObject(endpointEntityRepository, objectRequest)
         } catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couldn't get WoT Node: " + e.message)
+            throw CloudioHttpExceptions.BadRequestException("Couldn't get Object: " + e.message)
         }
 
         if (cloudioObject != null) {
@@ -188,6 +243,18 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
     @RequestMapping("/getAttribute", method = [RequestMethod.GET])
     fun getAttribute(@RequestBody attributeRequest: AttributeRequest): Attribute {
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getAttribute(userName, attributeRequest)
+    }
+
+    @RequestMapping("/getAttribute/{attributeTopic}", method = [RequestMethod.GET])
+    fun getAttribute(@PathVariable attributeTopic: String): Attribute {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return getAttribute(userName, AttributeRequest(attributeTopic.replace(".", "/")))
+    }
+
+    fun getAttribute(userName: String, attributeRequest: AttributeRequest): Attribute {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
@@ -212,9 +279,21 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Attribute doesn't exist")
     }
 
-    @RequestMapping("/setAttribute", method = [RequestMethod.GET])
+    @RequestMapping("/setAttribute", method = [RequestMethod.POST])
     fun setAttribute(@RequestBody attributeSetRequest: AttributeSetRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        setAttribute(userName, attributeSetRequest)
+    }
+
+    @RequestMapping("/setAttribute/{attributeTopic}", method = [RequestMethod.POST])
+    fun setAttribute(@PathVariable attributeTopic: String, @RequestBody attribute: Attribute) {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        setAttribute(userName, AttributeSetRequest(attributeTopic.replace(".", "/"), attribute))
+    }
+
+    fun setAttribute(userName: String, attributeSetRequest: AttributeSetRequest) {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
@@ -232,12 +311,23 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
                 throw CloudioHttpExceptions.BadRequestException("Couldn't set attribute: " + e.message)
             }
         }
-
     }
 
     @RequestMapping("/notifyAttributeChange", method = [RequestMethod.GET])
     fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
         val userName = SecurityContextHolder.getContext().authentication.name
+
+        return notifyAttributeChange(userName, attributeRequestLongpoll)
+    }
+
+    @RequestMapping("/notifyAttributeChange/{attributeTopic}/{timeout}", method = [RequestMethod.GET])
+    fun notifyAttributeChange(@PathVariable attributeTopic: String, @PathVariable timeout: Long): DeferredResult<Attribute> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return notifyAttributeChange(userName, AttributeRequestLongpoll(attributeTopic.replace(".", "/"), timeout))
+    }
+
+    fun notifyAttributeChange(userName: String, attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
