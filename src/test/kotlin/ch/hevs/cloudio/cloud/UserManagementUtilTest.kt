@@ -18,7 +18,7 @@ class UserManagementUtilTest {
     @Autowired
     private lateinit var userGroupRepository: UserGroupRepository
 
-    //randomChar to retreive non possible data
+    //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
 
     @Before

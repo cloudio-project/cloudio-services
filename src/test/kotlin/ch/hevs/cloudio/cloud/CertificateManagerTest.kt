@@ -8,15 +8,12 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.mock.env.MockEnvironment
 import java.io.StringReader
 import java.util.*
 
-@RunWith(JUnit4::class)
 @SpringBootTest
 class CertificateManagerTest {
     @Test
