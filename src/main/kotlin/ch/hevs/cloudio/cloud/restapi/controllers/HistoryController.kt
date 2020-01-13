@@ -23,7 +23,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
 
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.POST])
     fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -44,7 +44,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
             return queryResult
     }
 
-    @RequestMapping("/getAttributeHistoryByDateRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getAttributeHistoryByDateRequest", method = [RequestMethod.POST])
     fun getAttributeHistoryByDateRequest(@RequestBody historyDateRequest: HistoryDateRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
@@ -64,7 +64,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
             return queryResult
     }
 
-    @RequestMapping("/getAttributeHistoryWhere", method = [RequestMethod.GET])
+    @RequestMapping("/getAttributeHistoryWhere", method = [RequestMethod.POST])
     fun getAttributeHistoryWhere(@RequestBody historyWhereRequest: HistoryWhereRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils
@@ -84,7 +84,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
             return queryResult
     }
 
-    @RequestMapping("/getAttributeHistoryExpert", method = [RequestMethod.GET])
+    @RequestMapping("/getAttributeHistoryExpert", method = [RequestMethod.POST])
     fun getAttributeHistoryExpert(@RequestBody historyExpertRequest: HistoryExpertRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
         val permissionMap = PermissionUtils

@@ -33,7 +33,7 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
         }
     }
 
-    @RequestMapping("/getUserGroup", method = [RequestMethod.GET])
+    @RequestMapping("/getUserGroup", method = [RequestMethod.POST])
     fun getUserGroup(@RequestBody userGroupRequest: UserGroupRequest): UserGroup {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))

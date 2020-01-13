@@ -29,7 +29,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
 
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    @RequestMapping("/getEndpointLogsRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsRequest", method = [RequestMethod.POST])
     fun getEndpointLogsRequest(@RequestBody logsDefaultRequest: LogsDefaultRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -56,7 +56,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getEndpointLogsByDateRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsByDateRequest", method = [RequestMethod.POST])
     fun getEndpointLogsByDateRequest(@RequestBody logsDateRequest: LogsDateRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -83,7 +83,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getEndpointLogsWhereRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsWhereRequest", method = [RequestMethod.POST])
     fun getEndpointLogsWhereRequest(@RequestBody logsWhereRequest: LogsWhereRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -133,7 +133,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getLogsLevel", method = [RequestMethod.GET])
+    @RequestMapping("/getLogsLevel", method = [RequestMethod.POST])
     fun getLogsLevel(@RequestBody logsGetRequest: LogsGetRequest): LogsGetAnswer {
         val userName = SecurityContextHolder.getContext().authentication.name
 

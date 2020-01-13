@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1")
 class UserGroupAccessControlController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
 
-    @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.GET])
+    @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.POST])
     fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))

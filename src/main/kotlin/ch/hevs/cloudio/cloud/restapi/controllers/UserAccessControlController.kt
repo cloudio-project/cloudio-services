@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1")
 class UserAccessControlController(var userRepository: UserRepository) {
 
-    @RequestMapping("/getUserAccessRight", method = [RequestMethod.GET])
+    @RequestMapping("/getUserAccessRight", method = [RequestMethod.POST])
     fun getUserAccessRight(@RequestBody userRightRequest: UserRequest): Map<String, PrioritizedPermission> {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))

@@ -33,7 +33,7 @@ class UserManagementController(var userRepository: UserRepository) {
         }
     }
 
-    @RequestMapping("/getUser", method = [RequestMethod.GET])
+    @RequestMapping("/getUser", method = [RequestMethod.POST])
     fun getUser(@RequestBody userRequest: UserRequest): User {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
