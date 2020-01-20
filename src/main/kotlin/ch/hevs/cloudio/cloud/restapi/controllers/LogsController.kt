@@ -29,7 +29,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
 
     val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
-    @RequestMapping("/getEndpointLogsRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsRequest", method = [RequestMethod.POST])
     fun getEndpointLogsRequest(@RequestBody logsDefaultRequest: LogsDefaultRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -56,7 +56,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getEndpointLogsByDateRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsByDateRequest", method = [RequestMethod.POST])
     fun getEndpointLogsByDateRequest(@RequestBody logsDateRequest: LogsDateRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -69,7 +69,13 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             if (endpointEntityRepository.findByIdOrNull(logsDateRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-            val queryResult = LogsUtil.getEndpointLogsByDateRequest(influx, database, logsDateRequest)
+            val queryResult : QueryResult?
+            try {
+                queryResult = LogsUtil.getEndpointLogsByDateRequest(influx, database, logsDateRequest)
+            }
+            catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequestException("Couln't access logs: "+e.message)
+            }
 
             if (queryResult == null)
                 throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
@@ -83,7 +89,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getEndpointLogsWhereRequest", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointLogsWhereRequest", method = [RequestMethod.POST])
     fun getEndpointLogsWhereRequest(@RequestBody logsWhereRequest: LogsWhereRequest): QueryResult {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -96,7 +102,13 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
             if (endpointEntityRepository.findByIdOrNull(logsWhereRequest.endpointUuid)!!.blocked)
                 throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-            val queryResult = LogsUtil.getEndpointLogsWhereRequest(influx, database, logsWhereRequest)
+            val queryResult : QueryResult?
+            try {
+                queryResult = LogsUtil.getEndpointLogsWhereRequest(influx, database, logsWhereRequest)
+            }
+            catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequestException("Couln't access logs: "+e.message)
+            }
 
             if (queryResult == null)
                 throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
@@ -133,7 +145,7 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         }
     }
 
-    @RequestMapping("/getLogsLevel", method = [RequestMethod.GET])
+    @RequestMapping("/getLogsLevel", method = [RequestMethod.POST])
     fun getLogsLevel(@RequestBody logsGetRequest: LogsGetRequest): LogsGetAnswer {
         val userName = SecurityContextHolder.getContext().authentication.name
 

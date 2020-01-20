@@ -17,17 +17,28 @@ object LogsUtil {
         return influx.query(Query("SELECT * FROM \"$logEntry\" WHERE time < now() order by time desc limit $number", database))
     }
 
+    @Throws(CloudioApiException::class)
     fun getEndpointLogsByDateRequest(influx: InfluxDB, database: String, logsDateRequest: LogsDateRequest): QueryResult? {
         val logEntry = logsDateRequest.endpointUuid + ".logs"
         val dateStart = logsDateRequest.dateStart
         val dateStop = logsDateRequest.dateStop
+
+
+        if(dateStart.contains(";")||dateStop.contains(";"))
+            throw CloudioApiException("Unauthorized character in one field of the request")
+
         return influx.query(Query("SELECT * FROM \"$logEntry\" WHERE time >= '$dateStart' and time <= '$dateStop'", database))
 
     }
 
+    @Throws(CloudioApiException::class)
     fun getEndpointLogsWhereRequest(influx: InfluxDB, database: String, logsWhereRequest: LogsWhereRequest): QueryResult? {
         val logEntry = logsWhereRequest.endpointUuid + ".logs"
         val where = logsWhereRequest.where
+
+        if(where.contains(";"))
+            throw CloudioApiException("Unauthorized character in one field of the request")
+
         return influx.query(Query("SELECT * FROM \"$logEntry\" WHERE $where", database))
 
     }

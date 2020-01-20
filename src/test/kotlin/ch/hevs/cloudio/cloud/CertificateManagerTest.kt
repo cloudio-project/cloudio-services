@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateManagerService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -7,15 +8,12 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.mock.env.MockEnvironment
 import java.io.StringReader
 import java.util.*
 
-@RunWith(JUnit4::class)
 @SpringBootTest
 class CertificateManagerTest {
     @Test
@@ -68,13 +66,15 @@ class CertificateManagerTest {
                 YbvuYfPwY7671lVKNWbdv88//aal3yt2ZnODikZCnLh7OdpNLg2wspBkxp6a7flR
                 7AsFbQ==
                 -----END CERTIFICATE-----""".trimIndent())
+            setProperty("cloudio.caCertificateJksPath", "src/main/resources/ca-cert.jks")
+            setProperty("cloudio.caCertificateJksPassword", "123456")
         }
 
 
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val authority = CertificateManagerService(environment)
-        val certAndKey = CertificateAndPrivateKey("","")
-        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(UUID.randomUUID()))) as CertificateAndPrivateKey?
+        val certAndKey = CertificateAndPrivateKey("", "")
+        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(CertificateAndKeyRequest(UUID.randomUUID().toString())))) as CertificateAndPrivateKey?
 
         assert(certAndKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
         assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") || certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))

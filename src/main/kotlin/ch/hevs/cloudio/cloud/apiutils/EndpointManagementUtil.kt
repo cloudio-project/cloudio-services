@@ -88,7 +88,7 @@ object EndpointManagementUtil {
                 if (node != null) {
                     return CloudioModelUtils.findAttributeInNode(node, splitTopic)
                 } else
-                    throw CloudioApiException("Attribute doesn't exist")
+                    throw CloudioApiException("Node doesn't exist")
             } else
                 throw CloudioApiException("Endpoint doesn't exist")
         } catch (e: EmptyStackException) {

@@ -43,7 +43,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
     @Autowired
     val rabbitTemplate = RabbitTemplate()
 
-    @RequestMapping("/createCertificateAndKey", method = [RequestMethod.GET])
+    @RequestMapping("/createCertificateAndKey", method = [RequestMethod.POST])
     fun createCertificateAndKey(@RequestBody certificateAndKeyRequest: CertificateAndKeyRequest): CertificateAndPrivateKey {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -64,7 +64,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         }
     }
 
-    @RequestMapping("/createCertificateAndKeyZip", method = [RequestMethod.GET])
+    @RequestMapping("/createCertificateAndKeyZip", method = [RequestMethod.POST])
     fun createCertificateAndKeyZip(@RequestBody certificateAndKeyZipRequest: CertificateAndKeyZipRequest): ResponseEntity<UrlResource> {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -123,7 +123,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         })
     }
 
-    @RequestMapping("/createCertificateFromKey", method = [RequestMethod.GET])
+    @RequestMapping("/createCertificateFromKey", method = [RequestMethod.POST])
     fun createCertificateFromKey(@RequestBody certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey {
         val userName = SecurityContextHolder.getContext().authentication.name
 

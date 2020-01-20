@@ -47,7 +47,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
 
     }
 
-    @RequestMapping("/getEndpoint", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpoint", method = [RequestMethod.POST])
     fun getEndpoint(@RequestBody endpointRequest: EndpointRequest): EndpointEntity {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -83,7 +83,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Endpoint")
     }
 
-    @RequestMapping("/getEndpointFriendlyName", method = [RequestMethod.GET])
+    @RequestMapping("/getEndpointFriendlyName", method = [RequestMethod.POST])
     fun getEndpointFriendlyName(@RequestBody endpointRequest: EndpointRequest): EndpointFriendlyName {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -115,7 +115,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Couldn't get endpoint friendly name")
     }
 
-    @RequestMapping("/getNode", method = [RequestMethod.GET])
+    @RequestMapping("/getNode", method = [RequestMethod.POST])
     fun getNode(@RequestBody nodeRequest: NodeRequest): Node {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -157,7 +157,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Node")
     }
 
-    @RequestMapping("/getWotNode", method = [RequestMethod.GET])
+    @RequestMapping("/getWotNode", method = [RequestMethod.POST])
     fun getWotNode(@RequestBody nodeRequest: NodeRequest, request: HttpServletRequest): NodeThingDescription {
         val host = request.requestURL.toString().replace("/api/v1/getWotNode", "")
 
@@ -199,7 +199,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
         }
     }
 
-    @RequestMapping("/getObject", method = [RequestMethod.GET])
+    @RequestMapping("/getObject", method = [RequestMethod.POST])
     fun getObject(@RequestBody objectRequest: ObjectRequest): CloudioObject {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -240,7 +240,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             throw CloudioHttpExceptions.BadRequestException("Couldn't get Object")
     }
 
-    @RequestMapping("/getAttribute", method = [RequestMethod.GET])
+    @RequestMapping("/getAttribute", method = [RequestMethod.POST])
     fun getAttribute(@RequestBody attributeRequest: AttributeRequest): Attribute {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -313,7 +313,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
         }
     }
 
-    @RequestMapping("/notifyAttributeChange", method = [RequestMethod.GET])
+    @RequestMapping("/notifyAttributeChange", method = [RequestMethod.POST])
     fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
         val userName = SecurityContextHolder.getContext().authentication.name
 
