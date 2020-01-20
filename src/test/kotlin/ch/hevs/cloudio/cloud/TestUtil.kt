@@ -1,9 +1,7 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.model.Authority
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PermissionPriority
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -29,7 +27,7 @@ object TestUtil {
                         "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/error/temperature" to PrioritizedPermission(Permission.GRANT, PermissionPriority.LOW),
                         "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/*/error/temperature" to PrioritizedPermission(Permission.GRANT, PermissionPriority.LOW)),
                 setOf("testGroup1", "testGroup2"),
-                setOf(Authority.BROKER_ADMINISTRATION, Authority.HTTP_ACCESS, Authority.HTTP_ADMIN))
+                setOf())
     }
 
     fun createUserGroup(userGroupName: String, userNames: Set<String>): UserGroup {
@@ -42,5 +40,15 @@ object TestUtil {
                         "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/error/inside/temperature" to PrioritizedPermission(Permission.GRANT, PermissionPriority.LOW),
                         "bc0f1bf8-bdae-11e9-9cb5-2a2ae2dbcce4/Meteo/temperatures/error/temperature" to PrioritizedPermission(Permission.GRANT, PermissionPriority.LOW)))
 
+    }
+
+    fun createEndpointEntity(endpointUuid: String, friendlyName: String): EndpointEntity {
+        return EndpointEntity(endpointUuid = endpointUuid, friendlyName = friendlyName, endpoint =
+        Endpoint(hashMapOf("demoNode" to
+                Node(emptySet(), hashMapOf("demoObject" to
+                        CloudioObject("", mutableMapOf(), hashMapOf(
+                                "demoMeasure" to Attribute(AttributeConstraint.Measure, AttributeType.Number, 10.0, 10.0),
+                                "demoSetPoint" to Attribute(AttributeConstraint.SetPoint, AttributeType.Number, 10.0, 10.0)
+                        )))))))
     }
 }
