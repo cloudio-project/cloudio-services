@@ -56,7 +56,13 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
             throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-        val queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, database, historyDateRequest)
+        val queryResult : QueryResult?
+        try {
+            queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, database, historyDateRequest)
+        }
+        catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+        }
 
         if (queryResult == null)
             throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
@@ -76,7 +82,13 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
             throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-        val queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
+        val queryResult : QueryResult?
+        try {
+            queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
+        }
+        catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+        }
 
         if (queryResult == null)
             throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
@@ -95,8 +107,13 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         val splitTopic = historyExpertRequest.attributeTopic.split("/")
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
             throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
-
-        val queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
+        val queryResult : QueryResult?
+        try {
+            queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
+        }
+        catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+        }
 
         if (queryResult == null)
             throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")

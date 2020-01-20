@@ -12,7 +12,7 @@ import java.nio.charset.Charset
 abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: String) {
 
     companion object {
-        private val log = LogFactory.getLog(AttributeChangeNotifier::class.java)
+        private val log = LogFactory.getLog(ExecOutputNotifier::class.java)
     }
 
     private val channel: Channel
