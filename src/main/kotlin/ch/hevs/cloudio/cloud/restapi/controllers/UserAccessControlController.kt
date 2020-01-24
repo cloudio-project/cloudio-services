@@ -8,27 +8,33 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
 class UserAccessControlController(var userRepository: UserRepository) {
 
     @RequestMapping("/getUserAccessRight", method = [RequestMethod.POST])
-    fun getUserAccessRight(@RequestBody userRightRequest: UserRequest): Map<String, PrioritizedPermission> {
+    fun getUserAccessRight(@RequestBody userRequest: UserRequest): Map<String, PrioritizedPermission> {
         val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserAccessRight(userName, userRequest)
+    }
+
+    @RequestMapping("/getUserAccessRight/{userNameRequest}", method = [RequestMethod.GET])
+    fun getUserAccessRight(@PathVariable userNameRequest: String): Map<String, PrioritizedPermission> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserAccessRight(userName, UserRequest(userNameRequest))
+    }
+
+    fun getUserAccessRight(userName: String, userRequest: UserRequest): Map<String, PrioritizedPermission> {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
-            val userRight = UserAccessControlUtil.getUserAccessRight(userRepository, userRightRequest)
+            val userRight = UserAccessControlUtil.getUserAccessRight(userRepository, userRequest)
             if (userRight == null)
                 throw CloudioHttpExceptions.BadRequestException("Coudln't return userRight")
             else
                 return userRight
-
         }
     }
 

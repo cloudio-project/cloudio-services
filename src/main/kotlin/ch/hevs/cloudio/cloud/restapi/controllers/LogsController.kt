@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.Environment
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -148,7 +145,16 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
     @RequestMapping("/getLogsLevel", method = [RequestMethod.POST])
     fun getLogsLevel(@RequestBody logsGetRequest: LogsGetRequest): LogsGetAnswer {
         val userName = SecurityContextHolder.getContext().authentication.name
+        return getLogsLevel(userName, logsGetRequest)
+    }
 
+    @RequestMapping("/getLogsLevel/{endpointUuid}", method = [RequestMethod.GET])
+    fun getLogsLevel(@PathVariable endpointUuid: String): LogsGetAnswer {
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return getLogsLevel(userName, LogsGetRequest(endpointUuid))
+    }
+
+    fun getLogsLevel(userName: String, logsGetRequest: LogsGetRequest): LogsGetAnswer {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val genericTopic = logsGetRequest.endpointUuid + "/#"
