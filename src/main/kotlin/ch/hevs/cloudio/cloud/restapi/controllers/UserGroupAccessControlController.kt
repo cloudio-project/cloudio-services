@@ -9,10 +9,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -21,6 +18,16 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.POST])
     fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {
         val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserGroupAccessRight(userName, userGroupRightRequest)
+    }
+
+    @RequestMapping("/getUserGroupAccessRight/{userGroupName}", method = [RequestMethod.GET])
+    fun getUserGroupAccessRight(@PathVariable userGroupName: String): Map<String, PrioritizedPermission> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserGroupAccessRight(userName, UserGroupRequest(userGroupName))
+    }
+
+    fun getUserGroupAccessRight(userName: String, userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
@@ -29,7 +36,6 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
                 throw CloudioHttpExceptions.BadRequestException("Coudln't return userGroup Right")
             else
                 return userRight
-
         }
     }
 

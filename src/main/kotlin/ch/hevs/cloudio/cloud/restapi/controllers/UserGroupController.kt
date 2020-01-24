@@ -9,10 +9,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -36,6 +33,16 @@ class UserGroupController(var userRepository: UserRepository, var userGroupRepos
     @RequestMapping("/getUserGroup", method = [RequestMethod.POST])
     fun getUserGroup(@RequestBody userGroupRequest: UserGroupRequest): UserGroup {
         val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserGroup(userName, userGroupRequest)
+    }
+
+    @RequestMapping("/getUserGroup/{userGroupName}", method = [RequestMethod.GET])
+    fun getUserGroup(@PathVariable userGroupName: String): UserGroup {
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return getUserGroup(userName, UserGroupRequest(userGroupName))
+    }
+
+    fun getUserGroup(userName:String, userGroupRequest: UserGroupRequest): UserGroup {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {

@@ -9,10 +9,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ER
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -36,6 +33,16 @@ class UserManagementController(var userRepository: UserRepository) {
     @RequestMapping("/getUser", method = [RequestMethod.POST])
     fun getUser(@RequestBody userRequest: UserRequest): User {
         val userName = SecurityContextHolder.getContext().authentication.name
+        return(getUser(userName, userRequest))
+    }
+
+    @RequestMapping("/getUser/{userNameRequest}", method = [RequestMethod.GET])
+    fun getUser(@PathVariable userNameRequest: String): User {
+        val userName = SecurityContextHolder.getContext().authentication.name
+        return(getUser(userName, UserRequest(userNameRequest)))
+    }
+
+    fun getUser(userName: String, userRequest: UserRequest): User {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
             throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
