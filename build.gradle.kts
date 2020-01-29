@@ -7,8 +7,8 @@ plugins {
     kotlin("plugin.spring") version "1.3.50"
 }
 
-group = "ch.hevs.cloudio2"
-version = "0.0.1-SNAPSHOT"
+group = "ch.hevs.cloudio"
+version = "0.2.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
