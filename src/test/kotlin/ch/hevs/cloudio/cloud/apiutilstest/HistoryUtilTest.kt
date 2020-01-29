@@ -69,7 +69,7 @@ class HistoryUtilTest {
                 HistoryDefaultRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure", 10))
 
         assert(history!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.demoNode.demoObject.demoMeasure")
-        assert(history!!.results[0].series[0].values.size == 10)
+        assert(history.results[0].series[0].values.size == 10)
     }
 
     @Test
@@ -79,7 +79,7 @@ class HistoryUtilTest {
                         "2020-01-14T08:57:49Z",
                         "2020-01-14T08:57:49.009Z"))
         assert(history!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.demoNode.demoObject.demoMeasure")
-        assert(history!!.results[0].series[0].values.size == 10)
+        assert(history.results[0].series[0].values.size == 10)
     }
 
     @Test
@@ -88,7 +88,7 @@ class HistoryUtilTest {
                 HistoryWhereRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure",
                         "time >= '2020-01-14T08:57:49Z' and time <= '2020-01-14T08:57:49.01Z'"))
         assert(history!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.demoNode.demoObject.demoMeasure")
-        assert(history!!.results[0].series[0].values.size == 10)
+        assert(history.results[0].series[0].values.size == 10)
     }
 
     @Test
@@ -104,26 +104,26 @@ class HistoryUtilTest {
                         1000))
 
         assert(history!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.demoNode.demoObject.demoMeasure")
-        assert(history!!.results[0].series[0].values.size == 5)
+        assert(history.results[0].series[0].values.size == 5)
     }
 
     @Test
     fun basicSqlInjection() {
         assertFails {
-            val history = HistoryUtil.getAttributeHistoryByDateRequest(influx, database,
+            HistoryUtil.getAttributeHistoryByDateRequest(influx, database,
                     HistoryDateRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure",
                             "2020-01-14T08:57:49.001Z",
                             "2020-01-14T08:57:49.01Z; Show databases"))
         }
 
         assertFails {
-            val history = HistoryUtil.getAttributeHistoryWhere(influx, database,
+            HistoryUtil.getAttributeHistoryWhere(influx, database,
                     HistoryWhereRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure",
                             "WHERE time >= '2020-01-14T08:57:49.001Z' and time <= '2020-01-14T08:57:49.01Z'; Show databases"))
         }
 
         assertFails {
-            val history = HistoryUtil.getAttributeHistoryExpert(influx, database,
+            HistoryUtil.getAttributeHistoryExpert(influx, database,
                     HistoryExpertRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure",
                             AggregationInflux.MEAN,
                             "2020-01-14T08:57:49.001Z",

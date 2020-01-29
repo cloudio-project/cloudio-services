@@ -78,7 +78,7 @@ class LogsUtilTest {
         val logs = LogsUtil.getEndpointLogsRequest(influx, database, LogsDefaultRequest(endpointParameters.endpointUuid, 10))
 
         assert(logs!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.logs")
-        assert(logs!!.results[0].series[0].values.size == 10)
+        assert(logs.results[0].series[0].values.size == 10)
     }
 
     @Test
@@ -88,7 +88,7 @@ class LogsUtilTest {
                 "2020-01-14T08:57:49.01Z"))
 
         assert(logs!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.logs")
-        assert(logs!!.results[0].series[0].values.size == 10)
+        assert(logs.results[0].series[0].values.size == 10)
 
     }
 
@@ -99,7 +99,7 @@ class LogsUtilTest {
                 "time >= '2020-01-14T08:57:49Z' and time <= '2020-01-14T08:57:49.01Z' and \"level\" = 'ERROR'"))
 
         assert(logs!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.logs")
-        assert(logs!!.results[0].series[0].values.size == 5)
+        assert(logs.results[0].series[0].values.size == 5)
 
     }
 
