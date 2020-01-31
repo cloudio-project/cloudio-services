@@ -5,7 +5,6 @@ services:
     ports:
     - "8883:8883"
     - "5671:5671"
-    - "5672:5672"
     - "15672:15672"
     environment:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
