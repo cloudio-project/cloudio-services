@@ -8,7 +8,7 @@ services:
     - "5672:5672"
     - "15672:15672"
     environment:
-      ADMIN_PASSWORD: admin
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       CA_CERT: ${CA_CERT}
       SERVER_CERT: ${SERVER_CERT}
       SERVER_KEY: ${SERVER_KEY}

@@ -64,19 +64,18 @@ tasks.register("bootRunDev") {
             //environment("spring.rabbitmq.ssl.key-store-type", "PKCS12")
             //environment("spring.rabbitmq.ssl.key-store", "file:cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.username", "admin")
-            environment("spring.rabbitmq.password", "admin")
+            val adminPassword: String? by project
+            environment("spring.rabbitmq.password", adminPassword ?: "admin")
 
             environment("spring.rabbitmq.ssl.trust-store-type", "JKS")
             environment("spring.rabbitmq.ssl.trust-store", "file:cloudio-dev-environment/certificates/ca.jks")
             environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
-            // InfluxDB (HTTP).
             // InfluxDB client (HTTP).
             environment("spring.influx.url", "http://localhost:8086")
             environment("cloudio.influxBatchIntervallMs", "3000")
             environment("cloudio.influxBatchSize", "2000")
 
-            // MongoDB (HTTP).
             // MongoDB client (HTTP).
             environment("spring.data.mongodb.host", "localhost")
 
