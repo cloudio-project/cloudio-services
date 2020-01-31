@@ -86,3 +86,5 @@ tasks.register("bootRunDev") {
     }
     finalizedBy("bootRun")
 }
+
+jib.to.image = "cloudio/${project.name}:${project.version}"
