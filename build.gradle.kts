@@ -16,8 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
@@ -25,6 +24,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.64")
+
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.61")
@@ -36,4 +38,43 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs = listOf("-Xjsr305=strict")
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
+}
+
+tasks.register("bootRunDev") {
+    group = "application"
+    description = "Runs this project as a Spring Boot application with the cloudio dev environment"
+    dependsOn("cloudio-dev-environment:createDevServices")
+    doFirst {
+        tasks.bootRun.configure {
+            environment("cloudio.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
+            environment("cloudio.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
+            environment("cloudio.caCertificateJksPath", "cloudio-dev-environment/certificates/ca.jks")
+            environment("cloudio.caCertificateJksPassword", "123456")
+
+            // RabbitMQ (AMQPs).
+            environment("spring.rabbitmq.host", "localhost")
+            environment("spring.rabbitmq.port", "5671")
+            environment("spring.rabbitmq.ssl.enabled", "true")
+            environment("spring.rabbitmq.ssl.algorithm", "TLSv1.2")
+            environment("spring.rabbitmq.ssl.verify-hostname", "false")
+            environment("spring.rabbitmq.ssl.validate-server-certificate", "true")
+
+            // TODO: Certificate based login does not work yet, for a reason the client does not send his certificate.
+            //environment("spring.rabbitmq.ssl.key-store-type", "PKCS12")
+            //environment("spring.rabbitmq.ssl.key-store", "file:cloudio-dev-environment/certificates/cloudio_services.p12")
+            environment("spring.rabbitmq.username", "admin")
+            environment("spring.rabbitmq.password", "admin")
+
+            environment("spring.rabbitmq.ssl.trust-store-type", "JKS")
+            environment("spring.rabbitmq.ssl.trust-store", "file:cloudio-dev-environment/certificates/ca.jks")
+            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
+
+            // InfluxDB (HTTP).
+            environment("spring.influx.url", "http://localhost:8086")
+
+            // MongoDB (HTTP).
+            environment("spring.data.mongodb.host", "localhost")
+        }
+    }
+    finalizedBy("bootRun")
 }
