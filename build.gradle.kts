@@ -46,6 +46,7 @@ tasks.register("bootRunDev") {
     dependsOn("cloudio-dev-environment:createDevServices")
     doFirst {
         tasks.bootRun.configure {
+            // Certificate manager.
             environment("cloudio.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
             environment("cloudio.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
             environment("cloudio.caCertificateJksPath", "cloudio-dev-environment/certificates/ca.jks")
@@ -70,10 +71,17 @@ tasks.register("bootRunDev") {
             environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
             // InfluxDB (HTTP).
+            // InfluxDB client (HTTP).
             environment("spring.influx.url", "http://localhost:8086")
+            environment("cloudio.influxBatchIntervallMs", "3000")
+            environment("cloudio.influxBatchSize", "2000")
 
             // MongoDB (HTTP).
+            // MongoDB client (HTTP).
             environment("spring.data.mongodb.host", "localhost")
+
+            // Web server.
+            environment("server.port", "8081")
         }
     }
     finalizedBy("bootRun")
