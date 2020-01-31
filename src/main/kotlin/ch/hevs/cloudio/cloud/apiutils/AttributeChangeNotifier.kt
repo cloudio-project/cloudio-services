@@ -3,9 +3,9 @@ package ch.hevs.cloudio.cloud.apiutils
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import com.rabbitmq.client.CancelCallback
-import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.DeliverCallback
 import org.apache.commons.logging.LogFactory
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import java.nio.charset.Charset
 
 abstract class AttributeChangeNotifier(connectionFactory: ConnectionFactory, topic: String) {
@@ -16,8 +16,8 @@ abstract class AttributeChangeNotifier(connectionFactory: ConnectionFactory, top
 
     init {
         //create a new queue with parameter topic and bind it to default amq.topic exchange
-        val connection = connectionFactory.newConnection()
-        val channel = connection.createChannel()
+        val connection = connectionFactory.createConnection()
+        val channel = connection.createChannel(false)
         val queueName = channel.queueDeclare().getQueue()
         channel.queueBind(queueName, "amq.topic", topic)
 
