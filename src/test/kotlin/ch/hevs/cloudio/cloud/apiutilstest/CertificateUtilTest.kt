@@ -82,18 +82,13 @@ class CertificateUtilTest {
 
     @Test
     fun createCertificateAndKeyZip() {
-
-        //get CA certificate
-        val caCertPem = CertificateUtil.getCaCertificate(environment)
-        val caCert = convertToX509Certificate(caCertPem.caCertificate)
-
         //create zip of certificate
         val path = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, CertificateAndKeyZipRequest(endpointParameters.endpointUuid, LibraryLanguage.JAVA))
 
         var myFile = File(path!!.replace("\"", ""))
         assert(myFile.exists())
 
-        val fileInZip = readZip(path!!.replace("\"", ""))
+        val fileInZip = readZip(path.replace("\"", ""))
         assert(fileInZip.contains("/ca-cert.jks"))
         assert(fileInZip.contains("/${endpointParameters.endpointUuid}.properties"))
         assert(fileInZip.contains("/${endpointParameters.endpointUuid}.p12"))
@@ -144,7 +139,7 @@ class CertificateUtilTest {
         c.time = certificate.notBefore
         c.add(Calendar.YEAR, 100)
         val notAfterDate = c.time
-        assert(notAfterDate == certificate!!.notAfter)
+        assert(notAfterDate == certificate.notAfter)
 
         assert(certificate.issuerX500Principal == caCert.subjectX500Principal)
     }

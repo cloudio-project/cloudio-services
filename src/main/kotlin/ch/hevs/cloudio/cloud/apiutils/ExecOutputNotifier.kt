@@ -4,9 +4,9 @@ import ch.hevs.cloudio.cloud.model.JobsLineOutput
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.DeliverCallback
 import org.apache.commons.logging.LogFactory
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import java.nio.charset.Charset
 
 abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: String) {
@@ -20,8 +20,8 @@ abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: S
 
     init {
         //create a new queue with parameter topic and bind it to default amq.topic exchange
-        val connection = connectionFactory.newConnection()
-        channel = connection.createChannel()
+        val connection = connectionFactory.createConnection()
+        channel = connection.createChannel(false)
         queueName = channel.queueDeclare().getQueue()
         channel.queueBind(queueName, "amq.topic", topic)
 

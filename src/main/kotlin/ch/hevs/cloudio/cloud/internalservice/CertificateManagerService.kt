@@ -191,13 +191,7 @@ class CertificateManagerService(environment: Environment) {
                     out.close()
                     return mapper.writeValueAsString(zipFile)
                 }
-                else -> {
-
-                }
             }
-
-
-            return mapper.writeValueAsString(true)
         } catch (exception: Exception) {
             log.error("endpointKey-certificatePairZip", exception)
         }

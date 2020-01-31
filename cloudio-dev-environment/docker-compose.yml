@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  rabbitmq:
+    image: cloudio/cloudio-rabbitmq:latest
+    ports:
+    - "8883:8883"
+    - "5671:5671"
+    - "15672:15672"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CA_CERT: ${CA_CERT}
+      SERVER_CERT: ${SERVER_CERT}
+      SERVER_KEY: ${SERVER_KEY}
+
+  influx:
+    image: influxdb:latest
+    ports:
+    - "8086:8086"
+
+  mongo:
+    image: mongo:latest
+    ports:
+    - "27017:27017"
