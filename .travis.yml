@@ -10,7 +10,7 @@ jobs:
       script: ./gradlew bootJar
 
     - stage: deploy
-      if: branch = develop
+      if: branch = develop OR tag IS present
       script: ./gradlew jib -Djib.to.auth.username=${DOCKER_HUB_USERNAME} -Djib.to.auth.password=${DOCKER_HUB_PASSWORD}
 
 
