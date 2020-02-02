@@ -2,7 +2,7 @@ package ch.hevs.cloudio.cloud.apiutilstest
 
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.utils.toBigInteger
+import ch.hevs.cloudio.cloud.extension.toBigInteger
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser

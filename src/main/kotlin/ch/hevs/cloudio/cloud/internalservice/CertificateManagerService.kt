@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
-import ch.hevs.cloudio.cloud.utils.toBigInteger
+import ch.hevs.cloudio.cloud.extension.toBigInteger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.apache.commons.logging.LogFactory
