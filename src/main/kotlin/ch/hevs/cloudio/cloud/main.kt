@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class CloudApplication
+class CloudioApplication
 
 fun main(args: Array<String>) {
-    runApplication<CloudApplication>(*args)
+    runApplication<CloudioApplication>(*args)
 }
