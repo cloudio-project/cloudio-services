@@ -24,10 +24,8 @@ class AuthenticationService(private val userRepository: UserRepository,
                             private val endpointEntityRepository: EndpointEntityRepository,
                             private val passwordEncoder: BCryptPasswordEncoder) {
 
-    companion object {
-        private val log = LogFactory.getLog(AuthenticationService::class.java)
-        private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
-    }
+    private val log = LogFactory.getLog(AuthenticationService::class.java)
+    private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
 
     @RabbitListener(bindings = [QueueBinding(value = Queue("authentication"),
             exchange = Exchange(value = "authentication", type = ExchangeTypes.FANOUT, ignoreDeclarationExceptions = "true"))])
