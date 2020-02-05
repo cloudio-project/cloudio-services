@@ -49,10 +49,10 @@ tasks.register("bootRunDev") {
     doFirst {
         tasks.bootRun.configure {
             // Certificate manager.
-            environment("cloudio.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
-            environment("cloudio.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
-            environment("cloudio.caCertificateJksPath", "cloudio-dev-environment/certificates/ca.jks")
-            environment("cloudio.caCertificateJksPassword", "123456")
+            environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
+            environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
+            environment("cloudio.cert-manager.caCertificateJksPath", "cloudio-dev-environment/certificates/ca.jks")
+            environment("cloudio.cert-manager.caCertificateJksPassword", "123456")
 
             // RabbitMQ (AMQPs).
             // TODO: Certificate based login does not work yet, for a reason the client does not send his certificate.
