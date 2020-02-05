@@ -12,27 +12,22 @@ import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
 @Profile("authentication", "default")
-class AuthenticationService(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class AuthenticationService(private val userRepository: UserRepository,
+                            private val userGroupRepository: UserGroupRepository,
+                            private val endpointEntityRepository: EndpointEntityRepository,
+                            private val passwordEncoder: BCryptPasswordEncoder) {
 
     companion object {
         private val log = LogFactory.getLog(AuthenticationService::class.java)
         private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
     }
-
-    @Autowired
-    val rabbitTemplate = RabbitTemplate()
-
-    private var encoder: PasswordEncoder = BCryptPasswordEncoder()
 
     @RabbitListener(bindings = [QueueBinding(value = Queue("authentication"),
             exchange = Exchange(value = "authentication", type = ExchangeTypes.FANOUT, ignoreDeclarationExceptions = "true"))])
@@ -49,7 +44,7 @@ class AuthenticationService(var userRepository: UserRepository, var userGroupRep
                         log.info("User authentication with password")
 
                         val user = userRepository.findById(id)
-                        if (user.isPresent && encoder.matches(password, user.get().passwordHash)) {
+                        if (user.isPresent && passwordEncoder.matches(password, user.get().passwordHash)) {
                             user.get().authorities.joinToString(separator = ",") { it.value }
                         } else {
                             "refused"
