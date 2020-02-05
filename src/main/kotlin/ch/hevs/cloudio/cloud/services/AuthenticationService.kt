@@ -12,17 +12,20 @@ import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 
 @Service
 @Profile("authentication", "default")
 class AuthenticationService(private val userRepository: UserRepository,
                             private val userGroupRepository: UserGroupRepository,
                             private val endpointEntityRepository: EndpointEntityRepository,
-                            private val passwordEncoder: BCryptPasswordEncoder) {
+                            private val passwordEncoder: BCryptPasswordEncoder,
+                            private val rabbitProperties: RabbitProperties) {
 
     private val log = LogFactory.getLog(AuthenticationService::class.java)
     private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
@@ -42,98 +45,134 @@ class AuthenticationService(private val userRepository: UserRepository,
         val action = message.messageProperties.headers["action"]?.toString()
         val id = message.messageProperties.headers["username"].toString()
 
-        try {
-            return when (action) {
-                "login" -> {
-                    val password = message.messageProperties.headers["password"]?.toString()
+        return when (action) {
+            "login" -> {
+                val password = message.messageProperties.headers["password"]?.toString()
 
-                    if (password != null) {   //authentication with password --> User
-                        log.info("User authentication with password")
-
-                        val user = userRepository.findById(id)
-                        if (user.isPresent && passwordEncoder.matches(password, user.get().passwordHash)) {
-                            user.get().authorities.joinToString(separator = ",") { it.value }
-                        } else {
-                            "refused"
-                        }
-                    } else {   //authentication with certificates --> Endpoint
-                        log.info("Endpoint authentication with certificates")
-
-                        val endpoint = endpointEntityRepository.findById(id)
-                        if (endpoint.isPresent) {
-                            "allow"
-                        } else {
-                            "refused"
-                        }
+                if (password != null) {   // Authentication with password --> User.
+                    val user = userRepository.findById(id)
+                    if (user.isPresent && passwordEncoder.matches(password, user.get().passwordHash)) {
+                        val authorities = user.get().authorities.joinToString(separator = ",") { it.value }
+                        log.debug("Access granted for user \"$id\" using password (authorities=$authorities).")
+                        authorities
+                    } else {
+                        log.warn("Access refused for user \"$id\" (password).")
+                        "refused"
+                    }
+                } else {   // Authentication with certificates --> Endpoint.
+                    val endpoint = endpointEntityRepository.findById(id)
+                    if (endpoint.isPresent && !endpoint.get().blocked) {
+                        log.debug("Access granted for endpoint \"$id\" using client certificate.")
+                        "allow"
+                    } else {
+                        log.warn("Access refused for endpoint \"$id\" (certificate).")
+                        "refused"
                     }
                 }
-                "check_vhost" -> {
-                    val vhost = message.messageProperties.headers["vhost"]?.toString()
-                    when (vhost) {
-                        "/" -> "allow"
-                        else -> {
-                            log.warn("$action $vhost")
+            }
+            "check_vhost" -> {
+                when (val vhost = message.messageProperties.headers["vhost"]?.toString()) {
+                    rabbitProperties.virtualHost -> {
+                        log.debug("Access to virtual host \"$vhost\" granted for user/endpoint \"$id\".")
+                        "allow"
+                    }
+                    else -> {
+                        log.warn("Access to virtual host \"$vhost\" refused for user/endpoint \"$id\".")
+                        "deny"
+                    }
+                }
+            }
+            "check_resource" -> {
+                val resource = message.messageProperties.headers["resource"]?.toString()
+                val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val name = message.messageProperties.headers["name"]?.toString()
+                when (resource) {
+                    "queue" -> if (permission.value <= Permission.CONFIGURE.value) {
+                        log.debug("Permission $permission to queue \"$name\" granted for user/endpoint \"$id\"")
+                        "allow"
+                    } else {
+                        log.warn("Permission $permission to queue \"$name\" refused for user/endpoint \"$id\"")
+                        "deny"
+                    }
+                    "exchange" -> if (permission.value <= Permission.WRITE.value) {
+                        log.debug("Permission $permission to exchange \"$name\" granted for user/endpoint \"$id\"")
+                        "allow"
+                    } else {
+                        log.warn("Permission $permission to exchange \"$name\" refused for user/endpoint \"$id\"")
+                        "deny"
+                    }
+                    else -> {
+                        log.warn("Permission $permission to $resource \"$name\" refused for user/endpoint \"$id\"")
+                        "deny"
+                    }
+                }
+            }
+            "check_topic" -> {
+                val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
+                if (routingKey.size < 2) {
+                    log.warn("Permission to topic refused - topic is too small.")
+                    return "deny"
+                }
+
+                when (uuidPattern.matches(id)) {
+                    true -> {
+                        if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
+                            if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked) {
+                                log.debug("Access to topic $routingKey granted for endpoint $id")
+                                "allow"
+                            }
+                            else {
+                                log.warn("Access to topic $routingKey refused for endpoint $id")
+                                "deny"
+                            }
+                        } else {
+                            log.warn("Access to topic $routingKey refused for endpoint $id")
                             "deny"
                         }
                     }
-                }
-                "check_resource" -> {
-                    val resource = message.messageProperties.headers["resource"]?.toString()
-                    val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                    false -> {
+                        val permissionMap = PermissionUtils
+                                .permissionFromUserAndGroup(id, userRepository, userGroupRepository)
 
-                    when (resource) {
-                        "queue" -> if (permission.value <= Permission.CONFIGURE.value) "allow" else "deny"
+                        val topicFilter = routingKey.drop(1) // Drop the verb @...
 
-                        "exchange" -> if (permission.value <= Permission.WRITE.value) "allow" else "deny"
+                        // Check if there is permission linked to topic.
+                        val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
 
-                        else -> "deny"
-                    }
-                }
-                "check_topic" -> {
-                    val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
-                    val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
-
-                    if (routingKey.size < 2)
-                        return "deny"
-
-                    when (uuidPattern.matches(id)) {
-                        true -> {
-                            if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
-                                if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked)
-                                    "allow"
-                                else
-                                    "deny"
-                            } else
+                        when {
+                            endpointPermission == Permission.DENY -> {
+                                log.warn("Access to topic $routingKey refused for user $id")
                                 "deny"
-                        }
-                        false -> {
-                            val permissionMap = PermissionUtils
-                                    .permissionFromUserAndGroup(id, userRepository, userGroupRepository)
-
-                            val topicFilter = routingKey.drop(1) //drop the @...
-
-                            //check if there is permission linked to topic
-                            val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
-
-                            when {
-                                !endpointEntityRepository.existsById(routingKey[1]) -> "deny"
-                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> "deny"
-                                endpointPermission == Permission.DENY -> "deny"
-                                routingKey[0][0] != '@' -> "deny"
-                                endpointPermission.value >= permission.value -> "allow"
-                                else -> "deny"
+                            }
+                            routingKey[0][0] != '@' -> {
+                                log.warn("Access to topic $routingKey refused for user $id - invalid topic")
+                                "deny"
+                            }
+                            !endpointEntityRepository.existsById(routingKey[1]) -> {
+                                log.warn("Access to topic $routingKey refused for user $id - endpoint does not exist")
+                                "deny"
+                            }
+                            endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> {
+                                log.warn("Access to topic $routingKey refused for user $id - endpoint is blocked")
+                                "deny"
+                            }
+                            endpointPermission.value >= permission.value -> {
+                                log.debug("Access to topic $routingKey granted for user $id")
+                                "allow"
+                            }
+                            else -> {
+                                log.warn("Access to topic $routingKey refused for user $id - unknown error")
+                                "deny"
                             }
                         }
                     }
                 }
-                else -> {
-                    log.info("Unexpected header action, connection denied")
-                    "deny"
-                }
             }
-        } catch (exception: Exception) {
-            log.error("Exception during authentication message handling", exception)
+            else -> {
+                log.info("Unexpected header action, connection denied")
+                throw RuntimeException("Invalid authentication action")
+            }
         }
-        return "allow"
     }
 }
