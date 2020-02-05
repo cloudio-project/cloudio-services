@@ -55,34 +55,16 @@ tasks.register("bootRunDev") {
             environment("cloudio.caCertificateJksPassword", "123456")
 
             // RabbitMQ (AMQPs).
-            environment("spring.rabbitmq.host", "localhost")
-            environment("spring.rabbitmq.port", "5671")
-            environment("spring.rabbitmq.ssl.enabled", "true")
-            environment("spring.rabbitmq.ssl.algorithm", "TLSv1.2")
-            environment("spring.rabbitmq.ssl.verify-hostname", "false")
-            environment("spring.rabbitmq.ssl.validate-server-certificate", "true")
-
             // TODO: Certificate based login does not work yet, for a reason the client does not send his certificate.
             //environment("spring.rabbitmq.ssl.key-store-type", "PKCS12")
             //environment("spring.rabbitmq.ssl.key-store", "file:cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.username", "admin")
             val adminPassword: String? by project
             environment("spring.rabbitmq.password", adminPassword ?: "admin")
-
+            environment("spring.rabbitmq.ssl.verify-hostname", "false")
             environment("spring.rabbitmq.ssl.trust-store-type", "JKS")
             environment("spring.rabbitmq.ssl.trust-store", "file:cloudio-dev-environment/certificates/ca.jks")
             environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
-
-            // InfluxDB client (HTTP).
-            environment("spring.influx.url", "http://localhost:8086")
-            environment("cloudio.influxBatchIntervallMs", "3000")
-            environment("cloudio.influxBatchSize", "2000")
-
-            // MongoDB client (HTTP).
-            environment("spring.data.mongodb.host", "localhost")
-
-            // Web server.
-            environment("server.port", "8081")
         }
     }
     finalizedBy("bootRun")

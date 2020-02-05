@@ -1,6 +1,5 @@
 spring:
   rabbitmq:
-    host: localhost
     port: 5671
     ssl:
       enabled: true
@@ -13,9 +12,3 @@ spring:
     mongodb:
       host: localhost
       database: cloudio
-
-  cloudio:
-    influx:
-
-    influxBatchIntervallMs: 3000
-    influxBatchSize: 2000
