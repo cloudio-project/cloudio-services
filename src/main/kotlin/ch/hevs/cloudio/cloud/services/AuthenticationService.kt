@@ -27,8 +27,17 @@ class AuthenticationService(private val userRepository: UserRepository,
     private val log = LogFactory.getLog(AuthenticationService::class.java)
     private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
 
-    @RabbitListener(bindings = [QueueBinding(value = Queue("authentication"),
-            exchange = Exchange(value = "authentication", type = ExchangeTypes.FANOUT, ignoreDeclarationExceptions = "true"))])
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue("authentication"),
+                exchange = Exchange(
+                        value = "authentication",
+                        type = ExchangeTypes.FANOUT,
+                        durable = "false",
+                        ignoreDeclarationExceptions = "true"
+                )
+        )
+    ])
     fun authenticate(message: Message): String {
         val action = message.messageProperties.headers["action"]?.toString()
         val id = message.messageProperties.headers["username"].toString()
