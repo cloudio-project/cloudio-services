@@ -1,0 +1,21 @@
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5671
+    ssl:
+      enabled: true
+      algorithm: TLSv1.2
+
+  influx:
+    url: http://localhost:8086
+
+  data:
+    mongodb:
+      host: localhost
+      database: cloudio
+
+  cloudio:
+    influx:
+
+    influxBatchIntervallMs: 3000
+    influxBatchSize: 2000
