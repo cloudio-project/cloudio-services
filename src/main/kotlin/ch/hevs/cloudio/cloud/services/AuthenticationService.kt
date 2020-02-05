@@ -170,7 +170,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                 }
             }
             else -> {
-                log.info("Unexpected header action, connection denied")
+                log.error("Unexpected header action, connection denied")
                 throw RuntimeException("Invalid authentication action")
             }
         }
