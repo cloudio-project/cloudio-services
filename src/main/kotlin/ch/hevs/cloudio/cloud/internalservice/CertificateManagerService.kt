@@ -39,10 +39,9 @@ import java.util.zip.ZipOutputStream
 
 @Service
 @Profile("certificate-manager", "default")
-class CertificateManagerService(private val properties: CloudioCertificateManagerProperties) {
+class CertificateManagerService(private val properties: CloudioCertificateManagerProperties,
+                                private val mapper: ObjectMapper) {
     private val log = LogFactory.getLog(CertificateManagerService::class.java)
-
-    private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
 
     private val bouncyCastle = BouncyCastleProvider()
     private val keyPairGenerator: KeyPairGenerator

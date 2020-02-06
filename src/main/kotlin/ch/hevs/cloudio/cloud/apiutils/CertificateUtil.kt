@@ -6,12 +6,12 @@ import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.core.env.Environment
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 
 object CertificateUtil {
 
     fun createCertificateAndKey(rabbitTemplate: RabbitTemplate, certificateAndKeyRequest: CertificateAndKeyRequest): CertificateAndPrivateKey {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
 
         //set waiting time to infinite --> wait until the Certificate manager service turns on
         rabbitTemplate.setReplyTimeout(15000)
@@ -27,7 +27,7 @@ object CertificateUtil {
     }
 
     fun createCertificateAndKeyZip(rabbitTemplate: RabbitTemplate, certificateAndKeyZipRequest: CertificateAndKeyZipRequest): String? {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
 
         //set waiting time to infinite --> wait until the Certificate manager service turns on
         rabbitTemplate.setReplyTimeout(15000)
@@ -42,7 +42,7 @@ object CertificateUtil {
     }
 
     fun createCertificateFromKey(rabbitTemplate: RabbitTemplate, certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
         //set waiting time to infinite --> wait until the Certificate manager service turns on
         rabbitTemplate.setReplyTimeout(15000)
 

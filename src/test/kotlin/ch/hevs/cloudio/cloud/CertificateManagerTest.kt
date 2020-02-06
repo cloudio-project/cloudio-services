@@ -11,6 +11,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.mock.env.MockEnvironment
 import java.io.StringReader
 import java.util.*
@@ -71,8 +72,8 @@ class CertificateManagerTest {
                 caCertificateJksPassword = "123456"
         )
 
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-        val authority = CertificateManagerService(certificateManagerProperties)
+        val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
+        val authority = CertificateManagerService(certificateManagerProperties, mapper)
         val certAndKey = CertificateAndPrivateKey("", "")
         mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(CertificateAndKeyRequest(UUID.randomUUID().toString())))) as CertificateAndPrivateKey?
 
