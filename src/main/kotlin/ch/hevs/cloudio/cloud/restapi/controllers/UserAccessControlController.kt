@@ -28,11 +28,11 @@ class UserAccessControlController(var userRepository: UserRepository) {
 
     fun getUserAccessRight(userName: String, userRequest: UserRequest): Map<String, PrioritizedPermission> {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val userRight = UserAccessControlUtil.getUserAccessRight(userRepository, userRequest)
             if (userRight == null)
-                throw CloudioHttpExceptions.BadRequestException("Coudln't return userRight")
+                throw CloudioHttpExceptions.BadRequest("Coudln't return userRight")
             else
                 return userRight
         }
@@ -42,13 +42,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun addUserAccessRight(@RequestBody userRightRequestList: UserRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserAccessControlUtil.addUserAccessRight(userRepository, userRightRequestList)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't add user access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't add user access right: " + e.message)
             }
         }
     }
@@ -57,13 +57,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun modifyUserAccessRight(@RequestBody userRightRequest: UserRightRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserAccessControlUtil.modifyUserAccessRight(userRepository, userRightRequest)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't modify user access right: " + e.message)
             }
         }
     }
@@ -72,13 +72,13 @@ class UserAccessControlController(var userRepository: UserRepository) {
     fun removeUserAccessRight(@RequestBody userTopicRequest: UserTopicRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserAccessControlUtil.removeUserAccessRight(userRepository, userTopicRequest)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't delete user access right: " + e.message)
             }
         }
     }
@@ -89,9 +89,9 @@ class UserAccessControlController(var userRepository: UserRepository) {
 
         try {
             UserAccessControlUtil.giveUserAccessRight(userRepository, userRightRequestList, userName)
-            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couldn't add user access right: " + e.message)
+            throw CloudioHttpExceptions.BadRequest("Couldn't add user access right: " + e.message)
         }
     }
 }

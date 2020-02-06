@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.apiutils
 
+import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -57,7 +58,7 @@ object CertificateUtil {
     }
     //CertificateAndKeyRequest CertificateFromKeyRequest
 
-    fun getCaCertificate(environment: Environment): CaCertificate {
-        return CaCertificate(environment.getRequiredProperty("cloudio.caCertificate"))
+    fun getCaCertificate(certificateManagerProperties: CloudioCertificateManagerProperties): CaCertificate {
+        return CaCertificate(certificateManagerProperties.caCertificate)
     }
 }

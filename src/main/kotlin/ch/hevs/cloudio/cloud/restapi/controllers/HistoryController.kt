@@ -30,16 +30,16 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyDefaultRequest.attributeTopic.split("/")) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyDefaultRequest.attributeTopic.split("/")
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
-            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult = HistoryUtil.getAttributeHistoryRequest(influx, database, historyDefaultRequest)
 
         if (queryResult == null)
-            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
         else
             return queryResult
     }
@@ -50,22 +50,22 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyDateRequest.attributeTopic.split("/")) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyDateRequest.attributeTopic.split("/")
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
-            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult : QueryResult?
         try {
             queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, database, historyDateRequest)
         }
         catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+            throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)
         }
 
         if (queryResult == null)
-            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
         else
             return queryResult
     }
@@ -76,22 +76,22 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyWhereRequest.attributeTopic.split("/")) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyWhereRequest.attributeTopic.split("/")
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
-            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult : QueryResult?
         try {
             queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
         }
         catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+            throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)
         }
 
         if (queryResult == null)
-            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
         else
             return queryResult
     }
@@ -102,21 +102,21 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, historyExpertRequest.attributeTopic.split("/")) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequestException("You don't have permission to  access this attribute")
+            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyExpertRequest.attributeTopic.split("/")
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
-            throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         val queryResult : QueryResult?
         try {
             queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
         }
         catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couln't access history: "+e.message)
+            throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)
         }
 
         if (queryResult == null)
-            throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+            throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
         else
             return queryResult
     }
