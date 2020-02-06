@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
+import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateManagerService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -18,8 +19,8 @@ import java.util.*
 class CertificateManagerTest {
     @Test
     fun certificateAuthority() {
-        val environment = MockEnvironment().apply {
-            setProperty("cloudio.caPrivateKey", """
+        val certificateManagerProperties = CloudioCertificateManagerProperties(
+                caPrivateKey = """
                 -----BEGIN PRIVATE KEY-----
                 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpurJYJ1254tDt
                 4xNXrd1QkLGri3jounN9DbnQvzfifrvg6jPkhk30wrgeh67TUDkcTOZmwFoYoBt9
@@ -47,8 +48,8 @@ class CertificateManagerTest {
                 WlW7A7xsaBdcSTCJ5uj5BE5JD6VhBnMymz6eMgjUT9+M2DcadLjqRfvzOhSBUFpa
                 xqqq7yfKPaM1+a6u+UJwXSVHqAIH6//7gKKd3oK76BdVQ5fWdIPU06oTT0UlUmPU
                 v3rKeyI7tYvP/q3XHieRTPM=
-                -----END PRIVATE KEY-----""".trimIndent())
-            setProperty("cloudio.caCertificate", """
+                -----END PRIVATE KEY-----""".trimIndent(),
+                caCertificate = """
                 -----BEGIN CERTIFICATE-----
                 MIICoDCCAYgCCQCm/ar+qaI74zANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdj
                 bG91ZGlPMB4XDTE5MDQxNzE5MTA0NVoXDTI5MDQxNDE5MTA0NVowEjEQMA4GA1UE
@@ -65,14 +66,13 @@ class CertificateManagerTest {
                 nyja2xLqF0RWy9Pfht9izkjT0ISa7YzQ9FNBfcgwH4584XcZzgVmqBP1hSbyaMqS
                 YbvuYfPwY7671lVKNWbdv88//aal3yt2ZnODikZCnLh7OdpNLg2wspBkxp6a7flR
                 7AsFbQ==
-                -----END CERTIFICATE-----""".trimIndent())
-            setProperty("cloudio.caCertificateJksPath", "src/main/resources/ca-cert.jks")
-            setProperty("cloudio.caCertificateJksPassword", "123456")
-        }
-
+                -----END CERTIFICATE-----""".trimIndent(),
+                caCertificateJksPath = "src/main/resources/ca-cert.jks",
+                caCertificateJksPassword = "123456"
+        )
 
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val authority = CertificateManagerService(environment)
+        val authority = CertificateManagerService(certificateManagerProperties)
         val certAndKey = CertificateAndPrivateKey("", "")
         mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(CertificateAndKeyRequest(UUID.randomUUID().toString())))) as CertificateAndPrivateKey?
 
@@ -80,7 +80,7 @@ class CertificateManagerTest {
         assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") || certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))
 
         val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(environment.getProperty("cloudio.caCertificate"))
+                StringReader(certificateManagerProperties.caCertificate)
         ).readObject() as X509CertificateHolder)
         caCert.checkValidity()
 
