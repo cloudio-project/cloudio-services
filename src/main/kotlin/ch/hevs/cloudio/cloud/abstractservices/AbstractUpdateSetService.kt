@@ -17,10 +17,17 @@ abstract class AbstractUpdateSetService {
         private val log = LogFactory.getLog(AbstractUpdateSetService::class.java)
     }
 
-    @RabbitListener(
-            bindings = [QueueBinding(value = Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@update.#", "@set.#"])])
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(),
+                exchange = Exchange(
+                        value = "amq.topic",
+                        type = ExchangeTypes.TOPIC,
+                        ignoreDeclarationExceptions = "true"
+                ),
+                key = ["@update.#", "@set.#"]
+        )
+    ])
     fun handleUpdateMessage(message: Message) {
         val prefix = message.messageProperties.receivedRoutingKey.split(".")[0]
         try {
@@ -50,6 +57,6 @@ abstract class AbstractUpdateSetService {
         }
     }
 
-    //Abstract method to handle update of message
+    // Abstract method to handle update of message.
     abstract fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String)
 }

@@ -17,10 +17,17 @@ abstract class AbstractLogsService {
         private val log = LogFactory.getLog(AbstractLogsService::class.java)
     }
 
-    @RabbitListener(
-            bindings = [QueueBinding(value = Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@logsLevel.#"])])
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(),
+                exchange = Exchange(
+                    value = "amq.topic",
+                    type = ExchangeTypes.TOPIC,
+                    ignoreDeclarationExceptions = "true"
+                ),
+                key = ["@logsLevel.#"]
+        )
+    ])
     fun handleLogLevelMessage(message: Message) {
         try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
@@ -39,10 +46,17 @@ abstract class AbstractLogsService {
         }
     }
 
-    @RabbitListener(
-            bindings = [QueueBinding(value = Queue(),
-                    exchange = Exchange(value = "amq.topic", type = ExchangeTypes.TOPIC, ignoreDeclarationExceptions = "true"),
-                    key = ["@logs.#"])])
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(),
+                exchange = Exchange(
+                        value = "amq.topic",
+                        type = ExchangeTypes.TOPIC,
+                        ignoreDeclarationExceptions = "true"
+                ),
+                key = ["@logs.#"]
+        )
+    ])
     fun handleLogsMessage(message: Message) {
         try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
@@ -63,9 +77,9 @@ abstract class AbstractLogsService {
         }
     }
 
-    //Abstract method to handle log level change messages
+    // Abstract method to handle log level change messages.
     abstract fun logLevelChange(endpointUuid: String, logParameter: LogParameter)
 
-    //Abstract method to handle logs messages
+    // Abstract method to handle logs messages.
     abstract fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage)
 }
