@@ -1,5 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
+import ch.hevs.cloudio.cloud.extension.findAttribute
+import ch.hevs.cloudio.cloud.extension.findObject
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
@@ -8,7 +10,6 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
 import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
-import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -67,7 +68,7 @@ object EndpointManagementUtil {
             if (endpointEntity != null) {
                 val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
                 if (node != null) {
-                    return CloudioModelUtils.findObjectInNode(node, splitTopic)
+                    return node.findObject(splitTopic)
                 } else
                     throw CloudioApiException("Object doesn't exist")
             } else
@@ -86,7 +87,7 @@ object EndpointManagementUtil {
             if (endpointEntity != null) {
                 val node = endpointEntity.endpoint.nodes[splitTopic.pop()]
                 if (node != null) {
-                    return CloudioModelUtils.findAttributeInNode(node, splitTopic)
+                    return node.findAttribute(splitTopic)
                 } else
                     throw CloudioApiException("Node doesn't exist")
             } else

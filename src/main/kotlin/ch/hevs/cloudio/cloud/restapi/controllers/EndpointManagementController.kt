@@ -1,6 +1,8 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
+import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
@@ -9,7 +11,6 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
-import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
@@ -75,7 +76,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                CloudioModelUtils.fillAttributeFromEndpoint(influx, database, endpointEntity)
+                endpointEntity.fillAttributesFromInfluxDB(influx, database)
                 PermissionUtils.censorEndpointFromUserPermission(permissionMap, endpointEntity)
                 return endpointEntity
             }
@@ -149,7 +150,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                CloudioModelUtils.fillAttributeFromNode(influx, database, nodeRequest.nodeTopic + "/", node)
+                node.fillAttributesFromInfluxDB(influx, database, nodeRequest.nodeTopic)
                 PermissionUtils.censorNodeFromUserPermission(permissionMap, nodeRequest.nodeTopic + "/", node)
                 return node
             }
@@ -232,7 +233,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                CloudioModelUtils.fillAttributeFromObject(influx, database, objectRequest.objectTopic + "/", cloudioObject)
+                cloudioObject.fillAttributesFromInfluxDB(influx, database, objectRequest.objectTopic)
                 PermissionUtils.censorObjectFromUserPermission(permissionMap, objectRequest.objectTopic + "/", cloudioObject)
                 return cloudioObject
             }
@@ -272,7 +273,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                CloudioModelUtils.fillAttributeFromTopic(influx, database, attributeRequest.attributeTopic, attribute)
+                attribute.fillFromInfluxDB(influx, database, attributeRequest.attributeTopic)
                 return attribute
             }
         } else
