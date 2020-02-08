@@ -5,8 +5,6 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
-import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
-import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateManagerService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.bouncycastle.cert.X509CertificateHolder
@@ -19,7 +17,10 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.io.StringWriter
-import java.security.*
+import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.*
 import java.util.zip.ZipInputStream

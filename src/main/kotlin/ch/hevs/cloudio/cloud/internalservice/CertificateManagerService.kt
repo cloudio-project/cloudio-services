@@ -12,6 +12,7 @@ import org.apache.commons.logging.LogFactory
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500NameBuilder
 import org.bouncycastle.asn1.x500.style.BCStyle
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder
@@ -54,11 +55,9 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             initialize(properties.keySize, SecureRandom())
         }
 
-        privateKey = JcaPEMKeyConverter().getPrivateKey(PEMParser(
-                StringReader(properties.caPrivateKey)).readObject() as PrivateKeyInfo)
+        privateKey = properties.caPrivateKey.toPrivateKey()
 
-        certificate = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(properties.caCertificate)).readObject() as X509CertificateHolder)
+        certificate = properties.caCertificate.toX509Certificate()
     }
 
     @RabbitListener(bindings = [
@@ -220,14 +219,12 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         jks.store(this, keyStorePassword.toCharArray())
     }
 
-    private fun String.toPublicKey(): PublicKey {
-        val formattedKey = this
-                .replace("\n", "")
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-        val keyBytes: ByteArray = Base64.getDecoder().decode(formattedKey)
-        val spec = X509EncodedKeySpec(keyBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
-        return keyFactory.generatePublic(spec)
-    }
+    private fun String.toPrivateKey() = JcaPEMKeyConverter().getPrivateKey(PEMParser(
+            StringReader(this)).readObject() as PrivateKeyInfo)
+
+    private fun String.toPublicKey() = JcaPEMKeyConverter().getPublicKey(PEMParser(
+            StringReader(this)).readObject() as SubjectPublicKeyInfo)
+
+    private fun String.toX509Certificate() = JcaX509CertificateConverter().getCertificate(PEMParser(
+            StringReader(this)).readObject() as X509CertificateHolder)
 }
