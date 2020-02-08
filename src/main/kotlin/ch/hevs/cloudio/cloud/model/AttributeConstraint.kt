@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.model
 
-
 enum class AttributeConstraint {
     Invalid,
     Static,

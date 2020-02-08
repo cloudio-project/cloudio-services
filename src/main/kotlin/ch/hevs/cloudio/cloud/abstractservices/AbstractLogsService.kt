@@ -21,9 +21,9 @@ abstract class AbstractLogsService {
         QueueBinding(
                 value = Queue(),
                 exchange = Exchange(
-                    value = "amq.topic",
-                    type = ExchangeTypes.TOPIC,
-                    ignoreDeclarationExceptions = "true"
+                        value = "amq.topic",
+                        type = ExchangeTypes.TOPIC,
+                        ignoreDeclarationExceptions = "true"
                 ),
                 key = ["@logsLevel.#"]
         )
