@@ -121,8 +121,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                             if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked) {
                                 log.debug("Access to topic $routingKey granted for endpoint $id")
                                 "allow"
-                            }
-                            else {
+                            } else {
                                 log.warn("Access to topic $routingKey refused for endpoint $id")
                                 "deny"
                             }

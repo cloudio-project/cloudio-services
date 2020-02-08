@@ -25,6 +25,4 @@ class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository) :
     override fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage) {
         //nothing to do in mongo
     }
-
-
 }
