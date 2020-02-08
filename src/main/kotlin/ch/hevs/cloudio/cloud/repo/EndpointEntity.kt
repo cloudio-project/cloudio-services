@@ -11,7 +11,7 @@ data class EndpointEntity(
         var endpointUuid: String = "INVALID",
         var friendlyName: String = "INVALID",
         var blocked: Boolean = false,
-        var online: Boolean = false,
+        var online: Boolean = false,    // TODO: Online information is saved to InfluxDB too, this could probably be removed.
         var logLevel: LogLevel = LogLevel.ERROR,
         var endpoint: Endpoint = Endpoint()
 )
