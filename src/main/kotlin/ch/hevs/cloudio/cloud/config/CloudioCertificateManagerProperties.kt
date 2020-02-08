@@ -8,8 +8,6 @@ import org.springframework.boot.context.properties.ConstructorBinding
 class CloudioCertificateManagerProperties(
         val caCertificate: String,
         val caPrivateKey: String,
-        val caCertificateJksPath: String,
-        val caCertificateJksPassword: String,
         val keyAlgorithm: String = "RSA",
         val keySize: Int = 2048,
         val signAlgorithm: String = "SHA256WithRSA"
