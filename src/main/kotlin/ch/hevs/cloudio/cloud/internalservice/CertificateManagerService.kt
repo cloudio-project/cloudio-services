@@ -160,6 +160,9 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             Properties().apply {
                 setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
                 setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
+                certificateAndKeyZipRequest.properties.forEach {
+                    setProperty(it.key, it.value)
+                }
             }.store(zip, "")
             zip.closeEntry()
 

@@ -140,7 +140,8 @@ class CertificateManagerTest {
         val uuid = UUID.randomUUID()
         val data = authority.generateEndpointKeyCertificateZip(CertificateAndKeyZipRequest(
                 uuid.toString(),
-                LibraryLanguage.JAVA)
+                LibraryLanguage.JAVA,
+                mapOf("test" to "12345", "test2" to "54321"))
         )!!
 
         val zip = ZipInputStream(ByteArrayInputStream(data))
@@ -152,6 +153,8 @@ class CertificateManagerTest {
         val password = properties.getProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword")
         assert(password.isNotEmpty())
         assert(properties.getProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword") == password)
+        assert(properties.getProperty("test") == "12345")
+        assert(properties.getProperty("test2") == "54321")
 
         val jksFile = zip.nextEntry
         assert(jksFile.name == "cloud.io/authority.jks")
