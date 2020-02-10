@@ -1,11 +1,12 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
-import ch.hevs.cloudio.cloud.internalservice.CertificateManagerService
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointConfigurationArchiveRequest
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
@@ -80,25 +81,23 @@ class CertificateManagerTest {
 
     private val authority = CertificateManagerService(properties)
 
+    private val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
+            StringReader(properties.caCertificate)
+    ).readObject() as X509CertificateHolder)
+
     @Test
     fun generateEndpointKeyAndCertificatePairTest() {
-        val certAndKey = authority.generateEndpointKeyAndCertificatePair(
-                CertificateAndKeyRequest(UUID.randomUUID().toString()))!!
+        val uuid = UUID.randomUUID()
 
-        assert(certAndKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
-        assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") ||
-                certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))
+        val response = authority.generateEndpointKeyAndCertificate(
+                GenerateEndpointKeyAndCertificateRequest(uuid))!!
 
-        val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(properties.caCertificate)
-        ).readObject() as X509CertificateHolder)
-        caCert.checkValidity()
-
-        val clientCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(certAndKey.certificate)
-        ).readObject() as X509CertificateHolder)
-
-        clientCert.checkValidity()
+        assert(uuid == response.endpointUUID)
+        val p12KeyStore = KeyStore.getInstance("PKCS12")
+        p12KeyStore.load(ByteArrayInputStream(response.pkcs12Data), response.password.toCharArray())
+        val clientCert = p12KeyStore.getCertificate("") as X509Certificate
+        assertDoesNotThrow { clientCert.checkValidity() }
+        p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
     }
 
@@ -107,10 +106,11 @@ class CertificateManagerTest {
         val keyPair = KeyPairGenerator.getInstance(properties.keyAlgorithm, "BC").apply {
             initialize(properties.keySize, SecureRandom())
         }.genKeyPair()
+        val uuid = UUID.randomUUID()
 
-        val certFromKey = authority.generateEndpointCertificateFromPublicKey(
-                CertificateFromKeyRequest(
-                        UUID.randomUUID().toString(), StringWriter().let {
+        val response = authority.generateEndpointCertificateFromPublicKey(
+                GenerateEndpointCertificateFromPublicKeyRequest(
+                        uuid, StringWriter().let {
                     JcaPEMWriter(it).run {
                         writeObject(keyPair.public)
                         flush()
@@ -119,17 +119,11 @@ class CertificateManagerTest {
                     it
                 }.toString()))!!
 
-        assert(certFromKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
-
-        val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(properties.caCertificate)
-        ).readObject() as X509CertificateHolder)
-        caCert.checkValidity()
-
+        assert(uuid == response.endpointUUID)
+        assert(response.certificatePEM.contains("-----BEGIN CERTIFICATE-----"))
         val clientCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(certFromKey.certificate)
+                StringReader(response.certificatePEM)
         ).readObject() as X509CertificateHolder)
-
         clientCert.checkValidity()
         assert(clientCert.publicKey == keyPair.public)
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
@@ -138,13 +132,15 @@ class CertificateManagerTest {
     @Test
     fun generateEndpointKeyAndCertificatePairTestZip() {
         val uuid = UUID.randomUUID()
-        val data = authority.generateEndpointKeyCertificateZip(CertificateAndKeyZipRequest(
-                uuid.toString(),
+
+        val response = authority.generateEndpointConfigurationArchive(GenerateEndpointConfigurationArchiveRequest(
+                uuid,
                 LibraryLanguage.JAVA,
                 mapOf("test" to "12345", "test2" to "54321"))
         )!!
 
-        val zip = ZipInputStream(ByteArrayInputStream(data))
+        assert(uuid == response.endpointUUID)
+        val zip = ZipInputStream(ByteArrayInputStream(response.pkcs12Data))
         val propertiesFile = zip.nextEntry
         assert(propertiesFile.name == "cloud.io/$uuid.properties")
         val properties = Properties().apply {

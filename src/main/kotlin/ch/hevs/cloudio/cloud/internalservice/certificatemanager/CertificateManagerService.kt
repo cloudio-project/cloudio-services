@@ -1,13 +1,7 @@
-package ch.hevs.cloudio.cloud.internalservice
+package ch.hevs.cloudio.cloud.internalservice.certificatemanager
 
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
-import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
-import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.extension.toBigInteger
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.apache.commons.logging.LogFactory
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -29,10 +23,12 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.io.StringReader
+import java.io.StringWriter
 import java.security.*
 import java.security.cert.X509Certificate
-import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -63,41 +59,47 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
     @RabbitListener(bindings = [
         QueueBinding(
                 value = Queue(
-                        name = "cloudio.service.internal.endpointKey-certificatePair"
+                        name = "cloudio.service.internal.CertificateManagerService::getCACertificate",
+                        exclusive = "true"
                 ),
                 exchange = Exchange(
                         name = "cloudio.service.internal",
                         type = ExchangeTypes.DIRECT
                 ),
-                key = ["endpointKey-certificatePair"]
+                key = ["CertificateManagerService::getCACertificate"]
         )
     ])
-    fun generateEndpointKeyAndCertificatePair(certificateAndKeyRequest: CertificateAndKeyRequest): CertificateAndPrivateKey? {
+    fun getCACertificate(): String {
+        return certificate.toPEMString()
+    }
+
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(
+                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointKeyAndCertificate",
+                        exclusive = "true"
+                ),
+                exchange = Exchange(
+                        name = "cloudio.service.internal",
+                        type = ExchangeTypes.DIRECT
+                ),
+                key = ["CertificateManagerService::generateEndpointKeyAndCertificate"]
+        )
+    ])
+    fun generateEndpointKeyAndCertificate(request: GenerateEndpointKeyAndCertificateRequest): GenerateEndpointKeyAndCertificateResponse? {
         try {
-            val uuid = UUID.fromString(certificateAndKeyRequest.endpointUuid)
+            // Generate and sign certificate for endpoint.
+            val (certificate, keyPair) = createAndSignEndpointCertificate(request.endpointUUID!!)
 
-            val (certificate, keyPair) = createAndSignEndpointCertificate(uuid)
+            // Save the certificate and private key to a PKCS12 keystore.
+            val password = request.password ?: generateRandomPassword()
+            val pkcs12Data = ByteArrayOutputStream()
+            pkcs12Data.writePKCS12File(password, keyPair, certificate)
 
-            return CertificateAndPrivateKey(
-                    StringWriter().let {
-                        JcaPEMWriter(it).run {
-                            writeObject(certificate)
-                            flush()
-                            close()
-                        }
-                        it
-                    }.toString(),
-                    StringWriter().let {
-                        JcaPEMWriter(it).run {
-                            writeObject(keyPair.private)
-                            flush()
-                            close()
-                        }
-                        it
-                    }.toString()
-            )
+            // Return keystore file and password.
+            return GenerateEndpointKeyAndCertificateResponse(request.endpointUUID, password, pkcs12Data.toByteArray())
         } catch (exception: Exception) {
-            log.error("Exception during endpointKey-certificatePair", exception)
+            log.error("Exception during CertificateManagerService::generateEndpointKeyAndCertificate", exception)
         }
         return null
     }
@@ -105,31 +107,24 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
     @RabbitListener(bindings = [
         QueueBinding(
                 value = Queue(
-                        name = "cloudio.service.internal.certificateFromPublicKey"
+                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointCertificateFromPublicKey"
                 ),
                 exchange = Exchange(
                         name = "cloudio.service.internal",
                         type = ExchangeTypes.DIRECT
                 ),
-                key = ["certificateFromPublicKey"]
+                key = ["CertificateManagerService::generateEndpointCertificateFromPublicKey"]
         )
     ])
-    fun generateEndpointCertificateFromPublicKey(certificateFromKeyRequest: CertificateFromKeyRequest): CertificateFromKey? {
+    fun generateEndpointCertificateFromPublicKey(request: GenerateEndpointCertificateFromPublicKeyRequest): GenerateEndpointCertificateFromPublicKeyResponse? {
         try {
-            val uuid = UUID.fromString(certificateFromKeyRequest.endpointUuid)
+            // Generate and sign certificate for endpoint using the public key passed.
+            val certificate = signCertificate(request.endpointUUID!!, request.publicKeyPEM.toPublicKey())
 
-            val certificate = signCertificate(uuid, certificateFromKeyRequest.publicKey.toPublicKey())
-
-            return CertificateFromKey(StringWriter().let {
-                JcaPEMWriter(it).run {
-                    writeObject(certificate)
-                    flush()
-                    close()
-                }
-                it
-            }.toString())
+            // Return certificate as PEM data.
+            return GenerateEndpointCertificateFromPublicKeyResponse(request.endpointUUID, certificate.toPEMString())
         } catch (exception: Exception) {
-            log.error("endpointKey-certificateFromPublicKey", exception)
+            log.error("Exception during CertificateManagerService::generateEndpointCertificateFromPublicKey", exception)
         }
         return null
     }
@@ -137,32 +132,34 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
     @RabbitListener(bindings = [
         QueueBinding(
                 value = Queue(
-                        name = "cloudio.service.internal.endpointKey-certificatePairZip"
+                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointConfigurationArchive",
+                        exclusive = "true"
                 ),
                 exchange = Exchange(
                         name = "cloudio.service.internal",
                         type = ExchangeTypes.DIRECT
                 ),
-                key = ["endpointKey-certificatePairZip"]
+                key = ["CertificateManagerService::generateEndpointConfigurationArchive"]
         )
     ])
-    fun generateEndpointKeyCertificateZip(certificateAndKeyZipRequest: CertificateAndKeyZipRequest): ByteArray? {
+    fun generateEndpointConfigurationArchive(request: GenerateEndpointConfigurationArchiveRequest): GenerateEndpointConfigurationArchiveResponse? {
         try {
-            val uuid = UUID.fromString(certificateAndKeyZipRequest.endpointUuid)
-            val (certificate, privateKey) = createAndSignEndpointCertificate(uuid)
+            // Generate and sign certificate for endpoint.
+            val (certificate, privateKey) = createAndSignEndpointCertificate(request.endpointUUID!!)
+
+            // Save the configuration, the client certificate, private key and the authority keystore to a zip file.
             val password = generateRandomPassword()
-
             val output = ByteArrayOutputStream()
             val zip = ZipOutputStream(output)
 
             // Write properties file.
-            zip.putNextEntry(ZipEntry("cloud.io/${certificateAndKeyZipRequest.endpointUuid}.properties"))
+            zip.putNextEntry(ZipEntry("cloud.io/${request.endpointUUID}.properties"))
             Properties().apply {
-                setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
-                setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
-                certificateAndKeyZipRequest.properties.forEach {
+                request.properties.forEach {
                     setProperty(it.key, it.value)
                 }
+                setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
+                setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
             }.store(zip, "")
             zip.closeEntry()
 
@@ -172,12 +169,13 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             zip.closeEntry()
 
             // Add client P12 file.
-            zip.putNextEntry(ZipEntry("cloud.io/${certificateAndKeyZipRequest.endpointUuid}.p12"))
+            zip.putNextEntry(ZipEntry("cloud.io/${request.endpointUUID}.p12"))
             zip.writePKCS12File(password, privateKey, certificate)
             zip.closeEntry()
 
             zip.close()
-            return output.toByteArray()
+            return GenerateEndpointConfigurationArchiveResponse(request.endpointUUID, request.language,
+                    output.toByteArray())
         } catch (exception: Exception) {
             log.error("endpointKey-certificateFromPublicKey", exception)
         }
@@ -230,4 +228,12 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
 
     private fun String.toX509Certificate() = JcaX509CertificateConverter().getCertificate(PEMParser(
             StringReader(this)).readObject() as X509CertificateHolder)
+
+    private fun X509Certificate.toPEMString() = StringWriter().also { writer ->
+        JcaPEMWriter(writer).let {
+            it.writeObject(this)
+            it.flush()
+            it.close()
+        }
+    }.toString()
 }
