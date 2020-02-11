@@ -52,16 +52,9 @@ tasks.register("bootRunDev") {
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
             environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
-            environment("cloudio.cert-manager.caCertificateJksPath", "cloudio-dev-environment/certificates/ca.jks")
-            environment("cloudio.cert-manager.caCertificateJksPassword", "123456")
 
             // RabbitMQ (AMQPs).
-            // TODO: Certificate based login does not work yet, for a reason the client does not send his certificate.
-            //environment("spring.rabbitmq.ssl.key-store-type", "PKCS12")
-            //environment("spring.rabbitmq.ssl.key-store", "file:cloudio-dev-environment/certificates/cloudio_services.p12")
-            environment("spring.rabbitmq.username", "admin")
-            val adminPassword: String? by project
-            environment("spring.rabbitmq.password", adminPassword ?: "admin")
+            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.ssl.verify-hostname", "false")
             environment("spring.rabbitmq.ssl.trust-store-type", "JKS")
             environment("spring.rabbitmq.ssl.trust-store", "file:cloudio-dev-environment/certificates/ca.jks")
