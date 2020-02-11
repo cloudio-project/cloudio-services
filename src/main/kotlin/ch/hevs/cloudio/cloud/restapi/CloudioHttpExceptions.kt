@@ -10,14 +10,17 @@ object CloudioHttpExceptions {
     const val CLOUDIO_SUCCESS_MESSAGE = "Success"
 
     @ResponseStatus(HttpStatus.OK)
-    class OkException(message: String) : RuntimeException(message)
+    class OK(message: String) : RuntimeException(message)
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    class BadRequestException(message: String) : RuntimeException(message)
+    class BadRequest(message: String) : RuntimeException(message)
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    class ForbiddenException(message: String) : RuntimeException(message)
+    class Forbidden(message: String) : RuntimeException(message)
 
     @ResponseStatus(HttpStatus.REQUEST_TIMEOUT)
-    class TimeoutException(message: String) : RuntimeException(message)
+    class Timeout(message: String) : RuntimeException(message)
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    class NotFound(message: String) : java.lang.RuntimeException(message)
 }

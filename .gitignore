@@ -150,8 +150,8 @@ gradle-app.setting
 
 # End of https://www.gitignore.io/api/java,gradle,kotlin,intellij
 
-# Other ignores
+### Custom ignores
+cloudio-dev-environment/certificates/**
 out
 *.p12
-
 *.jks

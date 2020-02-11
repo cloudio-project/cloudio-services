@@ -46,11 +46,11 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(jobExecuteRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             if (!jobExecuteRequest.getOutput) {
                 JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } else {
 
                 val emitter = SseEmitter()
@@ -78,9 +78,9 @@ class JobsController(var connectionFactory: ConnectionFactory, val env: Environm
             }
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 }

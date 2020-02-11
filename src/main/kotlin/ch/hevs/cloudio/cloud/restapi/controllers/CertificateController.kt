@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
 import ch.hevs.cloudio.cloud.internalservice.CertificateFromKey
 import ch.hevs.cloudio.cloud.model.Permission
@@ -12,9 +13,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPO
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
-import org.springframework.core.env.Environment
 import org.springframework.core.io.UrlResource
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpHeaders
@@ -34,14 +33,14 @@ import javax.servlet.http.HttpServletResponse
 
 @RestController
 @RequestMapping("/api/v1")
-class CertificateController(var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class CertificateController(
+        private val certificateManagerProperties: CloudioCertificateManagerProperties,
+        private val userGroupRepository: UserGroupRepository,
+        private val userRepository: UserRepository,
+        private val endpointEntityRepository: EndpointEntityRepository,
+        private val rabbitTemplate: RabbitTemplate) {
 
-    companion object {
-        private val log = LogFactory.getLog(CertificateController::class.java)
-    }
-
-    @Autowired
-    val rabbitTemplate = RabbitTemplate()
+    private val log = LogFactory.getLog(CertificateController::class.java)
 
     @RequestMapping("/createCertificateAndKey", method = [RequestMethod.POST])
     fun createCertificateAndKey(@RequestBody certificateAndKeyRequest: CertificateAndKeyRequest): CertificateAndPrivateKey {
@@ -53,14 +52,14 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
             if (endpointEntityRepository.findByIdOrNull(certificateAndKeyRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return CertificateUtil.createCertificateAndKey(rabbitTemplate, certificateAndKeyRequest)
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.NotFound("Endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.Forbidden("You don't own this endpoint")
         }
     }
 
@@ -74,7 +73,7 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
             if (endpointEntityRepository.findByIdOrNull(certificateAndKeyZipRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 val pathToReturn = CertificateUtil.createCertificateAndKeyZip(rabbitTemplate, certificateAndKeyZipRequest)!!.replace("\"", "")
 
@@ -90,9 +89,9 @@ class CertificateController(var environment: Environment, var userGroupRepositor
             }
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.NotFound("Endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.Forbidden("You don't own this endpoint")
         }
     }
 
@@ -133,19 +132,19 @@ class CertificateController(var environment: Environment, var userGroupRepositor
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN)
             if (endpointEntityRepository.findByIdOrNull(certificateFromKeyRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return CertificateUtil.createCertificateFromKey(rabbitTemplate, certificateFromKeyRequest)
         else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 
     @RequestMapping("/getCaCertificate", method = [RequestMethod.GET])
     fun getCaCertificate(): CaCertificate {
-        return CertificateUtil.getCaCertificate(environment)
+        return CertificateUtil.getCaCertificate(certificateManagerProperties)
     }
 }

@@ -29,11 +29,11 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
 
     fun getUserGroupAccessRight(userName: String, userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             val userRight = UserGroupAccessControlUtil.getUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
             if (userRight == null)
-                throw CloudioHttpExceptions.BadRequestException("Coudln't return userGroup Right")
+                throw CloudioHttpExceptions.BadRequest("Coudln't return userGroup Right")
             else
                 return userRight
         }
@@ -43,13 +43,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     fun addUserGroupAccessRight(@RequestBody userGroupRightRequestList: UserGroupRightRequestList) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository, userGroupRightRequestList)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't add user group access right: " + e.message)
             }
 
         }
@@ -59,13 +59,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     fun modifyUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRightRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserGroupAccessControlUtil.modifyUserGroupAccessRight(userGroupRepository, userGroupRightRequest)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't modify user group access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't modify user group access right: " + e.message)
             }
         }
     }
@@ -74,13 +74,13 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
     fun removeUserGroupAccessRight(@RequestBody userGroupTopicRequest: UserGroupTopicRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.ForbiddenException(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
+            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
         else {
             try {
                 UserGroupAccessControlUtil.removeUserGroupAccessRight(userGroupRepository, userGroupTopicRequest)
-                throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couldn't delete user group access right: " + e.message)
+                throw CloudioHttpExceptions.BadRequest("Couldn't delete user group access right: " + e.message)
             }
         }
     }
@@ -91,9 +91,9 @@ class UserGroupAccessControlController(var userRepository: UserRepository, var u
 
         try {
             UserGroupAccessControlUtil.giveUserGroupAccessRight(userGroupRepository, userRepository, userGroupRightRequestList, userName)
-            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequestException("Couldn't add user group access right: " + e.message)
+            throw CloudioHttpExceptions.BadRequest("Couldn't add user group access right: " + e.message)
         }
     }
 }

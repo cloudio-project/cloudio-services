@@ -1,8 +1,9 @@
 package ch.hevs.cloudio.cloud.apiutilstest
 
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.utils.toBigInteger
+import ch.hevs.cloudio.cloud.extension.toBigInteger
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
@@ -29,10 +30,12 @@ class CertificateUtilTest {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
+
     @Autowired
     private lateinit var endpointEntityRepository: EndpointEntityRepository
+
     @Autowired
-    private lateinit var environment: Environment
+    private lateinit var certificateManagerProperties: CloudioCertificateManagerProperties
 
     private lateinit var endpointParameters: EndpointParameters
 
@@ -51,14 +54,14 @@ class CertificateUtilTest {
     @Test
     fun getCaCertificate() {
         //get CA certificate
-        val caCertPem = CertificateUtil.getCaCertificate(environment)
+        val caCertPem = CertificateUtil.getCaCertificate(certificateManagerProperties)
         convertToX509Certificate(caCertPem.caCertificate) //if doesn't throw error, format of cacert is correct
     }
 
     @Test
     fun createCertificateAndKey() {
         //get CA certificate
-        val caCertPem = CertificateUtil.getCaCertificate(environment)
+        val caCertPem = CertificateUtil.getCaCertificate(certificateManagerProperties)
         val caCert = convertToX509Certificate(caCertPem.caCertificate)
 
         //create certificate and key for created endpoint
@@ -70,7 +73,7 @@ class CertificateUtilTest {
     @Test
     fun createCertificateFromKey() {
         //get CA certificate
-        val caCertPem = CertificateUtil.getCaCertificate(environment)
+        val caCertPem = CertificateUtil.getCaCertificate(certificateManagerProperties)
         val caCert = convertToX509Certificate(caCertPem.caCertificate)
 
         //create certificate and from key for created endpoint

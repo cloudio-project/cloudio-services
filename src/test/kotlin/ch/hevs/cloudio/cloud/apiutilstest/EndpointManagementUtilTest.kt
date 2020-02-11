@@ -3,12 +3,13 @@ package ch.hevs.cloudio.cloud.apiutilstest
 import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.TestUtil.createEndpointEntity
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
+import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.utils.CloudioModelUtils
 import org.influxdb.InfluxDB
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -109,22 +110,22 @@ class EndpointManagementUtilTest {
         Thread.sleep(1000) //to be sure @set message is transefed to influxDB
 
         val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
-        CloudioModelUtils.fillAttributeFromEndpoint(influx, database, endpointEntity!!)
+        endpointEntity!!.fillAttributesFromInfluxDB(influx, database)
         //test if retrieved endpoint is the same
         assert(endpointEntity.endpoint.nodes["demoNode"]!!.objects["demoObject"]!!.attributes["demoSetPoint"]!!.value == setAttribute.value)
 
         val node = EndpointManagementUtil.getNode(endpointEntityRepository, NodeRequest("${endpointParameters.endpointUuid}/demoNode"))
-        CloudioModelUtils.fillAttributeFromNode(influx, database, "${endpointParameters.endpointUuid}/demoNode/", node!!)
+        node!!.fillAttributesFromInfluxDB(influx, database, "${endpointParameters.endpointUuid}/demoNode")
         //test if retrieved node is the same
         assert(node.objects["demoObject"]!!.attributes["demoSetPoint"]!!.value == setAttribute.value)
 
         val cloudioObject = EndpointManagementUtil.getObject(endpointEntityRepository, ObjectRequest("${endpointParameters.endpointUuid}/demoNode/demoObject"))
-        CloudioModelUtils.fillAttributeFromObject(influx, database, "${endpointParameters.endpointUuid}/demoNode/demoObject/", cloudioObject!!)
+        cloudioObject!!.fillAttributesFromInfluxDB(influx, database, "${endpointParameters.endpointUuid}/demoNode/demoObject")
         //test if retrieved object is the same
         assert(cloudioObject.attributes["demoSetPoint"]!!.value == setAttribute.value)
 
         val cloudioAttributeSetPoint = EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint"))
-        CloudioModelUtils.fillAttributeFromTopic(influx, database, "${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint", cloudioAttributeSetPoint!!)
+        cloudioAttributeSetPoint!!.fillFromInfluxDB(influx, database, "${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint")
         //test if retrieved attribute is the same
         assert(cloudioAttributeSetPoint.value == setAttribute.value)
     }

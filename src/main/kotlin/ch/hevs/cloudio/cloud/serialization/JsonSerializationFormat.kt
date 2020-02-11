@@ -2,11 +2,10 @@ package ch.hevs.cloudio.cloud.serialization
 
 import ch.hevs.cloudio.cloud.model.*
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 
 internal object JsonSerializationFormat {
-    private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
+    private val mapper by lazy { Jackson2ObjectMapperBuilder.json().build<ObjectMapper>() }
 
     fun detect(data: ByteArray): Boolean = data.size > 0 && data[0] == '{'.toByte()
 

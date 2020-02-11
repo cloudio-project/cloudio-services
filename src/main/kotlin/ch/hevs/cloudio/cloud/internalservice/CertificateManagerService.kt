@@ -4,7 +4,8 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
-import ch.hevs.cloudio.cloud.utils.toBigInteger
+import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
+import ch.hevs.cloudio.cloud.extension.toBigInteger
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.apache.commons.logging.LogFactory
@@ -26,7 +27,6 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.context.annotation.Profile
-import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.io.*
 import java.security.*
@@ -39,16 +39,11 @@ import java.util.zip.ZipOutputStream
 
 @Service
 @Profile("certificate-manager", "default")
-class CertificateManagerService(environment: Environment) {
+class CertificateManagerService(private val properties: CloudioCertificateManagerProperties,
+                                private val mapper: ObjectMapper) {
+    private val log = LogFactory.getLog(CertificateManagerService::class.java)
 
-
-    companion object {
-        private val log = LogFactory.getLog(CertificateManagerService::class.java)
-    }
-
-    private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
-
-    private val bouncyCastle: BouncyCastleProvider = BouncyCastleProvider()
+    private val bouncyCastle = BouncyCastleProvider()
     private val keyPairGenerator: KeyPairGenerator
 
     private val privateKey: PrivateKey
@@ -60,29 +55,34 @@ class CertificateManagerService(environment: Environment) {
     init {
         Security.addProvider(bouncyCastle)
 
-        keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC").apply {
-            initialize(2048, SecureRandom())
+        keyPairGenerator = KeyPairGenerator.getInstance(properties.keyAlgorithm, "BC").apply {
+            initialize(properties.keySize, SecureRandom())
         }
 
         privateKey = JcaPEMKeyConverter().getPrivateKey(PEMParser(
-                StringReader(environment.getRequiredProperty("cloudio.caPrivateKey"))
+                StringReader(properties.caPrivateKey)
         ).readObject() as PrivateKeyInfo)
 
         certificate = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(environment.getRequiredProperty("cloudio.caCertificate"))
+                StringReader(properties.caCertificate)
         ).readObject() as X509CertificateHolder)
 
-        caCertificatePath = environment.getRequiredProperty("cloudio.caCertificateJksPath")
-        caCertificatePassword = environment.getRequiredProperty("cloudio.caCertificateJksPassword")
-
+        caCertificatePath = properties.caCertificateJksPath
+        caCertificatePassword = properties.caCertificateJksPassword
     }
 
     @RabbitListener(bindings = [
         QueueBinding(
-                value = Queue(name = "cloudio.service.internal.endpointKey-certificatePair"),
-                exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
+                value = Queue(
+                        name = "cloudio.service.internal.endpointKey-certificatePair"
+                ),
+                exchange = Exchange(
+                        name = "cloudio.service.internal",
+                        type = ExchangeTypes.DIRECT
+                ),
                 key = ["endpointKey-certificatePair"]
-        )])
+        )
+    ])
     fun generateEndpointKeyAndCertificatePair(certificateAndKeyRequestString: String): String? {
         try {
             val certificateAndKeyRequest = CertificateAndKeyRequest("")
@@ -99,7 +99,7 @@ class CertificateManagerService(environment: Environment) {
                 add(Calendar.YEAR, 100)
                 time
             }
-            val signer = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
+            val signer = JcaContentSignerBuilder(properties.signAlgorithm).build(privateKey)
             val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, keyPair.public)
             val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
@@ -131,10 +131,16 @@ class CertificateManagerService(environment: Environment) {
 
     @RabbitListener(bindings = [
         QueueBinding(
-                value = Queue(name = "cloudio.service.internal.endpointKey-certificatePairZip"),
-                exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
+                value = Queue(
+                        name = "cloudio.service.internal.endpointKey-certificatePairZip"
+                ),
+                exchange = Exchange(
+                        name = "cloudio.service.internal",
+                        type = ExchangeTypes.DIRECT
+                ),
                 key = ["endpointKey-certificatePairZip"]
-        )])
+        )
+    ])
     fun generateEndpointKeyCertificateZip(certificateAndKeyRequestString: String): String? {
         try {
             val certificateAndKeyZipRequest = CertificateAndKeyZipRequest("", LibraryLanguage.JAVA)
@@ -151,7 +157,7 @@ class CertificateManagerService(environment: Environment) {
                 add(Calendar.YEAR, 100)
                 time
             }
-            val signer = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
+            val signer = JcaContentSignerBuilder(properties.signAlgorithm).build(privateKey)
             val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, keyPair.public)
             val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
@@ -200,10 +206,16 @@ class CertificateManagerService(environment: Environment) {
 
     @RabbitListener(bindings = [
         QueueBinding(
-                value = Queue(name = "cloudio.service.internal.certificateFromPublicKey"),
-                exchange = Exchange(name = "cloudio.service.internal", type = ExchangeTypes.DIRECT),
+                value = Queue(
+                        name = "cloudio.service.internal.certificateFromPublicKey"
+                ),
+                exchange = Exchange(
+                        name = "cloudio.service.internal",
+                        type = ExchangeTypes.DIRECT
+                ),
                 key = ["certificateFromPublicKey"]
-        )])
+        )
+    ])
     fun generateEndpointCertificateFromPublicKey(certificateFromKeyRequestString: String): String? {
         try {
             val certificateFromKeyRequest = CertificateFromKeyRequest("", "")
@@ -219,7 +231,7 @@ class CertificateManagerService(environment: Environment) {
                 add(Calendar.YEAR, 100)
                 time
             }
-            val signer = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
+            val signer = JcaContentSignerBuilder(properties.signAlgorithm).build(privateKey)
             val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, getKey(certificateFromKeyRequest.publicKey))
             val certificate = JcaX509CertificateConverter().getCertificate(builder.build(signer))
 
@@ -268,5 +280,4 @@ class CertificateManagerService(environment: Environment) {
         }
 
     }
-
 }

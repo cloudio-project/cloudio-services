@@ -37,19 +37,19 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(logsDefaultRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult = LogsUtil.getEndpointLogsRequest(influx, database, logsDefaultRequest)
 
             if (queryResult == null)
-                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
             else
                 return queryResult
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 
@@ -64,25 +64,25 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(logsDateRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult : QueryResult?
             try {
                 queryResult = LogsUtil.getEndpointLogsByDateRequest(influx, database, logsDateRequest)
             }
             catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couln't access logs: "+e.message)
+                throw CloudioHttpExceptions.BadRequest("Couln't access logs: "+e.message)
             }
 
             if (queryResult == null)
-                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
             else
                 return queryResult
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 
@@ -97,25 +97,25 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(logsWhereRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult : QueryResult?
             try {
                 queryResult = LogsUtil.getEndpointLogsWhereRequest(influx, database, logsWhereRequest)
             }
             catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequestException("Couln't access logs: "+e.message)
+                throw CloudioHttpExceptions.BadRequest("Couln't access logs: "+e.message)
             }
 
             if (queryResult == null)
-                throw CloudioHttpExceptions.BadRequestException("Query didn't return a result")
+                throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
             else
                 return queryResult
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 
@@ -130,15 +130,15 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(logsSetRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest)
-            throw CloudioHttpExceptions.OkException(CLOUDIO_SUCCESS_MESSAGE)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 
@@ -162,18 +162,18 @@ class LogsController(val env: Environment, val influx: InfluxDB, var userReposit
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
             if (endpointEntityRepository.findByIdOrNull(logsGetRequest.endpointUuid)!!.blocked)
-                throw CloudioHttpExceptions.BadRequestException(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val logLevel = LogsUtil.getLogsLevel(endpointEntityRepository, logsGetRequest)
             if (logLevel != null)
                 return logLevel
             else
-                throw CloudioHttpExceptions.BadRequestException("Couldn't retrieve log level")
+                throw CloudioHttpExceptions.BadRequest("Couldn't retrieve log level")
         } else {
             if (endpointGeneralPermission == null)
-                throw CloudioHttpExceptions.BadRequestException("This endpoint doesn't exist")
+                throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
             else
-                throw CloudioHttpExceptions.BadRequestException("You don't own this endpoint")
+                throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
         }
     }
 }
