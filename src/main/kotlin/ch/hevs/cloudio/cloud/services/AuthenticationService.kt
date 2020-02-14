@@ -72,7 +72,7 @@ class AuthenticationService(private val userRepository: UserRepository,
             }
             "check_vhost" -> {
                 when (val vhost = message.messageProperties.headers["vhost"]?.toString()) {
-                    rabbitProperties.virtualHost -> {
+                    rabbitProperties.virtualHost ?: "/" -> {
                         log.debug("Access to virtual host \"$vhost\" granted for user/endpoint \"$id\".")
                         "allow"
                     }
