@@ -8,6 +8,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import org.springframework.security.access.annotation.Secured
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -16,30 +17,25 @@ import org.springframework.web.bind.annotation.*
 class UserManagementController(var userRepository: UserRepository) {
 
     @RequestMapping("/createUser", method = [RequestMethod.POST])
+    @Secured("HTTP_ADMIN")
     fun createUser(@RequestBody user: User) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserManagementUtil.createUser(userRepository, user)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't create user: " + e.message)
-            }
+        try {
+            UserManagementUtil.createUser(userRepository, user)
+        } catch (exception: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't create user: " + exception.message)
         }
     }
 
     @RequestMapping("/getUser", method = [RequestMethod.POST])
     fun getUser(@RequestBody userRequest: UserRequest): User {
         val userName = SecurityContextHolder.getContext().authentication.name
-        return(getUser(userName, userRequest))
+        return (getUser(userName, userRequest))
     }
 
     @RequestMapping("/getUser/{userNameRequest}", method = [RequestMethod.GET])
     fun getUser(@PathVariable userNameRequest: String): User {
         val userName = SecurityContextHolder.getContext().authentication.name
-        return(getUser(userName, UserRequest(userNameRequest)))
+        return (getUser(userName, UserRequest(userNameRequest)))
     }
 
     fun getUser(userName: String, userRequest: UserRequest): User {
@@ -117,12 +113,6 @@ class UserManagementController(var userRepository: UserRepository) {
     }
 
     @RequestMapping("/getUserList", method = [RequestMethod.GET])
-    fun getUserList(): UserListAnswer {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            return UserManagementUtil.getUserList(userRepository)
-        }
-    }
+    @Secured("HTTP_ADMIN")
+    fun getUserList(): UserListAnswer = UserManagementUtil.getUserList(userRepository)
 }
