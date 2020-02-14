@@ -1,20 +1,14 @@
 package ch.hevs.cloudio.cloud.internalservice.certificatemanager
 
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
-import ch.hevs.cloudio.cloud.extension.toBigInteger
+import ch.hevs.cloudio.cloud.extension.*
 import org.apache.commons.logging.LogFactory
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x500.X500NameBuilder
 import org.bouncycastle.asn1.x500.style.BCStyle
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
-import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.openssl.PEMParser
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.rabbit.annotation.Exchange
@@ -24,9 +18,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
-import java.io.OutputStream
-import java.io.StringReader
-import java.io.StringWriter
 import java.security.*
 import java.security.cert.X509Certificate
 import java.util.*
@@ -92,9 +83,9 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             val (certificate, keyPair) = createAndSignEndpointCertificate(request.endpointUUID!!)
 
             // Save the certificate and private key to a PKCS12 keystore.
-            val password = request.password ?: generateRandomPassword()
+            val password = request.password ?: String.generateRandomPassword()
             val pkcs12Data = ByteArrayOutputStream()
-            pkcs12Data.writePKCS12File(password, keyPair, certificate)
+            pkcs12Data.writePKCS12Keystore(password, certificate, keyPair.private)
 
             // Return keystore file and password.
             return GenerateEndpointKeyAndCertificateResponse(request.endpointUUID, password, pkcs12Data.toByteArray())
@@ -145,10 +136,10 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
     fun generateEndpointConfigurationArchive(request: GenerateEndpointConfigurationArchiveRequest): GenerateEndpointConfigurationArchiveResponse? {
         try {
             // Generate and sign certificate for endpoint.
-            val (certificate, privateKey) = createAndSignEndpointCertificate(request.endpointUUID!!)
+            val (certificate, keyPair) = createAndSignEndpointCertificate(request.endpointUUID!!)
 
             // Save the configuration, the client certificate, private key and the authority keystore to a zip file.
-            val password = generateRandomPassword()
+            val password = String.generateRandomPassword()
             val output = ByteArrayOutputStream()
             val zip = ZipOutputStream(output)
 
@@ -165,12 +156,12 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
 
             // Add certificate authority keystore.
             zip.putNextEntry(ZipEntry("cloud.io/authority.jks"))
-            zip.writeJKSFile(password, this.certificate)
+            zip.writeJKSTruststore(password, this.certificate)
             zip.closeEntry()
 
             // Add client P12 file.
             zip.putNextEntry(ZipEntry("cloud.io/${request.endpointUUID}.p12"))
-            zip.writePKCS12File(password, privateKey, certificate)
+            zip.writePKCS12Keystore(password, certificate, keyPair.private)
             zip.closeEntry()
 
             zip.close()
@@ -180,11 +171,6 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             log.error("endpointKey-certificateFromPublicKey", exception)
         }
         return null
-    }
-
-    private fun generateRandomPassword(length: Int = 16): String {
-        val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        return List(length) { alphabet.random() }.joinToString("")
     }
 
     private fun createAndSignEndpointCertificate(uuid: UUID): Pair<X509Certificate, KeyPair> {
@@ -205,35 +191,4 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         val builder = JcaX509v3CertificateBuilder(JcaX509CertificateHolder(certificate).subject, serial, now, expires, subject, publicKey)
         return JcaX509CertificateConverter().getCertificate(builder.build(signer))
     }
-
-    private fun OutputStream.writePKCS12File(keyStorePassword: String, pair: KeyPair, certificate: X509Certificate) {
-        val pkcs12 = KeyStore.getInstance("PKCS12")
-        pkcs12.load(null, null)
-        pkcs12.setKeyEntry("", pair.private, "".toCharArray(), arrayOf(certificate))
-        pkcs12.store(this, keyStorePassword.toCharArray())
-    }
-
-    private fun OutputStream.writeJKSFile(keyStorePassword: String, certificate: X509Certificate) {
-        val jks = KeyStore.getInstance("JKS")
-        jks.load(null, null)
-        jks.setCertificateEntry("", certificate)
-        jks.store(this, keyStorePassword.toCharArray())
-    }
-
-    private fun String.toPrivateKey() = JcaPEMKeyConverter().getPrivateKey(PEMParser(
-            StringReader(this)).readObject() as PrivateKeyInfo)
-
-    private fun String.toPublicKey() = JcaPEMKeyConverter().getPublicKey(PEMParser(
-            StringReader(this)).readObject() as SubjectPublicKeyInfo)
-
-    private fun String.toX509Certificate() = JcaX509CertificateConverter().getCertificate(PEMParser(
-            StringReader(this)).readObject() as X509CertificateHolder)
-
-    private fun X509Certificate.toPEMString() = StringWriter().also { writer ->
-        JcaPEMWriter(writer).let {
-            it.writeObject(this)
-            it.flush()
-            it.close()
-        }
-    }.toString()
 }
