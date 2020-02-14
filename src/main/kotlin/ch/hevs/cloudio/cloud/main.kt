@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.rabbitmq.client.DefaultSaslConfig
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
@@ -12,6 +13,9 @@ import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilde
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
 @SpringBootApplication
@@ -66,6 +70,24 @@ class CloudioApplication {
         rabbitProperties.cache.connection.let { connection ->
             connection.mode?.let { cacheMode = it }
             connection.size?.let { connectionCacheSize = it }
+        }
+    }
+
+    @Bean
+    fun webSecurityConfigurerAdapter(customUserDetailsService: MongoCustomUserDetailsService) = object : WebSecurityConfigurerAdapter() {
+        override fun configure(auth: AuthenticationManagerBuilder) {
+            auth.userDetailsService(customUserDetailsService)
+        }
+
+        override fun configure(http: HttpSecurity) {
+            /*http.authorizeRequests()
+                    .anyRequest().hasAuthority("http_access").and()
+                    .httpBasic().and()
+                    .sessionManagement().disable()*/
+            http.csrf().disable()
+                    .authorizeRequests().anyRequest().permitAll()
+                    .and().httpBasic()
+                    .and().sessionManagement().disable()
         }
     }
 }
