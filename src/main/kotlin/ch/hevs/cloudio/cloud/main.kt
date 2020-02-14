@@ -3,10 +3,14 @@ package ch.hevs.cloudio.cloud
 import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.rabbitmq.client.DefaultSaslConfig
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.connection.RabbitConnectionFactoryBean
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.support.converter.SimpleMessageConverter
+import org.springframework.amqp.support.converter.SmartMessageConverter
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
@@ -30,8 +34,27 @@ class CloudioApplication {
     }
 
     @Bean
-    fun messageConverter() = Jackson2JsonMessageConverter().apply {
-        setAssumeSupportedContentType(false)
+    fun messageConverter() = object : SmartMessageConverter {
+        private val simple = SimpleMessageConverter()
+        private val json = Jackson2JsonMessageConverter()
+
+        override fun toMessage(obj: Any, messageProperties: MessageProperties) = when (obj) {
+            is Message -> simple.toMessage(obj, messageProperties)
+            is ByteArray -> simple.toMessage(obj, messageProperties)
+            else -> json.toMessage(obj, messageProperties)
+        }
+
+        override fun fromMessage(message: Message, conversionHint: Any) = if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
+            json.fromMessage(message, conversionHint)
+        } else {
+            simple.fromMessage(message)
+        }
+
+        override fun fromMessage(message: Message)= if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
+            json.fromMessage(message)
+        } else {
+            simple.fromMessage(message)
+        }
     }
 
     @Bean
