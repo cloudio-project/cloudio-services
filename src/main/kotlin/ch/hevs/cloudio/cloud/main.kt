@@ -30,7 +30,9 @@ class CloudioApplication {
     }
 
     @Bean
-    fun messageConverter() = Jackson2JsonMessageConverter()
+    fun messageConverter() = Jackson2JsonMessageConverter().apply {
+        setAssumeSupportedContentType(false)
+    }
 
     @Bean
     fun connectionFactory(rabbitProperties: RabbitProperties): ConnectionFactory = CachingConnectionFactory(RabbitConnectionFactoryBean().apply {

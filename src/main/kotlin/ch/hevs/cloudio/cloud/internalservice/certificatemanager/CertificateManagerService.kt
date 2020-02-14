@@ -47,36 +47,38 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         certificate = properties.caCertificate.toX509Certificate()
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(
-                        name = "cloudio.service.internal.CertificateManagerService::getCACertificate",
-                        exclusive = "true"
-                ),
-                exchange = Exchange(
-                        name = "cloudio.service.internal",
-                        type = ExchangeTypes.DIRECT
-                ),
-                key = ["CertificateManagerService::getCACertificate"]
-        )
-    ])
+    @RabbitListener(
+            bindings = [
+                QueueBinding(
+                        value = Queue(
+                                name = "cloudio.service.internal.CertificateManagerService::getCACertificate",
+                                exclusive = "true"
+                        ),
+                        exchange = Exchange(
+                                name = "cloudio.service.internal",
+                                type = ExchangeTypes.DIRECT
+                        ),
+                        key = ["CertificateManagerService::getCACertificate"]
+                )
+            ])
     fun getCACertificate(): String {
         return certificate.toPEMString()
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(
-                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointKeyAndCertificate",
-                        exclusive = "true"
-                ),
-                exchange = Exchange(
-                        name = "cloudio.service.internal",
-                        type = ExchangeTypes.DIRECT
-                ),
-                key = ["CertificateManagerService::generateEndpointKeyAndCertificate"]
-        )
-    ])
+    @RabbitListener(
+            bindings = [
+                QueueBinding(
+                        value = Queue(
+                                name = "cloudio.service.internal.CertificateManagerService::generateEndpointKeyAndCertificate",
+                                exclusive = "true"
+                        ),
+                        exchange = Exchange(
+                                name = "cloudio.service.internal",
+                                type = ExchangeTypes.DIRECT
+                        ),
+                        key = ["CertificateManagerService::generateEndpointKeyAndCertificate"]
+                )
+            ])
     fun generateEndpointKeyAndCertificate(request: GenerateEndpointKeyAndCertificateRequest): GenerateEndpointKeyAndCertificateResponse? {
         try {
             // Generate and sign certificate for endpoint.
@@ -95,18 +97,19 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         return null
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(
-                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointCertificateFromPublicKey"
-                ),
-                exchange = Exchange(
-                        name = "cloudio.service.internal",
-                        type = ExchangeTypes.DIRECT
-                ),
-                key = ["CertificateManagerService::generateEndpointCertificateFromPublicKey"]
-        )
-    ])
+    @RabbitListener(
+            bindings = [
+                QueueBinding(
+                        value = Queue(
+                                name = "cloudio.service.internal.CertificateManagerService::generateEndpointCertificateFromPublicKey"
+                        ),
+                        exchange = Exchange(
+                                name = "cloudio.service.internal",
+                                type = ExchangeTypes.DIRECT
+                        ),
+                        key = ["CertificateManagerService::generateEndpointCertificateFromPublicKey"]
+                )
+            ])
     fun generateEndpointCertificateFromPublicKey(request: GenerateEndpointCertificateFromPublicKeyRequest): GenerateEndpointCertificateFromPublicKeyResponse? {
         try {
             // Generate and sign certificate for endpoint using the public key passed.

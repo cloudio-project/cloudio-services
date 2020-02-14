@@ -4,7 +4,6 @@ import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
-import java.lang.RuntimeException
 import java.util.*
 
 @Service
