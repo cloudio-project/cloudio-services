@@ -12,6 +12,6 @@ data class User(
         var passwordHash: String = "",
         var permissions: Map<String, PrioritizedPermission> = emptyMap(),
         var userGroups: Set<String> = emptySet(),
-        var authorities: Set<Authority> = emptySet(),
+        var authorities: Set<Authority> = setOf(Authority.BROKER_ACCESS, Authority.HTTP_ACCESS),
         var banned: Boolean = false
 )
