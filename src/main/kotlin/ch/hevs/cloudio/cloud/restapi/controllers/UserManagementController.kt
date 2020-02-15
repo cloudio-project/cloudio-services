@@ -8,64 +8,52 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
-import org.springframework.security.access.annotation.Secured
+import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
+@PreAuthorize("hasAuthority('HTTP_ADMIN')")
 class UserManagementController(var userRepository: UserRepository) {
 
     @RequestMapping("/createUser", method = [RequestMethod.POST])
-    @Secured("HTTP_ADMIN")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun createUser(@RequestBody user: User) {
         try {
             UserManagementUtil.createUser(userRepository, user)
         } catch (exception: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequest("Couldn't create user: " + exception.message)
+            throw CloudioHttpExceptions.Conflict("Couldn't create user: " + exception.message)
         }
     }
 
     @RequestMapping("/getUser", method = [RequestMethod.POST])
-    fun getUser(@RequestBody userRequest: UserRequest): User {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        return (getUser(userName, userRequest))
+    @ResponseStatus(HttpStatus.OK)
+    fun getUser(@RequestBody userRequest: UserRequest): User = userRepository.findById(userRequest.userName).orElseGet {
+        throw CloudioHttpExceptions.NotFound("User not found")
     }
 
     @RequestMapping("/getUser/{userNameRequest}", method = [RequestMethod.GET])
-    fun getUser(@PathVariable userNameRequest: String): User {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        return (getUser(userName, UserRequest(userNameRequest)))
-    }
-
-    fun getUser(userName: String, userRequest: UserRequest): User {
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            val user = UserManagementUtil.getUser(userRepository, userRequest)
-            if (user == null)
-                throw CloudioHttpExceptions.BadRequest("User doesn't exist")
-            else
-                return user
-        }
+    @ResponseStatus(HttpStatus.OK)
+    fun getUser(@PathVariable userNameRequest: String): User = userRepository.findById(userNameRequest).orElseGet {
+        throw CloudioHttpExceptions.NotFound("User not found")
     }
 
     @RequestMapping("/deleteUser", method = [RequestMethod.DELETE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteUser(@RequestBody userRequest: UserRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserManagementUtil.deleteUser(userRepository, userRequest)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't delete user: " + e.message)
-            }
+        if (userRepository.existsById(userRequest.userName)) {
+            userRepository.deleteById(userRequest.userName)
+        } else {
+            throw CloudioHttpExceptions.NotFound("User not found")
         }
     }
 
+    // TODO: We should not pass a hash, the hash should be generated on the server.
+    // TODO: Give the user the possibility to change his own password without needing ADMIN atuhority.
     @RequestMapping("/modifyUserPassword", method = [RequestMethod.POST])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun modifyUserPassword(@RequestBody userPasswordRequest: UserPasswordRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
 
@@ -83,21 +71,18 @@ class UserManagementController(var userRepository: UserRepository) {
     }
 
     @RequestMapping("/addUserAuthority", method = [RequestMethod.POST])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun addUserAuthority(@RequestBody addAuthorityRequest: AddAuthorityRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserManagementUtil.addUserAuthority(userRepository, addAuthorityRequest)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't add user authority: " + e.message)
-            }
+        try {
+            UserManagementUtil.addUserAuthority(userRepository, addAuthorityRequest)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
+        } catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't add user authority: " + e.message)
         }
     }
 
     @RequestMapping("/removeUserAuthority", method = [RequestMethod.DELETE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun removeUserAuthority(@RequestBody removeAuthorityRequest: RemoveAuthorityRequest) {
         val userName = SecurityContextHolder.getContext().authentication.name
         if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
@@ -113,6 +98,6 @@ class UserManagementController(var userRepository: UserRepository) {
     }
 
     @RequestMapping("/getUserList", method = [RequestMethod.GET])
-    @Secured("HTTP_ADMIN")
+    @ResponseStatus(HttpStatus.OK)
     fun getUserList(): UserListAnswer = UserManagementUtil.getUserList(userRepository)
 }
