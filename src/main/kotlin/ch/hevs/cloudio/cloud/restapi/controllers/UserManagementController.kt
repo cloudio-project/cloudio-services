@@ -9,13 +9,12 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ER
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_OWN_ACCOUNT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import org.springframework.http.HttpStatus
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
-@PreAuthorize("hasAuthority('HTTP_ADMIN')")
+@Authority.HttpAdmin
 class UserManagementController(var userRepository: UserRepository) {
 
     @RequestMapping("/createUser", method = [RequestMethod.POST])
