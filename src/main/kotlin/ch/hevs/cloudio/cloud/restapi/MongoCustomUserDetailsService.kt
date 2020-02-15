@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi
 
+import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.authentication.DisabledException
@@ -17,8 +18,8 @@ class MongoCustomUserDetailsService(private var userRepository: UserRepository) 
         else -> if (user.banned) {
             throw DisabledException("User \"$username\" is banned.")
         } else {
-            User(user.userName, user.passwordHash, user.authorities.map {
-                SimpleGrantedAuthority(it.value)
+            User(user.userName, user.passwordHash, user.authorities.map(Authority::name).filter{ it.startsWith("HTTP_")}.map {
+                SimpleGrantedAuthority(it)
             }.toList())
         }
     }

@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
+import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
@@ -52,8 +53,13 @@ class AuthenticationService(private val userRepository: UserRepository,
 
                 if (password != null) {   // Authentication with password --> User.
                     val user = userRepository.findById(id)
-                    if (user.isPresent && passwordEncoder.matches(password, user.get().passwordHash)) {
-                        val authorities = user.get().authorities.joinToString(separator = ",") { it.value }
+                    if (user.isPresent &&
+                            user.get().authorities.contains(Authority.BROKER_ACCESS) &&
+                            passwordEncoder.matches(password, user.get().passwordHash)) {
+                        val authorities = user.get().authorities
+                                .map(Authority::name)
+                                .filter { it.startsWith("BROKER_MANAGEMENT_") }
+                                .joinToString(separator = ",") { it.substring(18).toLowerCase() }
                         log.debug("Access granted for user \"$id\" using password (authorities=$authorities).")
                         authorities
                     } else {
@@ -174,7 +180,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                 throw RuntimeException("Invalid authentication action")
             }
         }
-        
+
         return Message(body.toByteArray(), MessageProperties())
     }
 }

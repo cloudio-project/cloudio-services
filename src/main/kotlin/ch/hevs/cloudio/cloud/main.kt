@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.rabbitmq.client.DefaultSaslConfig
@@ -18,12 +19,14 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
@@ -110,7 +113,7 @@ class CloudioApplication {
                     .httpBasic().and()
                     .sessionManagement().disable()*/
             http.csrf().disable()
-                    .authorizeRequests().anyRequest().permitAll()
+                    .authorizeRequests().anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
                     .and().sessionManagement().disable()
         }
