@@ -74,7 +74,6 @@ class UserManagementController(var userRepository: UserRepository) {
     fun addUserAuthority(@RequestBody addAuthorityRequest: AddAuthorityRequest) {
         try {
             UserManagementUtil.addUserAuthority(userRepository, addAuthorityRequest)
-            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } catch (e: CloudioApiException) {
             throw CloudioHttpExceptions.BadRequest("Couldn't add user authority: " + e.message)
         }
