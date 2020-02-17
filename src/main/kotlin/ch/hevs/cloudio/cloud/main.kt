@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud
 import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
@@ -39,7 +40,9 @@ class CloudioApplication {
     @Bean
     fun messageConverter() = object : SmartMessageConverter {
         private val simple = SimpleMessageConverter()
-        private val json = Jackson2JsonMessageConverter()
+        private val json = Jackson2JsonMessageConverter().apply {
+            jacksonObjectMapper().registerModule(KotlinModule())
+        }
 
         override fun toMessage(obj: Any, messageProperties: MessageProperties) = when (obj) {
             is Message -> simple.toMessage(obj, messageProperties)
@@ -53,7 +56,7 @@ class CloudioApplication {
             simple.fromMessage(message)
         }
 
-        override fun fromMessage(message: Message)= if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
+        override fun fromMessage(message: Message) = if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
             json.fromMessage(message)
         } else {
             simple.fromMessage(message)
@@ -108,10 +111,6 @@ class CloudioApplication {
         }
 
         override fun configure(http: HttpSecurity) {
-            /*http.authorizeRequests()
-                    .anyRequest().hasAuthority("http_access").and()
-                    .httpBasic().and()
-                    .sessionManagement().disable()*/
             http.csrf().disable()
                     .authorizeRequests().anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
