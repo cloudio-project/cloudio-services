@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
@@ -76,8 +75,6 @@ class CertificateManagerTest {
                 7AsFbQ==
                 -----END CERTIFICATE-----""".trimIndent()
     )
-
-    private val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
 
     private val authority = CertificateManagerService(properties)
 
