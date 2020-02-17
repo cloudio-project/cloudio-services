@@ -15,7 +15,6 @@ import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.env.Environment
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
@@ -27,7 +26,7 @@ import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()

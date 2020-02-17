@@ -22,5 +22,8 @@ object CloudioHttpExceptions {
     class Timeout(message: String) : RuntimeException(message)
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    class NotFound(message: String) : java.lang.RuntimeException(message)
+    class NotFound(message: String) : RuntimeException(message)
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    class Conflict(message: String): RuntimeException(message)
 }

@@ -74,9 +74,9 @@ data class AccessibleAttributesAnswer(val accessibleAttributes: Map<String, Perm
 // ------ Certificate data class ---------------------------------------------------------------------------------------
 data class CertificateAndKeyRequest(val endpointUuid: String)
 
-enum class LibraryLanguage { JAVA }
+enum class LibraryLanguage { INVALID, JAVA }
 
-data class CertificateAndKeyZipRequest(val endpointUuid: String, val libraryLanguage: LibraryLanguage)
+data class CertificateAndKeyZipRequest(val endpointUuid: String, val libraryLanguage: LibraryLanguage, val properties: Map<String, String> = emptyMap())
 
 data class CertificateFromKeyRequest(val endpointUuid: String, val publicKey: String)
 

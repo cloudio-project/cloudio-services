@@ -6,107 +6,68 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
+@Authority.HttpAdmin
 class UserGroupController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
 
     @RequestMapping("/createUserGroup", method = [RequestMethod.POST])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun createUserGroup(@RequestBody userGroup: UserGroup) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroup)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't create userGroup: " + e.message)
-            }
+        try {
+            UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroup)
+        } catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't create userGroup: " + e.message)
         }
     }
 
     @RequestMapping("/getUserGroup", method = [RequestMethod.POST])
-    fun getUserGroup(@RequestBody userGroupRequest: UserGroupRequest): UserGroup {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        return getUserGroup(userName, userGroupRequest)
-    }
+    @ResponseStatus(HttpStatus.OK)
+    fun getUserGroup(@RequestBody userGroupRequest: UserGroupRequest) = getUserGroup(userGroupRequest.userGroupName)
 
     @RequestMapping("/getUserGroup/{userGroupName}", method = [RequestMethod.GET])
-    fun getUserGroup(@PathVariable userGroupName: String): UserGroup {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        return getUserGroup(userName, UserGroupRequest(userGroupName))
-    }
-
-    fun getUserGroup(userName:String, userGroupRequest: UserGroupRequest): UserGroup {
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            val userGroup = UserGroupUtil.getUserGroup(userGroupRepository, userGroupRequest)
-            if (userGroup == null)
-                throw CloudioHttpExceptions.BadRequest("UserGroup doesn't exist")
-            else
-                return userGroup
-        }
+    @ResponseStatus(HttpStatus.OK)
+    fun getUserGroup(@PathVariable userGroupName: String): UserGroup = userGroupRepository.findById(userGroupName).orElseGet {
+        throw CloudioHttpExceptions.NotFound("User group not found")
     }
 
     @RequestMapping("/getUserGroupList", method = [RequestMethod.GET])
-    fun getUserGroupList(): UserGroupList {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            return UserGroupUtil.getUserGroupList(userGroupRepository)
-        }
-    }
+    @ResponseStatus(HttpStatus.OK)
+    fun getUserGroupList() = UserGroupList(userGroupRepository.findAll().map(UserGroup::userGroupName).toSet())
 
     @RequestMapping("/addUserToGroup", method = [RequestMethod.POST])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun addUserToGroup(@RequestBody userGroupRequestList: UserGroupUserRequestList) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserGroupUtil.addUserToGroup(userGroupRepository, userRepository, userGroupRequestList)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't add user to userGroup: " + e.message)
-            }
+        try {
+            UserGroupUtil.addUserToGroup(userGroupRepository, userRepository, userGroupRequestList)
+        } catch (exception: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't add user to userGroup: " + exception.message)
         }
     }
 
-    @RequestMapping("/deleteUserToGroup", method = [RequestMethod.DELETE])
+    @RequestMapping("/deleteUserToGroup", method = [RequestMethod.DELETE])  // TODO: Should it not be FromGroup...
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteUserToGroup(@RequestBody userGroupUserRequest: UserGroupUserRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserGroupUtil.deleteUserToGroup(userGroupRepository, userRepository, userGroupUserRequest)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't delete user from userGroup: " + e.message)
-            }
+        try {
+            UserGroupUtil.deleteUserToGroup(userGroupRepository, userRepository, userGroupUserRequest)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
+        } catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't delete user from userGroup: " + e.message)
         }
     }
 
     @RequestMapping("/deleteUserGroup", method = [RequestMethod.DELETE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteUserGroup(@RequestBody userGroupRequest: UserGroupRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        if (!userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN))
-            throw CloudioHttpExceptions.Forbidden(CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE)
-        else {
-            try {
-                UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, userGroupRequest)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't delete userGroup: " + e.message)
-            }
+        try {
+            UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, userGroupRequest)
+            throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
+        } catch (e: CloudioApiException) {
+            throw CloudioHttpExceptions.BadRequest("Couldn't delete userGroup: " + e.message)
         }
     }
-
 }

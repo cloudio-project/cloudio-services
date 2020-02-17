@@ -63,6 +63,7 @@ object PermissionUtils {
         }
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity) {
         val topic = endpointEntity.endpointUuid + "/"
 
@@ -73,6 +74,7 @@ object PermissionUtils {
 
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun censorNodeFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node) {
 
         for (cloudioObject in node.objects) {
@@ -81,6 +83,7 @@ object PermissionUtils {
         }
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun censorObjectFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject) {
         val innerTopic = topic
         for (attribute in cloudioObject.attributes) {
@@ -96,6 +99,7 @@ object PermissionUtils {
         }
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun getAccessibleAttributesFromEndpoint(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity): MutableMap<String, Permission> {
         if (endpointEntity.blocked)
             return mutableMapOf()
@@ -113,6 +117,7 @@ object PermissionUtils {
 
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun getAccessibleAttributesFromNode(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node, previousAttributesRight: MutableMap<String, Permission>): MutableMap<String, Permission> {
 
         val attributesRight: MutableMap<String, Permission> = mutableMapOf()
@@ -124,6 +129,7 @@ object PermissionUtils {
         return attributesRight
     }
 
+    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun getAccessibleAttributesFromObject(permissionMap: Map<String, PrioritizedPermission>, topic: String, cloudioObject: CloudioObject, previousAttributesRight: MutableMap<String, Permission>): MutableMap<String, Permission> {
         val innerTopic = topic
         val attributesRight: MutableMap<String, Permission> = mutableMapOf()

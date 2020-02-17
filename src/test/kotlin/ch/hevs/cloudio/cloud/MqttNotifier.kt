@@ -1,9 +1,9 @@
 package ch.hevs.cloudio.cloud
 
 import com.rabbitmq.client.CancelCallback
-import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.DeliverCallback
 import org.apache.commons.logging.LogFactory
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import java.nio.charset.Charset
 
 abstract class MqttNotifier(connectionFactory: ConnectionFactory, topic: String) {
@@ -14,8 +14,8 @@ abstract class MqttNotifier(connectionFactory: ConnectionFactory, topic: String)
 
     init {
         //create a new queue with parameter topic and bind it to default amq.topic exchange
-        val connection = connectionFactory.newConnection()
-        val channel = connection.createChannel()
+        val connection = connectionFactory.createConnection()
+        val channel = connection.createChannel(false)
         val queueName = channel.queueDeclare().getQueue()
         channel.queueBind(queueName, "amq.topic", topic)
 

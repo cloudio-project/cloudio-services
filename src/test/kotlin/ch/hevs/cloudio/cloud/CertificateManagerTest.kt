@@ -1,27 +1,31 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyRequest
+import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
-import ch.hevs.cloudio.cloud.internalservice.CertificateAndPrivateKey
-import ch.hevs.cloudio.cloud.internalservice.CertificateManagerService
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointConfigurationArchiveRequest
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
-import org.springframework.mock.env.MockEnvironment
+import org.junit.jupiter.api.assertDoesNotThrow
+import java.io.ByteArrayInputStream
 import java.io.StringReader
+import java.io.StringWriter
+import java.security.KeyPairGenerator
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.*
+import java.util.zip.ZipInputStream
 
-@SpringBootTest
 class CertificateManagerTest {
-    @Test
-    fun certificateAuthority() {
-        val certificateManagerProperties = CloudioCertificateManagerProperties(
-                caPrivateKey = """
+    private val properties = CloudioCertificateManagerProperties(
+            caPrivateKey = """
                 -----BEGIN PRIVATE KEY-----
                 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpurJYJ1254tDt
                 4xNXrd1QkLGri3jounN9DbnQvzfifrvg6jPkhk30wrgeh67TUDkcTOZmwFoYoBt9
@@ -50,7 +54,7 @@ class CertificateManagerTest {
                 xqqq7yfKPaM1+a6u+UJwXSVHqAIH6//7gKKd3oK76BdVQ5fWdIPU06oTT0UlUmPU
                 v3rKeyI7tYvP/q3XHieRTPM=
                 -----END PRIVATE KEY-----""".trimIndent(),
-                caCertificate = """
+            caCertificate = """
                 -----BEGIN CERTIFICATE-----
                 MIICoDCCAYgCCQCm/ar+qaI74zANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdj
                 bG91ZGlPMB4XDTE5MDQxNzE5MTA0NVoXDTI5MDQxNDE5MTA0NVowEjEQMA4GA1UE
@@ -67,30 +71,94 @@ class CertificateManagerTest {
                 nyja2xLqF0RWy9Pfht9izkjT0ISa7YzQ9FNBfcgwH4584XcZzgVmqBP1hSbyaMqS
                 YbvuYfPwY7671lVKNWbdv88//aal3yt2ZnODikZCnLh7OdpNLg2wspBkxp6a7flR
                 7AsFbQ==
-                -----END CERTIFICATE-----""".trimIndent(),
-                caCertificateJksPath = "src/main/resources/ca-cert.jks",
-                caCertificateJksPassword = "123456"
-        )
+                -----END CERTIFICATE-----""".trimIndent()
+    )
 
-        val mapper: ObjectMapper = Jackson2ObjectMapperBuilder.json().build()
-        val authority = CertificateManagerService(certificateManagerProperties, mapper)
-        val certAndKey = CertificateAndPrivateKey("", "")
-        mapper.readerForUpdating(certAndKey).readValue(authority.generateEndpointKeyAndCertificatePair(mapper.writeValueAsString(CertificateAndKeyRequest(UUID.randomUUID().toString())))) as CertificateAndPrivateKey?
+    private val authority = CertificateManagerService(properties)
 
-        assert(certAndKey.certificate.contains("-----BEGIN CERTIFICATE-----"))
-        assert(certAndKey.privateKey.contains("-----BEGIN RSA PRIVATE KEY-----") || certAndKey.privateKey.contains("-----BEGIN PRIVATE KEY-----"))
+    private val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
+            StringReader(properties.caCertificate)
+    ).readObject() as X509CertificateHolder)
 
-        val caCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(certificateManagerProperties.caCertificate)
-        ).readObject() as X509CertificateHolder)
-        caCert.checkValidity()
+    @Test
+    fun generateEndpointKeyAndCertificatePairTest() {
+        val uuid = UUID.randomUUID()
 
-        val clientCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(certAndKey.certificate)
-        ).readObject() as X509CertificateHolder)
+        val response = authority.generateEndpointKeyAndCertificate(
+                GenerateEndpointKeyAndCertificateRequest(uuid))!!
 
-        clientCert.checkValidity()
-
+        assert(uuid == response.endpointUUID)
+        val p12KeyStore = KeyStore.getInstance("PKCS12")
+        p12KeyStore.load(ByteArrayInputStream(response.pkcs12Data), response.password.toCharArray())
+        val clientCert = p12KeyStore.getCertificate("") as X509Certificate
+        assertDoesNotThrow { clientCert.checkValidity() }
+        p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
+    }
+
+    @Test
+    fun generateEndpointCertificateFromPublicKey() {
+        val keyPair = KeyPairGenerator.getInstance(properties.keyAlgorithm, "BC").apply {
+            initialize(properties.keySize, SecureRandom())
+        }.genKeyPair()
+        val uuid = UUID.randomUUID()
+
+        val response = authority.generateEndpointCertificateFromPublicKey(
+                GenerateEndpointCertificateFromPublicKeyRequest(
+                        uuid, StringWriter().let {
+                    JcaPEMWriter(it).run {
+                        writeObject(keyPair.public)
+                        flush()
+                        close()
+                    }
+                    it
+                }.toString()))!!
+
+        assert(uuid == response.endpointUUID)
+        assert(response.certificatePEM.contains("-----BEGIN CERTIFICATE-----"))
+        val clientCert = JcaX509CertificateConverter().getCertificate(PEMParser(
+                StringReader(response.certificatePEM)
+        ).readObject() as X509CertificateHolder)
+        clientCert.checkValidity()
+        assert(clientCert.publicKey == keyPair.public)
+        assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
+    }
+
+    @Test
+    fun generateEndpointKeyAndCertificatePairTestZip() {
+        val uuid = UUID.randomUUID()
+
+        val response = authority.generateEndpointConfigurationArchive(GenerateEndpointConfigurationArchiveRequest(
+                uuid,
+                LibraryLanguage.JAVA,
+                mapOf("test" to "12345", "test2" to "54321"))
+        )!!
+
+        assert(uuid == response.endpointUUID)
+        val zip = ZipInputStream(ByteArrayInputStream(response.pkcs12Data))
+        val propertiesFile = zip.nextEntry
+        assert(propertiesFile.name == "cloud.io/$uuid.properties")
+        val properties = Properties().apply {
+            load(zip)
+        }
+        val password = properties.getProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword")
+        assert(password.isNotEmpty())
+        assert(properties.getProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword") == password)
+        assert(properties.getProperty("test") == "12345")
+        assert(properties.getProperty("test2") == "54321")
+
+        val jksFile = zip.nextEntry
+        assert(jksFile.name == "cloud.io/authority.jks")
+        val jksKeystore = KeyStore.getInstance("JKS")
+        jksKeystore.load(zip, password.toCharArray())
+        val caCert = jksKeystore.getCertificate("") as X509Certificate
+        assertDoesNotThrow { caCert.checkValidity() }
+        val p12File = zip.nextEntry
+        assert(p12File.name == "cloud.io/$uuid.p12")
+        val p12KeyStore = KeyStore.getInstance("PKCS12")
+        p12KeyStore.load(zip, password.toCharArray())
+        val clientCert = p12KeyStore.getCertificate("") as X509Certificate
+        assertDoesNotThrow { clientCert.checkValidity() }
+        p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
     }
 }

@@ -8,11 +8,11 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.rabbitmq.client.ConnectionFactory
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -28,7 +28,6 @@ class JobsUtilTest {
 
     @Autowired
     private lateinit var connectionFactory: ConnectionFactory
-
     private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
 
     private lateinit var endpointParameters: EndpointParameters

@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
+import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
@@ -8,6 +9,7 @@ import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
@@ -17,7 +19,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
-import java.lang.RuntimeException
 
 @Service
 @Profile("authentication", "default")
@@ -41,18 +42,23 @@ class AuthenticationService(private val userRepository: UserRepository,
                 )
         )
     ])
-    fun authenticate(message: Message): String {
+    fun authenticate(message: Message): Message {
         val action = message.messageProperties.headers["action"]?.toString()
         val id = message.messageProperties.headers["username"].toString()
 
-        return when (action) {
+        val body = when (action) {
             "login" -> {
                 val password = message.messageProperties.headers["password"]?.toString()
 
                 if (password != null) {   // Authentication with password --> User.
                     val user = userRepository.findById(id)
-                    if (user.isPresent && passwordEncoder.matches(password, user.get().passwordHash)) {
-                        val authorities = user.get().authorities.joinToString(separator = ",") { it.value }
+                    if (user.isPresent &&
+                            user.get().authorities.contains(Authority.BROKER_ACCESS) &&
+                            passwordEncoder.matches(password, user.get().passwordHash)) {
+                        val authorities = user.get().authorities
+                                .map(Authority::name)
+                                .filter { it.startsWith("BROKER_MANAGEMENT_") }
+                                .joinToString(separator = ",") { it.substring(18).toLowerCase() }
                         log.debug("Access granted for user \"$id\" using password (authorities=$authorities).")
                         authorities
                     } else {
@@ -72,7 +78,7 @@ class AuthenticationService(private val userRepository: UserRepository,
             }
             "check_vhost" -> {
                 when (val vhost = message.messageProperties.headers["vhost"]?.toString()) {
-                    rabbitProperties.virtualHost -> {
+                    rabbitProperties.virtualHost ?: "/" -> {
                         log.debug("Access to virtual host \"$vhost\" granted for user/endpoint \"$id\".")
                         "allow"
                     }
@@ -112,57 +118,57 @@ class AuthenticationService(private val userRepository: UserRepository,
                 val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
                 if (routingKey.size < 2) {
                     log.warn("Permission to topic refused - topic is too small.")
-                    return "deny"
-                }
-
-                when (uuidPattern.matches(id)) {
-                    true -> {
-                        if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
-                            if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked) {
-                                log.debug("Access to topic $routingKey granted for endpoint $id")
-                                "allow"
+                    "deny"
+                } else {
+                    when (uuidPattern.matches(id)) {
+                        true -> {
+                            if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
+                                if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked) {
+                                    log.debug("Access to topic $routingKey granted for endpoint $id")
+                                    "allow"
+                                } else {
+                                    log.warn("Access to topic $routingKey refused for endpoint $id")
+                                    "deny"
+                                }
                             } else {
                                 log.warn("Access to topic $routingKey refused for endpoint $id")
                                 "deny"
                             }
-                        } else {
-                            log.warn("Access to topic $routingKey refused for endpoint $id")
-                            "deny"
                         }
-                    }
-                    false -> {
-                        val permissionMap = PermissionUtils
-                                .permissionFromUserAndGroup(id, userRepository, userGroupRepository)
+                        false -> {
+                            val permissionMap = PermissionUtils
+                                    .permissionFromUserAndGroup(id, userRepository, userGroupRepository)
 
-                        val topicFilter = routingKey.drop(1) // Drop the verb @...
+                            val topicFilter = routingKey.drop(1) // Drop the verb @...
 
-                        // Check if there is permission linked to topic.
-                        val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
+                            // Check if there is permission linked to topic.
+                            val endpointPermission = PermissionUtils.getHigherPriorityPermission(permissionMap, topicFilter)
 
-                        when {
-                            endpointPermission == Permission.DENY -> {
-                                log.warn("Access to topic $routingKey refused for user $id")
-                                "deny"
-                            }
-                            routingKey[0][0] != '@' -> {
-                                log.warn("Access to topic $routingKey refused for user $id - invalid topic")
-                                "deny"
-                            }
-                            !endpointEntityRepository.existsById(routingKey[1]) -> {
-                                log.warn("Access to topic $routingKey refused for user $id - endpoint does not exist")
-                                "deny"
-                            }
-                            endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> {
-                                log.warn("Access to topic $routingKey refused for user $id - endpoint is blocked")
-                                "deny"
-                            }
-                            endpointPermission.value >= permission.value -> {
-                                log.debug("Access to topic $routingKey granted for user $id")
-                                "allow"
-                            }
-                            else -> {
-                                log.warn("Access to topic $routingKey refused for user $id - unknown error")
-                                "deny"
+                            when {
+                                endpointPermission == Permission.DENY -> {
+                                    log.warn("Access to topic $routingKey refused for user $id")
+                                    "deny"
+                                }
+                                routingKey[0][0] != '@' -> {
+                                    log.warn("Access to topic $routingKey refused for user $id - invalid topic")
+                                    "deny"
+                                }
+                                !endpointEntityRepository.existsById(routingKey[1]) -> {
+                                    log.warn("Access to topic $routingKey refused for user $id - endpoint does not exist")
+                                    "deny"
+                                }
+                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> {
+                                    log.warn("Access to topic $routingKey refused for user $id - endpoint is blocked")
+                                    "deny"
+                                }
+                                endpointPermission.value >= permission.value -> {
+                                    log.debug("Access to topic $routingKey granted for user $id")
+                                    "allow"
+                                }
+                                else -> {
+                                    log.warn("Access to topic $routingKey refused for user $id - unknown error")
+                                    "deny"
+                                }
                             }
                         }
                     }
@@ -173,5 +179,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                 throw RuntimeException("Invalid authentication action")
             }
         }
+
+        return Message(body.toByteArray(), MessageProperties())
     }
 }

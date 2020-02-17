@@ -39,7 +39,7 @@ class EndpointManagementUtilTest {
     @Autowired
     private lateinit var influx: InfluxDB
 
-    val database = "CLOUDIO"
+    val database = "cloudio"
 
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)

@@ -80,20 +80,20 @@ class UserManagementUtilTest {
     @Test
     fun addUserAuthority() {
         //add authority
-        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_POLICYMAKER)))
+        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_MANAGEMENT_POLICYMAKER)))
         //test authority
-        assert(UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_POLICYMAKER) == true)
+        assert(UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_MANAGEMENT_POLICYMAKER) == true)
     }
 
     @Test
     fun removeUserAuthority() {
         //add authority
-        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_ADMINISTRATION)))
+        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_MANAGEMENT_ADMINISTRATOR)))
 
         //remove authority
-        UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(userName, Authority.BROKER_ADMINISTRATION))
+        UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(userName, Authority.BROKER_MANAGEMENT_ADMINISTRATOR))
         //test authority is removed
-        assert((UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_ADMINISTRATION)) == false)
+        assert((UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_MANAGEMENT_ADMINISTRATOR)) == false)
     }
 
     @Test
@@ -101,8 +101,8 @@ class UserManagementUtilTest {
         //test that the random user cannot be retreived
         assert(UserManagementUtil.getUser(userRepository, UserRequest(randomCharacters)) == null)
         assertFails { UserManagementUtil.modifyUserPassword(userRepository, UserPasswordRequest(randomCharacters, "password")) }
-        assertFails { UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(randomCharacters, setOf(Authority.BROKER_POLICYMAKER))) }
-        assertFails { UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(randomCharacters, Authority.BROKER_ADMINISTRATION)) }
+        assertFails { UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(randomCharacters, setOf(Authority.BROKER_MANAGEMENT_POLICYMAKER))) }
+        assertFails { UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(randomCharacters, Authority.BROKER_MANAGEMENT_POLICYMAKER)) }
         assertFails { UserManagementUtil.deleteUser(userRepository, UserRequest(randomCharacters)) }
     }
 }
