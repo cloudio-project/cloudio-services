@@ -4,11 +4,9 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
 import ch.hevs.cloudio.cloud.model.LogParameter
-import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
-import org.springframework.core.env.Environment
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 

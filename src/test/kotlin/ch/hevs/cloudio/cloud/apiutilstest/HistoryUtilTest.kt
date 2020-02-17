@@ -28,7 +28,7 @@ class HistoryUtilTest {
     @Autowired
     private lateinit var endpointEntityRepository: EndpointEntityRepository
 
-    val database = "CLOUDIO"
+    val database = "cloudio"
 
     private lateinit var endpointParameters: EndpointParameters
     private lateinit var createdEndpoint: EndpointEntity

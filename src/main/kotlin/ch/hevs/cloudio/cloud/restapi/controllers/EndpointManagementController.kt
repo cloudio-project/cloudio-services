@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.model.*
@@ -16,7 +17,6 @@ import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.env.Environment
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -26,12 +26,11 @@ import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("/api/v1")
-class EndpointManagementController(val env: Environment, var connectionFactory: ConnectionFactory, var influx: InfluxDB, var environment: Environment, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class EndpointManagementController(var connectionFactory: ConnectionFactory, var influx: InfluxDB, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
 
-    val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
 
     @RequestMapping("/createEndpoint", method = [RequestMethod.POST])
     fun createEndpoint(@RequestBody endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
@@ -76,7 +75,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                endpointEntity.fillAttributesFromInfluxDB(influx, database)
+                endpointEntity.fillAttributesFromInfluxDB(influx, influxProperties.database)
                 PermissionUtils.censorEndpointFromUserPermission(permissionMap, endpointEntity)
                 return endpointEntity
             }
@@ -150,7 +149,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                node.fillAttributesFromInfluxDB(influx, database, nodeRequest.nodeTopic)
+                node.fillAttributesFromInfluxDB(influx, influxProperties.database, nodeRequest.nodeTopic)
                 PermissionUtils.censorNodeFromUserPermission(permissionMap, nodeRequest.nodeTopic + "/", node)
                 return node
             }
@@ -233,7 +232,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                cloudioObject.fillAttributesFromInfluxDB(influx, database, objectRequest.objectTopic)
+                cloudioObject.fillAttributesFromInfluxDB(influx, influxProperties.database, objectRequest.objectTopic)
                 PermissionUtils.censorObjectFromUserPermission(permissionMap, objectRequest.objectTopic + "/", cloudioObject)
                 return cloudioObject
             }
@@ -273,7 +272,7 @@ class EndpointManagementController(val env: Environment, var connectionFactory: 
             if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
-                attribute.fillFromInfluxDB(influx, database, attributeRequest.attributeTopic)
+                attribute.fillFromInfluxDB(influx, influxProperties.database, attributeRequest.attributeTopic)
                 return attribute
             }
         } else

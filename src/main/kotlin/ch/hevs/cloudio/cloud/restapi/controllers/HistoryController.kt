@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
+import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
@@ -9,7 +10,6 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.influxdb.dto.QueryResult
-import org.springframework.core.env.Environment
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1")
-class HistoryController(val env: Environment, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
-
-    val database: String by lazy { env.getProperty("CLOUDIO_INFLUX_DATABASE", "CLOUDIO") }
+class HistoryController(val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
 
     @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.POST])
     fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult {
@@ -36,7 +34,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
         if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-        val queryResult = HistoryUtil.getAttributeHistoryRequest(influx, database, historyDefaultRequest)
+        val queryResult = HistoryUtil.getAttributeHistoryRequest(influx, influxProperties.database, historyDefaultRequest)
 
         if (queryResult == null)
             throw CloudioHttpExceptions.BadRequest("Query didn't return a result")
@@ -58,7 +56,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
 
         val queryResult : QueryResult?
         try {
-            queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, database, historyDateRequest)
+            queryResult = HistoryUtil.getAttributeHistoryByDateRequest(influx, influxProperties.database, historyDateRequest)
         }
         catch (e: CloudioApiException) {
             throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)
@@ -84,7 +82,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
 
         val queryResult : QueryResult?
         try {
-            queryResult = HistoryUtil.getAttributeHistoryWhere(influx, database, historyWhereRequest)
+            queryResult = HistoryUtil.getAttributeHistoryWhere(influx, influxProperties.database, historyWhereRequest)
         }
         catch (e: CloudioApiException) {
             throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)
@@ -109,7 +107,7 @@ class HistoryController(val env: Environment, val influx: InfluxDB, var userRepo
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         val queryResult : QueryResult?
         try {
-            queryResult = HistoryUtil.getAttributeHistoryExpert(influx, database, historyExpertRequest)
+            queryResult = HistoryUtil.getAttributeHistoryExpert(influx, influxProperties.database, historyExpertRequest)
         }
         catch (e: CloudioApiException) {
             throw CloudioHttpExceptions.BadRequest("Couln't access history: "+e.message)

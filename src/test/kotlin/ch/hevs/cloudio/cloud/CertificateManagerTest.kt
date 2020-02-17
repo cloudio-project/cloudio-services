@@ -6,14 +6,12 @@ import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManag
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointConfigurationArchiveRequest
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.io.StringWriter
