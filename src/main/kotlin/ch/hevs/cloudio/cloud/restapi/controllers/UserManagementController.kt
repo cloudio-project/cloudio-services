@@ -29,9 +29,7 @@ class UserManagementController(var userRepository: UserRepository) {
 
     @RequestMapping("/getUser", method = [RequestMethod.POST])
     @ResponseStatus(HttpStatus.OK)
-    fun getUser(@RequestBody userRequest: UserRequest): User = userRepository.findById(userRequest.userName).orElseGet {
-        throw CloudioHttpExceptions.NotFound("User not found")
-    }
+    fun getUser(@RequestBody userRequest: UserRequest) = getUser(userRequest.userName)
 
     @RequestMapping("/getUser/{userNameRequest}", method = [RequestMethod.GET])
     @ResponseStatus(HttpStatus.OK)
