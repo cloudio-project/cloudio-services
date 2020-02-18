@@ -56,6 +56,7 @@ class HistoryUtilTest {
             //if batch enabled, save point in set, either send it
             influx.write(database, "autogen", myPoint)
         }
+        Thread.sleep(3000) //to be sure the update will be transferred to influxDB (3000ms is default batch time)
     }
 
     @AfterAll
