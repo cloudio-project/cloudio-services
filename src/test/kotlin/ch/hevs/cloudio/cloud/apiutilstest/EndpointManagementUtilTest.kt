@@ -107,7 +107,7 @@ class EndpointManagementUtilTest {
     fun setAttributeSetPoint() {
         val setAttribute = Attribute(AttributeConstraint.SetPoint, AttributeType.Number, 1578992269.000, 11.0)
         EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint", setAttribute))
-        Thread.sleep(1000) //to be sure @set message is transefed to influxDB
+        Thread.sleep(3000) //to be sure @set message is transferred to influxDB (3000ms is default batch time)
 
         val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
         endpointEntity!!.fillAttributesFromInfluxDB(influx, database)

@@ -28,7 +28,7 @@ class LogsUtilTest {
     @Autowired
     private lateinit var endpointEntityRepository: EndpointEntityRepository
 
-    val database = "CLOUDIO"
+    val database = "cloudio"
 
     private lateinit var endpointParameters: EndpointParameters
     private lateinit var createdEndpoint: EndpointEntity
@@ -66,6 +66,7 @@ class LogsUtilTest {
                     .addField("logSource", cloudioLogMessage.logSource)
                     .build())
         }
+        Thread.sleep(3000) //to be sure the logs will transferred to influxDB (3000ms is default batch time)
     }
 
     @AfterAll

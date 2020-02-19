@@ -1,9 +1,6 @@
 package ch.hevs.cloudio.cloud.utils
 
-import ch.hevs.cloudio.cloud.model.CloudioObject
-import ch.hevs.cloudio.cloud.model.Node
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -43,7 +40,7 @@ object PermissionUtils {
                 if (splitTopic.size <= index)
                     splitTopic.last() == "#"
                 else
-                    listOf("#", "*", value).contains(splitTopic[index])
+                    listOf("#", "*", "+", value).contains(splitTopic[index])
             }
         }
         return permissionMapToReturn
@@ -89,8 +86,12 @@ object PermissionUtils {
         for (attribute in cloudioObject.attributes) {
             val innerTopicAttribute = innerTopic + attribute.key
             val endpointPermission = getHigherPriorityPermission(permissionMap, innerTopicAttribute.split("/"))
-            if (endpointPermission == Permission.DENY)
+            if (endpointPermission == Permission.DENY) {
+                attribute.value.constraint = AttributeConstraint.Invalid
+                attribute.value.type = AttributeType.Invalid
+                attribute.value.timestamp = -1.0
                 attribute.value.value = "You don't have the right to see this attribute value"
+            }
         }
 
         for (innerCloudioObject in cloudioObject.objects) {
