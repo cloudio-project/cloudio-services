@@ -21,25 +21,3 @@ services:
     image: mongo:latest
     ports:
     - "27017:27017"
-    
-  cloudio-service:
-    image: cloudio/cloudio-services:0.2.0-SNAPSHOT 
-    ports:
-    - "8081:8081"
-    network_mode: "host"
-    environment:
-      spring.rabbitmq.username: 'admin'
-      spring.rabbitmq.password: ${ADMIN_PASSWORD}
-      spring.rabbitmq.host: '127.0.0.1' 
-      spring.rabbitmq.port: '5671'
-      spring.rabbitmq.ssl.enabled: 'true'
-      spring.rabbitmq.ssl.algorithm: 'TLSv1.2'
-      spring.rabbitmq.ssl.verify-hostname: 'false'
-      spring.rabbitmq.ssl.validate-server-certificate: 'false'
-      spring.influx: 'http://127.0.0.1:8086'
-      spring.data.mongodb.host: '127.0.0.1'
-      spring.data.mongodb.database: 'cloudio'
-      server.port: '8081'
-      cloudio.cert-manager.caCertificate: ${CA_CERT}
-      cloudio.cert-manager.caPrivateKey: ${CA_KEY}
-    
