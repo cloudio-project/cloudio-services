@@ -1,14 +1,15 @@
 spring:
   rabbitmq:
+    host: rabbit
     port: 5671
     ssl:
       enabled: true
       algorithm: TLSv1.2
 
   influx:
-    url: http://localhost:8086
+    url: http://influx:8086
 
   data:
     mongodb:
-      host: localhost
+      host: mongo
       database: cloudio
