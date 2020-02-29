@@ -5,16 +5,21 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertFails
 
+@RunWith(SpringRunner::class)
 @SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserManagementUtilTest {
 
     @Autowired
@@ -23,86 +28,91 @@ class UserManagementUtilTest {
     @Autowired
     private lateinit var userGroupRepository: UserGroupRepository
 
+    @Autowired
+    private lateinit var userManagement: UserManagementController
+
+    @Autowired
+    private lateinit var passwordEncoder: PasswordEncoder
+
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
 
     private lateinit var userName: String
 
-    @BeforeAll
+    @Before
     fun setup() {
-
         userName = TestUtil.generateRandomString(15)
-        val userTest = TestUtil.createUser(userName)
-        UserManagementUtil.createUser(userRepository, userTest)
+        val userTest = TestUtil.createUser()
+        userManagement.postUserByUserName(userName, userTest)
     }
 
-    @AfterAll
+    @After
     fun cleanUp() {
-        UserManagementUtil.deleteUser(userRepository, UserRequest(userName))
+        userManagement.deleteUser(userName)
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createDeleteUser() {
         val createUserName = TestUtil.generateRandomString(15)
-        val userTest = TestUtil.createUser(createUserName)
-        UserManagementUtil.createUser(userRepository, userTest)
-        UserManagementUtil.deleteUser(userRepository, UserRequest(createUserName))
+        val userTest = TestUtil.createUser()
+        userManagement.postUserByUserName(createUserName, userTest)
+        userManagement.deleteUser(createUserName)
         //user shouldn't exist
-        val user = UserManagementUtil.getUser(userRepository, UserRequest(createUserName))
-        assert(user == null)
+        try {
+            userManagement.getUserByUserName(createUserName)
+            assert(false)
+        } catch (exception: CloudioHttpExceptions.NotFound) { }
         //user shouldn't be in the list
-        val list = UserManagementUtil.getUserList(userRepository)
-        assert(!list.userList.contains(createUserName))
+        val list = userManagement.getUsers()
+        assert(list.none { it.userName == createUserName })
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getUserList() {
         //test that user is in the user list
-        val list = UserManagementUtil.getUserList(userRepository)
-        assert(list.userList.contains(userName))
+        val list = userManagement.getUsers()
+        assert(!list.none { it.userName == userName })
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getUser() {
-        var user = UserManagementUtil.getUser(userRepository, UserRequest(userName))
-        assert(user != null)
-        assert(user?.userName == userName)
+        userManagement.getUserByUserName(userName)
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserPassword() {
         //modify user password
-        UserManagementUtil.modifyUserPassword(userRepository, UserPasswordRequest(userName, "password"))
+        userManagement.putUserPassword(userName, "password")
         //test new password
-        assert(UserManagementUtil.getUser(userRepository, UserRequest(userName))?.passwordHash == "password")
+        assert(passwordEncoder.matches("password", userRepository.findById(userName).get().passwordHash))
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun addUserAuthority() {
-        //add authority
-        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_MANAGEMENT_POLICYMAKER)))
-        //test authority
-        assert(UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_MANAGEMENT_POLICYMAKER) == true)
+        // TODO
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun removeUserAuthority() {
-        //add authority
-        UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(userName, setOf(Authority.BROKER_MANAGEMENT_ADMINISTRATOR)))
-
-        //remove authority
-        UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(userName, Authority.BROKER_MANAGEMENT_ADMINISTRATOR))
-        //test authority is removed
-        assert((UserManagementUtil.getUser(userRepository, UserRequest(userName))?.authorities?.contains(Authority.BROKER_MANAGEMENT_ADMINISTRATOR)) == false)
+        // TODO
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun randomCharacterUserTest() {
         //test that the random user cannot be retreived
-        assert(UserManagementUtil.getUser(userRepository, UserRequest(randomCharacters)) == null)
-        assertFails { UserManagementUtil.modifyUserPassword(userRepository, UserPasswordRequest(randomCharacters, "password")) }
-        assertFails { UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(randomCharacters, setOf(Authority.BROKER_MANAGEMENT_POLICYMAKER))) }
-        assertFails { UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(randomCharacters, Authority.BROKER_MANAGEMENT_POLICYMAKER)) }
-        assertFails { UserManagementUtil.deleteUser(userRepository, UserRequest(randomCharacters)) }
+
+        // TODO:
+        //assert(userManagement.getUserByUserName(randomCharacters))
+        //assertFails { UserManagementUtil.modifyUserPassword(userRepository, UserPasswordRequest(randomCharacters, "password")) }
+        //assertFails { UserManagementUtil.addUserAuthority(userRepository, AddAuthorityRequest(randomCharacters, setOf(Authority.BROKER_MANAGEMENT_POLICYMAKER))) }
+        //assertFails { UserManagementUtil.removeUserAuthority(userRepository, RemoveAuthorityRequest(randomCharacters, Authority.BROKER_MANAGEMENT_POLICYMAKER)) }
+        //assertFails { UserManagementUtil.deleteUser(userRepository, UserRequest(randomCharacters)) }
     }
 }

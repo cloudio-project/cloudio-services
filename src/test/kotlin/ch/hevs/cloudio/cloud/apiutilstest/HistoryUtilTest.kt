@@ -9,17 +9,18 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.junit4.SpringRunner
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFails
 
+@RunWith(SpringRunner::class)
 @SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HistoryUtilTest {
 
     @Autowired
@@ -35,7 +36,7 @@ class HistoryUtilTest {
 
     private val attribute = Attribute(AttributeConstraint.Measure, AttributeType.Number, 10.0, 10.0)
 
-    @BeforeAll
+    @Before
     fun setup() {
         val friendlyName = "PaquitoTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
@@ -59,7 +60,7 @@ class HistoryUtilTest {
         Thread.sleep(3000) //to be sure the update will be transferred to influxDB (3000ms is default batch time)
     }
 
-    @AfterAll
+    @After
     fun cleanUp() {
         endpointEntityRepository.deleteById(endpointParameters.endpointUuid)
     }

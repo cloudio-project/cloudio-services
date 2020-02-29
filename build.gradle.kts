@@ -33,6 +33,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.61")
+    testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
 }
 
@@ -68,6 +69,32 @@ tasks.register("bootRunDev") {
         }
     }
     finalizedBy("bootRun")
+}
+
+tasks.test {
+    dependsOn("cloudio-dev-environment:createDevServices")
+    doFirst {
+        tasks.test.configure {
+            // Certificate manager.
+            environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
+            environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
+
+            // RabbitMQ (AMQPs).
+            environment("spring.rabbitmq.host", "localhost")
+            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
+            environment("spring.rabbitmq.ssl.verify-hostname", "false")
+            environment("spring.rabbitmq.ssl.trust-store", "file:./cloudio-dev-environment/certificates/ca.jks")
+            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
+
+            // InfluxDB.
+            environment("spring.influx.url", "http://localhost:8086")
+            environment("cloudio.influx.database", "cloudiotest")
+
+            // MongoDB.
+            environment("spring.data.mongodb.host", "localhost")
+            environment("spring.data.mongodb.database", "cloudiotest")
+        }
+    }
 }
 
 jib.to.image = "cloudio/${project.name}:${project.version}"
