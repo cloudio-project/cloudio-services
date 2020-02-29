@@ -44,9 +44,7 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-tasks.register("bootRunDev") {
-    group = "application"
-    description = "Runs this project as a Spring Boot application with the cloudio dev environment"
+tasks.bootRun {
     dependsOn("cloudio-dev-environment:createDevServices")
     doFirst {
         tasks.bootRun.configure {
@@ -68,7 +66,6 @@ tasks.register("bootRunDev") {
             environment("spring.data.mongodb.host", "localhost")
         }
     }
-    finalizedBy("bootRun")
 }
 
 tasks.test {
