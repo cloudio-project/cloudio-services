@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.restapi.account
 
-import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import org.springframework.http.HttpStatus
