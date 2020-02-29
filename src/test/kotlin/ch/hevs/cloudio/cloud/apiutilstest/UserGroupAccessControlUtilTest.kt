@@ -6,6 +6,7 @@ import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.PermissionPriority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.restapi.admin.group.GroupManagementController
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import org.junit.After
@@ -31,6 +32,9 @@ class UserGroupAccessControlUtilTest {
     @Autowired
     private lateinit var userManagement: UserManagementController
 
+    @Autowired
+    private lateinit var groupManagement: GroupManagementController
+
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
 
@@ -43,10 +47,11 @@ class UserGroupAccessControlUtilTest {
         userName = TestUtil.generateRandomString(15)
 
         userGroupName = TestUtil.generateRandomString(15)
-        val userGroupTest = TestUtil.createUserGroup(userGroupName, emptySet())
+        val userGroupTest = TestUtil.createUserGroup(userGroupName)
 
         userManagement.postUserByUserName(userName, PostUserBody(password = "test"))
-        UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroupTest)
+        groupManagement.postGroupByGroupName(userGroupName)
+        groupManagement.putGroupByGroupName(userGroupName, userGroupTest)
     }
 
     @After
@@ -54,7 +59,7 @@ class UserGroupAccessControlUtilTest {
         try {
             //remove user and user group
             userManagement.deleteUser(userName)
-            UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, UserGroupRequest(userGroupName))
+            groupManagement.deleteGroupByGroupName(userGroupName)
         } catch (e: Exception) {
         }
     }

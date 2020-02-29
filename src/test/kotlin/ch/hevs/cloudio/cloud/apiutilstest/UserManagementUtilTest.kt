@@ -1,8 +1,6 @@
 package ch.hevs.cloudio.cloud.apiutilstest
 
 import ch.hevs.cloudio.cloud.TestUtil
-import ch.hevs.cloudio.cloud.apiutils.*
-import ch.hevs.cloudio.cloud.model.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
@@ -16,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
-import kotlin.test.assertFails
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -64,16 +61,16 @@ class UserManagementUtilTest {
             assert(false)
         } catch (exception: CloudioHttpExceptions.NotFound) { }
         //user shouldn't be in the list
-        val list = userManagement.getUsers()
-        assert(list.none { it.userName == createUserName })
+        val list = userManagement.getAllUsers()
+        assert(list.none { it == createUserName })
     }
 
     @Test
     @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getUserList() {
         //test that user is in the user list
-        val list = userManagement.getUsers()
-        assert(!list.none { it.userName == userName })
+        val list = userManagement.getAllUsers()
+        assert(!list.none { it == userName })
     }
 
     @Test

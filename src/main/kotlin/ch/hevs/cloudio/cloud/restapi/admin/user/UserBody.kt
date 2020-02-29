@@ -5,12 +5,20 @@ import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
 
 data class UserBody(
-        var userName: String,
+        var name: String,
         var permissions: Map<String, PrioritizedPermission>,
         var groupMemberships: Set<String>,
         var authorities: Set<Authority>,
         var banned: Boolean
 ) {
+    constructor(user: User): this(
+            name = user.userName,
+            permissions = user.permissions,
+            groupMemberships = user.userGroups,
+            authorities = user.authorities,
+            banned = user.banned
+    )
+
     fun updateUser(user: User) {
         user.permissions = permissions
         user.userGroups = groupMemberships
@@ -18,11 +26,3 @@ data class UserBody(
         user.banned = banned
     }
 }
-
-fun User.toUserBody() = UserBody(
-        userName = userName,
-        permissions = permissions,
-        groupMemberships = userGroups,
-        authorities = authorities,
-        banned = banned
-)

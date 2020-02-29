@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.admin.user
 
 import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import org.springframework.http.HttpStatus
@@ -12,32 +13,38 @@ import org.springframework.web.bind.annotation.*
 @Authority.HttpAdmin
 class UserManagementController(
         private var userRepository: UserRepository,
+        private var groupRepository: UserGroupRepository,
         private var passwordEncoder: PasswordEncoder
 ) {
     @PostMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun postUserByUserName(@PathVariable userName: String, @RequestBody body: PostUserBody) {
         if (userRepository.existsById(userName)) {
-            throw CloudioHttpExceptions.Conflict("Could not create user '$userName' - user exists already.")
+            throw CloudioHttpExceptions.Conflict("Could not create user '$userName' - user exists.")
         }
         userRepository.save(body.toUser(userName, passwordEncoder))
     }
 
     @GetMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.OK)
-    fun getUserByUserName(@PathVariable userName: String) = userRepository.findById(userName).orElseThrow {
+    fun getUserByUserName(@PathVariable userName: String) = UserBody(userRepository.findById(userName).orElseThrow {
         CloudioHttpExceptions.NotFound("User '$userName' not found.")
-    }.toUserBody()
+    })
 
     @PutMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putUserByUserName(@PathVariable userName: String, @RequestBody body: UserBody) {
-        if (userName != body.userName) {
-            throw CloudioHttpExceptions.Conflict("Username in URL and body do not match")
+        if (userName != body.name) {
+            throw CloudioHttpExceptions.Conflict("User name in URL and body do not match")
         }
         userRepository.findById(userName).orElseThrow {
             CloudioHttpExceptions.NotFound("User '$userName' not found.")
         }.also {
+            body.groupMemberships.forEach {
+                if (!groupRepository.existsById(it)) {
+                    throw CloudioHttpExceptions.NotFound("Group '$it' not found.")
+                }
+            }
             body.updateUser(it)
             userRepository.save(it)
         }
@@ -65,5 +72,5 @@ class UserManagementController(
 
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
-    fun getUsers() = userRepository.findAll().map { it.userName }
+    fun getAllUsers() = userRepository.findAll().map { it.userName }
 }

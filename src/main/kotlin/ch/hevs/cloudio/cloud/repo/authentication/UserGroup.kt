@@ -8,6 +8,5 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class UserGroup(
         @Id
         var userGroupName: String = "",
-        var usersList: Set<String> = emptySet(),
         var permissions: Map<String, PrioritizedPermission> = emptyMap()
 )
