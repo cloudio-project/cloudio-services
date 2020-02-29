@@ -9,7 +9,7 @@ data class PostUserBody(
         var password: String,
         var permissions: Map<String, PrioritizedPermission> = emptyMap(),
         var groupMemberships: Set<String> = emptySet(),
-        var authorities: Set<Authority> = emptySet(),
+        var authorities: Set<Authority> = setOf(Authority.BROKER_ACCESS, Authority.HTTP_ACCESS),
         var banned: Boolean = false
 ) {
     fun toUser(userName: String, passwordEncoder: PasswordEncoder) = User(
