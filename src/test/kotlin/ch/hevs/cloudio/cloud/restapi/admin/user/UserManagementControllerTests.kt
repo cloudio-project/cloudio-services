@@ -39,6 +39,7 @@ class UserManagementControllerTests {
     @Before
     fun setup() {
         userRepository.deleteAll()
+        groupRepository.deleteAll()
         groupRepository.save(UserGroup(
                 userGroupName = "TestGroup"
         ))

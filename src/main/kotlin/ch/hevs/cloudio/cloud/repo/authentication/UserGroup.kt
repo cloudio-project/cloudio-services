@@ -8,5 +8,5 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class UserGroup(
         @Id
         var userGroupName: String = "",
-        var permissions: Map<String, PrioritizedPermission> = emptyMap()
+        var permissions: MutableMap<String, PrioritizedPermission> = mutableMapOf()
 )

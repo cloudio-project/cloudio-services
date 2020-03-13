@@ -40,7 +40,7 @@ class UserManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putUserByUserName(@PathVariable userName: String, @RequestBody body: UserBody) {
         if (userName != body.name) {
-            throw CloudioHttpExceptions.Conflict("User name in URL and body do not match")
+            throw CloudioHttpExceptions.Conflict("User name in URL and body do not match.")
         }
         userRepository.findById(userName).orElseThrow {
             CloudioHttpExceptions.NotFound("User '$userName' not found.")

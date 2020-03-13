@@ -35,7 +35,7 @@ class GroupManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putGroupByGroupName(@PathVariable groupName: String, @RequestBody body: GroupBody) {
         if (groupName != body.name) {
-            throw CloudioHttpExceptions.Conflict("Group name in URL and body do not match")
+            throw CloudioHttpExceptions.Conflict("Group name in URL and body do not match.")
         }
         groupRepository.findById(groupName).orElseThrow {
             CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
