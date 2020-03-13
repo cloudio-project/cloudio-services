@@ -20,7 +20,12 @@ class UserManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun postUserByUserName(@PathVariable userName: String, @RequestBody body: PostUserBody) {
         if (userRepository.existsById(userName)) {
-            throw CloudioHttpExceptions.Conflict("Could not create user '$userName' - user exists.")
+            throw CloudioHttpExceptions.Conflict("Could not create user '$userName' - User exists.")
+        }
+        body.groupMemberships.forEach {
+            if (!groupRepository.existsById(it)) {
+                throw CloudioHttpExceptions.NotFound("Could not create user '$userName' - Group '$it' does not exist.")
+            }
         }
         userRepository.save(body.toUser(userName, passwordEncoder))
     }

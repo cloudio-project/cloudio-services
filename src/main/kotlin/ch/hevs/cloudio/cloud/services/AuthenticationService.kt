@@ -117,7 +117,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                 val permission = Permission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
                 val routingKey = (message.messageProperties.headers["routing_key"] as String).split(".")
                 if (routingKey.size < 2) {
-                    log.warn("Permission to topic refused - topic is too small.")
+                    log.warn("Permission to topic refused - topic is too short.")
                     "deny"
                 } else {
                     when (uuidPattern.matches(id)) {
