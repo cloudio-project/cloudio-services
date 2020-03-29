@@ -75,7 +75,35 @@ class UserManagementControllerTests {
 
         userManagementController.deleteUser("User1")
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.deleteUser("Uesr1")
+            userManagementController.deleteUser("User1")
+        }
+    }
+
+    @Test
+    @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
+    fun createAndDeleteCompleteUser() {
+        userManagementController.postUserByUserName("User1", PostUserBody(
+                "tototititata",
+                mapOf("#/toto" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH)),
+                setOf("TestGroup"),
+                setOf(Authority.HTTP_ACCESS),
+                false
+        ))
+
+        val user = userRepository.findByIdOrNull("User1")
+        assert(user != null)
+        user?.apply {
+            assert(userName == "User1")
+            assert(passwordEncoder.matches("tototititata", passwordHash))
+            assert(permissions.count() == 1 && permissions["#/toto"] == PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
+            assert(userGroups.count() == 1 && userGroups.contains("TestGroup"))
+            assert(authorities == setOf(Authority.HTTP_ACCESS))
+            assert(!banned)
+        }
+
+        userManagementController.deleteUser("User1")
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            userManagementController.deleteUser("User1")
         }
     }
 
