@@ -2,9 +2,9 @@ package ch.hevs.cloudio.cloud.restapi.endpoint
 
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PermissionPriority
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository

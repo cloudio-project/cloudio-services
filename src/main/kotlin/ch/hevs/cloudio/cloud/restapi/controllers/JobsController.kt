@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.apiutils.ExecOutputNotifier
 import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
-import ch.hevs.cloudio.cloud.model.Permission
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository

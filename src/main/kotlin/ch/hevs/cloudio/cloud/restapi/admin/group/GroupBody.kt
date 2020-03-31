@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.admin.group
 
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 
 data class GroupBody(

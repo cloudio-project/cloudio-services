@@ -2,9 +2,11 @@ package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.restapi.admin.group.GroupBody
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import java.util.*
 
 object TestUtil {

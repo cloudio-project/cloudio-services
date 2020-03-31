@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
-import ch.hevs.cloudio.cloud.model.Permission
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository

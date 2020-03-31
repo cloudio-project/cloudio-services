@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.model
+package ch.hevs.cloudio.cloud.security
 
 enum class PermissionPriority(val value: Int) {
     LOW(0),

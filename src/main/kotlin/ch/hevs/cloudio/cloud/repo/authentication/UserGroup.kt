@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.repo.authentication
 
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 

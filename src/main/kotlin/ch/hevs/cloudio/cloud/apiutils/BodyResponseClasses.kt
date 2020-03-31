@@ -3,6 +3,8 @@ package ch.hevs.cloudio.cloud.apiutils
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
 import java.util.*
 
 // ------ Exception used in the API ------------------------------------------------------------------------------------

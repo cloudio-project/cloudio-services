@@ -12,6 +12,8 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
 import org.influxdb.InfluxDB
 import org.junit.After
 import org.junit.Before
@@ -22,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
-import java.util.*
 import kotlin.test.assertFails
 
 @RunWith(SpringRunner::class)

@@ -4,6 +4,8 @@ import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import org.springframework.data.repository.findByIdOrNull
 
 

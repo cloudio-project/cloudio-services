@@ -7,6 +7,7 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
 import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription

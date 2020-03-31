@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
