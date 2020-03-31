@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
+import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
@@ -105,9 +105,9 @@ class CloudioApplication {
     }
 
     @Bean
-    fun webSecurityConfigurerAdapter(customUserDetailsService: MongoCustomUserDetailsService) = object : WebSecurityConfigurerAdapter() {
+    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
         override fun configure(auth: AuthenticationManagerBuilder) {
-            auth.userDetailsService(customUserDetailsService)
+            auth.userDetailsService(cloudioUserDetailsService)
         }
 
         override fun configure(http: HttpSecurity) {
