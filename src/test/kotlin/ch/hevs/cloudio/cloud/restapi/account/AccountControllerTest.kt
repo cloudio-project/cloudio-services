@@ -40,7 +40,7 @@ class AccountControllerTest {
                 passwordHash = passwordEncoder.encode("TestUserPassword"),
                 authorities = setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS),
                 userGroups = setOf(),
-                permissions = mapOf("#/toto" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH)),
+                permissions = mutableMapOf("#/toto" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH)),
                 banned = false
         ))
     }

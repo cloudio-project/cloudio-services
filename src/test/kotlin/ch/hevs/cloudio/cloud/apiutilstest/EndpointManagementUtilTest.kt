@@ -60,7 +60,7 @@ class EndpointManagementUtilTest {
         val friendlyName = "PaquitoTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
         //simulate an @online that populate the endpoint data model
-        createdEndpoint = createEndpointEntity(endpointParameters.endpointUuid, endpointParameters.friendlyName)
+        createdEndpoint = createEndpointEntity(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName)
         endpointEntityRepository.save(createdEndpoint)
     }
 
@@ -73,7 +73,6 @@ class EndpointManagementUtilTest {
     fun createEndpoint() {
         val friendlyName = "TotoTheEndpoint"
         val endpointParameters2 = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
-        UUID.fromString(endpointParameters2.endpointUuid)
         assert(friendlyName == endpointParameters2.friendlyName)
 
         endpointEntityRepository.deleteById(endpointParameters2.endpointUuid)
@@ -81,7 +80,7 @@ class EndpointManagementUtilTest {
 
     @Test
     fun getEndpoint() {
-        val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
+        val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
         //test if retrieved endpoint is the same
         assert(endpointEntity == createdEndpoint)
     }
@@ -118,7 +117,7 @@ class EndpointManagementUtilTest {
         Thread.sleep(3000) //to be sure @set message is transferred to influxDB (3000ms is default batch time)
         // TODO: This does not work, InfluxDB driver has no time to save data when blocking the thread.
 
-        val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
+        val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
         endpointEntity!!.fillAttributesFromInfluxDB(influx, database)
         //test if retrieved endpoint is the same
         //assert(endpointEntity.endpoint.nodes["demoNode"]!!.objects["demoObject"]!!.attributes["demoSetPoint"]!!.value == setAttribute.value)
@@ -148,14 +147,14 @@ class EndpointManagementUtilTest {
 
     @Test
     fun blockEndpoint() {
-        EndpointManagementUtil.blockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
-        assert(EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))!!.blocked)
+        EndpointManagementUtil.blockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
+        assert(EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))!!.blocked)
     }
 
     @Test
     fun unblockEndpoint() {
-        EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
-        assert(!EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))!!.blocked)
+        EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
+        assert(!EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))!!.blocked)
     }
 
     @Test
@@ -166,7 +165,7 @@ class EndpointManagementUtilTest {
         UserAccessControlUtil.addUserAccessRight(userRepository,
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 
-        EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid))
+        EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
         val accessibleAttribute = EndpointManagementUtil.getAccessibleAttributes(userRepository, userGroupRepository, endpointEntityRepository, userName)
         //be sure endpoint is unblocked
         assert(accessibleAttribute.accessibleAttributes["${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint"] == Permission.OWN)
@@ -183,7 +182,7 @@ class EndpointManagementUtilTest {
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 
         val ownedEndpoint = EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointEntityRepository, userName)
-        val endpointParametersAndBlock = EndpointParametersAndBlock(endpointParameters.endpointUuid, endpointParameters.friendlyName, false)
+        val endpointParametersAndBlock = EndpointParametersAndBlock(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName, false)
         assert(ownedEndpoint.ownedEndpoints.contains(endpointParametersAndBlock))
         userManagement.deleteUser(userName)
     }

@@ -48,7 +48,7 @@ class GroupManagementControllerTests {
                 passwordHash = passwordEncoder.encode("TestUserPassword"),
                 authorities = setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS),
                 userGroups = setOf("TestGroup"),
-                permissions = mapOf(),
+                permissions = mutableMapOf(),
                 banned = false
         ))
     }
@@ -188,7 +188,7 @@ class GroupManagementControllerTests {
                 passwordHash = passwordEncoder.encode("TestUserPassword"),
                 authorities = setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS),
                 userGroups = setOf("TestGroup", "TestGroup2"),
-                permissions = mapOf(),
+                permissions = mutableMapOf(),
                 banned = false
         ))
 

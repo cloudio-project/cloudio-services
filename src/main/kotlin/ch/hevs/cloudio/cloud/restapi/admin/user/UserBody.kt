@@ -20,7 +20,7 @@ data class UserBody(
     )
 
     fun updateUser(user: User) {
-        user.permissions = permissions
+        user.permissions = permissions.toMutableMap()
         user.userGroups = groupMemberships
         user.authorities = authorities
         user.banned = banned

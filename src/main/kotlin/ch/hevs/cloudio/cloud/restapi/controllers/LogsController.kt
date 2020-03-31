@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -34,7 +35,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(logsDefaultRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsDefaultRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult = LogsUtil.getEndpointLogsRequest(influx, influxProperties.database, logsDefaultRequest)
@@ -61,7 +62,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(logsDateRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsDateRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult : QueryResult?
@@ -94,7 +95,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(logsWhereRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsWhereRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val queryResult : QueryResult?
@@ -127,7 +128,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(logsSetRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsSetRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest)
@@ -159,7 +160,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(logsGetRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsGetRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             val logLevel = LogsUtil.getLogsLevel(endpointEntityRepository, logsGetRequest)

@@ -48,7 +48,7 @@ class UserManagementControllerTests {
                 passwordHash = passwordEncoder.encode("TestUserPassword"),
                 authorities = setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS),
                 userGroups = setOf("TestGroup"),
-                permissions = mapOf(),
+                permissions = mutableMapOf(),
                 banned = false
         ))
     }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
+import java.util.*
 
 @RestController
 @RequestMapping("/api/v1")
@@ -31,7 +32,7 @@ class HistoryController(val influx: InfluxDB, var userRepository: UserRepository
             throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyDefaultRequest.attributeTopic.split("/")
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult = HistoryUtil.getAttributeHistoryRequest(influx, influxProperties.database, historyDefaultRequest)
@@ -51,7 +52,7 @@ class HistoryController(val influx: InfluxDB, var userRepository: UserRepository
             throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyDateRequest.attributeTopic.split("/")
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult : QueryResult?
@@ -77,7 +78,7 @@ class HistoryController(val influx: InfluxDB, var userRepository: UserRepository
             throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyWhereRequest.attributeTopic.split("/")
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
         val queryResult : QueryResult?
@@ -103,7 +104,7 @@ class HistoryController(val influx: InfluxDB, var userRepository: UserRepository
             throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
         val splitTopic = historyExpertRequest.attributeTopic.split("/")
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         val queryResult : QueryResult?
         try {

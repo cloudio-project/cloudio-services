@@ -41,7 +41,7 @@ class HistoryUtilTest {
         val friendlyName = "PaquitoTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
         //simulate an @online that populate the endpoint data model
-        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid, endpointParameters.friendlyName)
+        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName)
         endpointEntityRepository.save(createdEndpoint)
 
         // the date from those 10 points goes from 2020-01-14T08:57:49Z to 2020-01-14T08:57:49.009Z

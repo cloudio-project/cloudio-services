@@ -10,7 +10,7 @@ data class User(
         @Id
         var userName: String = "",
         var passwordHash: String = "",
-        var permissions: Map<String, PrioritizedPermission> = emptyMap(),
+        var permissions: MutableMap<String, PrioritizedPermission> = mutableMapOf(),
         var userGroups: Set<String> = emptySet(),
         var authorities: Set<Authority> = setOf(Authority.BROKER_ACCESS, Authority.HTTP_ACCESS),
         var banned: Boolean = false

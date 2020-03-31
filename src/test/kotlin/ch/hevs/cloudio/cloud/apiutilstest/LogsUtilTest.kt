@@ -41,7 +41,7 @@ class LogsUtilTest {
         val friendlyName = "LuluTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
         //simulate an @online that populate the endpoint data model
-        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid, endpointParameters.friendlyName)
+        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName)
         endpointEntityRepository.save(createdEndpoint)
 
         var cloudioLogMessage = CloudioLogMessage(LogLevel.DEBUG)
@@ -77,7 +77,7 @@ class LogsUtilTest {
 
     @Test
     fun getEndpointLogsRequest() {
-        val logs = LogsUtil.getEndpointLogsRequest(influx, database, LogsDefaultRequest(endpointParameters.endpointUuid, 10))
+        val logs = LogsUtil.getEndpointLogsRequest(influx, database, LogsDefaultRequest(endpointParameters.endpointUuid.toString(), 10))
 
         assert(logs!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.logs")
         assert(logs.results[0].series[0].values.size == 10)
@@ -85,7 +85,7 @@ class LogsUtilTest {
 
     @Test
     fun getEndpointLogsByDateRequest() {
-        val logs = LogsUtil.getEndpointLogsByDateRequest(influx, database, LogsDateRequest(endpointParameters.endpointUuid,
+        val logs = LogsUtil.getEndpointLogsByDateRequest(influx, database, LogsDateRequest(endpointParameters.endpointUuid.toString(),
                 "2020-01-14T08:57:49Z",
                 "2020-01-14T08:57:49.01Z"))
 
@@ -97,7 +97,7 @@ class LogsUtilTest {
     @Test
     fun getEndpointLogsWhereRequest() {
         //filter Error logs -> only 5 logs
-        val logs = LogsUtil.getEndpointLogsWhereRequest(influx, database, LogsWhereRequest(endpointParameters.endpointUuid,
+        val logs = LogsUtil.getEndpointLogsWhereRequest(influx, database, LogsWhereRequest(endpointParameters.endpointUuid.toString(),
                 "time >= '2020-01-14T08:57:49Z' and time <= '2020-01-14T08:57:49.01Z' and \"level\" = 'ERROR'"))
 
         assert(logs!!.results[0].series[0].name == "${endpointParameters.endpointUuid}.logs")
@@ -107,26 +107,26 @@ class LogsUtilTest {
 
     @Test
     fun getLogsLevel() {
-        LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid))
+        LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid.toString()))
     }
 
     @Test
     fun setLogsLevel() {
-        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid, LogLevel.FATAL))
+        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid.toString(), LogLevel.FATAL))
         Thread.sleep(100) //wait for the mqtt message to be send
-        val level = LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid))
+        val level = LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid.toString()))
         assert(level!!.level == LogLevel.FATAL)
     }
 
     @Test
     fun basicSqlInjection() {
         assertFails {
-            LogsUtil.getEndpointLogsByDateRequest(influx, database, LogsDateRequest(endpointParameters.endpointUuid,
+            LogsUtil.getEndpointLogsByDateRequest(influx, database, LogsDateRequest(endpointParameters.endpointUuid.toString(),
                     "2020-01-14T08:57:49Z; Show databases",
                     "2020-01-14T08:57:49.01Z"))
         }
         assertFails {
-            LogsUtil.getEndpointLogsWhereRequest(influx, database, LogsWhereRequest(endpointParameters.endpointUuid,
+            LogsUtil.getEndpointLogsWhereRequest(influx, database, LogsWhereRequest(endpointParameters.endpointUuid.toString(),
                     "time >= '2020-01-14T08:57:49Z' and time <= '2020-01-14T08:57:49.01Z' and \"level\" = 'ERROR'; Show databases"))
         }
     }

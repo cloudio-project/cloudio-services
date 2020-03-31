@@ -43,9 +43,9 @@ class JobsUtilTest {
         val friendlyName = "KarolTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
         //simulate an @online that populate the endpoint data model
-        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid, endpointParameters.friendlyName)
+        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName)
         endpointEntityRepository.save(createdEndpoint)
-        jobExecuteRequest = JobExecuteRequest(endpointParameters.endpointUuid, "cmd://listJobs", false, "123soleil", "fake data", 1000)
+        jobExecuteRequest = JobExecuteRequest(endpointParameters.endpointUuid.toString(), "cmd://listJobs", false, "123soleil", "fake data", 1000)
     }
 
     @After

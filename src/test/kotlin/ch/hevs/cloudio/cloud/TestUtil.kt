@@ -5,6 +5,7 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.restapi.admin.group.GroupBody
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
+import java.util.*
 
 object TestUtil {
 
@@ -40,7 +41,7 @@ object TestUtil {
     }
 
     fun createEndpointEntity(endpointUuid: String, friendlyName: String): EndpointEntity {
-        return EndpointEntity(endpointUuid = endpointUuid, friendlyName = friendlyName, endpoint =
+        return EndpointEntity(endpointUuid = UUID.fromString(endpointUuid), friendlyName = friendlyName, endpoint =
         Endpoint(hashMapOf("demoNode" to
                 Node(emptySet(), hashMapOf("demoObject" to
                         CloudioObject("", mutableMapOf(), hashMapOf(

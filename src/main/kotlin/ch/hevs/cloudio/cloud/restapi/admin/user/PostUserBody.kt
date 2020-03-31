@@ -15,7 +15,7 @@ data class PostUserBody(
     fun toUser(userName: String, passwordEncoder: PasswordEncoder) = User(
             userName = userName,
             passwordHash = passwordEncoder.encode(password),
-            permissions = permissions,
+            permissions = permissions.toMutableMap(),
             userGroups = groupMemberships,
             authorities = authorities,
             banned = banned

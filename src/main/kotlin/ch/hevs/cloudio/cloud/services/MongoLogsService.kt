@@ -8,6 +8,7 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 @Profile("logs-mongo", "default")
@@ -15,7 +16,7 @@ class MongoLogsService(val endpointEntityRepository: EndpointEntityRepository) :
 
 
     override fun logLevelChange(endpointUuid: String, logParameter: LogParameter) {
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(endpointUuid)
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointUuid))
         if (endpointEntity != null) {
             endpointEntity.logLevel = LogLevel.valueOf(logParameter.level)
             endpointEntityRepository.save(endpointEntity)

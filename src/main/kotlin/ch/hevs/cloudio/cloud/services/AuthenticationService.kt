@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 @Profile("authentication", "default")
@@ -66,7 +67,7 @@ class AuthenticationService(private val userRepository: UserRepository,
                         "refused"
                     }
                 } else {   // Authentication with certificates --> Endpoint.
-                    val endpoint = endpointEntityRepository.findById(id)
+                    val endpoint = endpointEntityRepository.findById(UUID.fromString(id))
                     if (endpoint.isPresent && !endpoint.get().blocked) {
                         log.debug("Access granted for endpoint \"$id\" using client certificate.")
                         "allow"
@@ -122,8 +123,8 @@ class AuthenticationService(private val userRepository: UserRepository,
                 } else {
                     when (uuidPattern.matches(id)) {
                         true -> {
-                            if (id == routingKey[1] && endpointEntityRepository.existsById(id)) {
-                                if (!endpointEntityRepository.findByIdOrNull(id)!!.blocked) {
+                            if (id == routingKey[1] && endpointEntityRepository.existsById(UUID.fromString(id))) {
+                                if (!endpointEntityRepository.findByIdOrNull(UUID.fromString(id))!!.blocked) {
                                     log.debug("Access to topic $routingKey granted for endpoint $id")
                                     "allow"
                                 } else {
@@ -153,11 +154,11 @@ class AuthenticationService(private val userRepository: UserRepository,
                                     log.warn("Access to topic $routingKey refused for user $id - invalid topic")
                                     "deny"
                                 }
-                                !endpointEntityRepository.existsById(routingKey[1]) -> {
+                                !endpointEntityRepository.existsById(UUID.fromString(routingKey[1])) -> {
                                     log.warn("Access to topic $routingKey refused for user $id - endpoint does not exist")
                                     "deny"
                                 }
-                                endpointEntityRepository.findByIdOrNull(routingKey[1])!!.blocked -> {
+                                endpointEntityRepository.findByIdOrNull(UUID.fromString(routingKey[1]))!!.blocked -> {
                                     log.warn("Access to topic $routingKey refused for user $id - endpoint is blocked")
                                     "deny"
                                 }

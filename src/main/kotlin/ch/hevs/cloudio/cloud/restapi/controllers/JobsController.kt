@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.util.*
 import java.util.concurrent.Executors
 
 @RestController
@@ -44,7 +45,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(jobExecuteRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(jobExecuteRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             if (!jobExecuteRequest.getOutput) {

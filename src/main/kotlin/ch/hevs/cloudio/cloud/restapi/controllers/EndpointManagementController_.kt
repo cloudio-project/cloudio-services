@@ -21,12 +21,13 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.context.request.async.DeferredResult
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("/api/v1")
-class EndpointManagementController(var connectionFactory: ConnectionFactory, var influx: InfluxDB, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
+class EndpointManagementController_(var connectionFactory: ConnectionFactory, var influx: InfluxDB, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -38,9 +39,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
 
         val userName = SecurityContextHolder.getContext().authentication.name
         val user = userRepository.findById(userName).get()
-        val permissions = user.permissions.toMutableMap()
-        permissions.put(toReturn.endpointUuid + "/#", PrioritizedPermission(Permission.OWN, PermissionPriority.HIGHEST))
-        user.permissions = permissions.toMap()
+        user.permissions.put(toReturn.endpointUuid.toString() + "/#", PrioritizedPermission(Permission.OWN, PermissionPriority.HIGHEST))
         userRepository.save(user)
 
         return toReturn
@@ -72,7 +71,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, endpointRequest)
 
         if (endpointEntity != null) {
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 endpointEntity.fillAttributesFromInfluxDB(influx, influxProperties.database)
@@ -107,7 +106,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
 
         val endpointFriendlyName = EndpointManagementUtil.getEndpointFriendlyName(endpointEntityRepository, endpointRequest)
         if (endpointFriendlyName != null) {
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return endpointFriendlyName
@@ -146,7 +145,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
 
         if (node != null) {
 
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 node.fillAttributesFromInfluxDB(influx, influxProperties.database, nodeRequest.nodeTopic)
@@ -192,7 +191,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if (nodeThingDescription == null) {
             throw CloudioHttpExceptions.BadRequest("Couldn't get WoT Node")
         } else {
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else
                 return nodeThingDescription
@@ -229,7 +228,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         }
 
         if (cloudioObject != null) {
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 cloudioObject.fillAttributesFromInfluxDB(influx, influxProperties.database, objectRequest.objectTopic)
@@ -269,7 +268,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
             throw CloudioHttpExceptions.BadRequest("Couldn't get Attribute: " + e.message)
         }
         if (attribute != null) {
-            if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 attribute.fillFromInfluxDB(influx, influxProperties.database, attributeRequest.attributeTopic)
@@ -301,7 +300,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) < Permission.WRITE)
             throw CloudioHttpExceptions.BadRequest("You don't have permission to write this attribute")
 
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         else {
             try {
@@ -335,7 +334,7 @@ class EndpointManagementController(var connectionFactory: ConnectionFactory, var
         if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
             throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
 
-        if (endpointEntityRepository.findByIdOrNull(splitTopic[0])!!.blocked)
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         else {
             try {

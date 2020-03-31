@@ -8,6 +8,7 @@ import org.influxdb.dto.Query
 import org.influxdb.dto.QueryResult
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.repository.findByIdOrNull
+import java.util.*
 
 object LogsUtil {
 
@@ -52,7 +53,7 @@ object LogsUtil {
 
     fun getLogsLevel(endpointEntityRepository: EndpointEntityRepository, logsGetRequest: LogsGetRequest): LogsGetAnswer? {
 
-        val endpointEntity = endpointEntityRepository.findByIdOrNull(logsGetRequest.endpointUuid)
+        val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(logsGetRequest.endpointUuid))
         if (endpointEntity != null) {
             return LogsGetAnswer(endpointEntity.logLevel)
         } else {
