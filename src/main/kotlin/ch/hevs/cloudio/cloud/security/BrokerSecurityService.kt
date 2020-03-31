@@ -1,7 +1,5 @@
-package ch.hevs.cloudio.cloud.services
+package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -23,13 +21,13 @@ import java.util.*
 
 @Service
 @Profile("authentication", "default")
-class AuthenticationService(private val userRepository: UserRepository,
+class BrokerSecurityService(private val userRepository: UserRepository,
                             private val userGroupRepository: UserGroupRepository,
                             private val endpointEntityRepository: EndpointEntityRepository,
                             private val passwordEncoder: BCryptPasswordEncoder,
                             private val rabbitProperties: RabbitProperties) {
 
-    private val log = LogFactory.getLog(AuthenticationService::class.java)
+    private val log = LogFactory.getLog(BrokerSecurityService::class.java)
     private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
 
     @RabbitListener(bindings = [
