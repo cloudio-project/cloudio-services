@@ -11,6 +11,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB

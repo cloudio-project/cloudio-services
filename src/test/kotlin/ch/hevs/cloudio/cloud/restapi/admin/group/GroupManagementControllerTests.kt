@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.admin.group
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.PermissionPriority
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
@@ -9,7 +9,6 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows

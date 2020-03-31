@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

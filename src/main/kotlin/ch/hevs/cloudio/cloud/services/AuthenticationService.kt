@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository

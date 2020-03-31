@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.admin.user
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
 

@@ -1,11 +1,10 @@
 package ch.hevs.cloudio.cloud.restapi.account
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.model.Permission
 import ch.hevs.cloudio.cloud.model.PermissionPriority
 import ch.hevs.cloudio.cloud.model.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import org.junit.Before

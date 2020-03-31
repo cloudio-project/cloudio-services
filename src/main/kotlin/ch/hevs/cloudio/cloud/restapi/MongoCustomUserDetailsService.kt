@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi
 
-import ch.hevs.cloudio.cloud.model.Authority
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.authentication.DisabledException

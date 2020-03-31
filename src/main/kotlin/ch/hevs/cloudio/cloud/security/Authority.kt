@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.model
+package ch.hevs.cloudio.cloud.security
 
 import org.springframework.security.access.prepost.PreAuthorize
 
