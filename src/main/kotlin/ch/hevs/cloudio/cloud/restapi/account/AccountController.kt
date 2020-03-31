@@ -2,26 +2,33 @@ package ch.hevs.cloudio.cloud.restapi.account
 
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
+import springfox.documentation.annotations.ApiIgnore
 import java.security.Principal
 
+@Api(tags = ["Account"], description = "Allows user to interact with his own account.")
 @RestController
 @RequestMapping("/api/v1/account")
 class AccountController(
         private val userRepository: UserRepository,
         private val passwordEncoder: PasswordEncoder
 ) {
+    @ApiOperation("Get the information about the actual authenticated user.")
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    fun getAccount(principal: Principal) = AccountBody(userRepository.findById(principal.name).orElseThrow {
+    fun getMyAccount(@ApiIgnore principal: Principal) = AccountBody(userRepository.findById(principal.name).orElseThrow {
         CloudioHttpExceptions.NotFound("User not found.")
     })
 
+    @ApiOperation("Change the actual authenticated user's password.")
     @PutMapping("/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun putAccountPassword(@RequestParam password: String, principal: Principal) {
+    fun changeMyPassword(@RequestParam password: String, @ApiIgnore principal: Principal) {
         userRepository.findById(principal.name).orElseThrow {
             CloudioHttpExceptions.NotFound("User not found.")
         }.let {

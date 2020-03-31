@@ -12,6 +12,10 @@ group = "ch.hevs.cloudio"
 version = "0.2.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
+springBoot {
+    buildInfo()
+}
+
 repositories {
     mavenCentral()
 }
@@ -25,6 +29,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.64")
+    implementation("io.springfox:springfox-swagger2:2.9.2")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

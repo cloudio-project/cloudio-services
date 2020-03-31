@@ -11,12 +11,16 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
 import org.influxdb.InfluxDB
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
+import springfox.documentation.annotations.ApiIgnore
 import java.security.Principal
 import java.util.*
 
+@Api(tags = ["Endpoint Management"], description = "Allows an user to access and manage endpoints and their actual data.")
 @RestController
 @RequestMapping("/api/v1/endpoint")
 class EndpointManagementController(
@@ -26,9 +30,10 @@ class EndpointManagementController(
         private val influxDB: InfluxDB,
         private val influxProperties: CloudioInfluxProperties
 ) {
+    @ApiOperation("Create a new endpoint.")
     @PostMapping("")
     @ResponseStatus(HttpStatus.OK)
-    fun createEndpoint(@RequestParam friendlyName: String, principal: Principal) = userRepository.findById(principal.name).orElseThrow {
+    fun createEndpoint(@RequestParam friendlyName: String, @ApiIgnore principal: Principal) = userRepository.findById(principal.name).orElseThrow {
         CloudioHttpExceptions.NotFound("User '${principal.name}' not found.")
     }.let {
         val endpoint = EndpointEntity(UUID.randomUUID(), friendlyName)
@@ -38,8 +43,9 @@ class EndpointManagementController(
         endpoint.endpointUuid.toString()
     }
 
+    @ApiOperation("Get endpoint information.")
     @GetMapping("{uuid}")
-    fun getEndpoint(@PathVariable uuid: UUID, principal: Principal): EndpointEntity {
+    fun getEndpoint(@PathVariable uuid: UUID, @ApiIgnore principal: Principal): EndpointEntity {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(principal.name, userRepository, userGroupRepository)
         val genericTopic = "$uuid/#"

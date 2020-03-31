@@ -66,7 +66,7 @@ class AccountControllerTest {
     @Test
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun changePassword() {
-        accountController.putAccountPassword("MyNewPassword123777", Principal { "TestUser" })
+        accountController.changeMyPassword("MyNewPassword123777", Principal { "TestUser" })
 
         val user = userRepository.findByIdOrNull("TestUser")
 
@@ -78,7 +78,7 @@ class AccountControllerTest {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun changePasswordOfNonExistingUser() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.putAccountPassword("MyNewPassword123777", Principal { "TestUser2" })
+            accountController.changeMyPassword("MyNewPassword123777", Principal { "TestUser2" })
         }
     }
 }

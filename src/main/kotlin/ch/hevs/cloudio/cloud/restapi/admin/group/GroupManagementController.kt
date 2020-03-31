@@ -5,9 +5,12 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
+@Api(tags = ["Group Management"], description = "Allows an admin user to manage user groups.")
 @RestController
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
@@ -15,6 +18,7 @@ class GroupManagementController(
         private var groupRepository: UserGroupRepository,
         private var userRepository: UserRepository
 ) {
+    @ApiOperation("Create a new user group.")
     @PostMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun postGroupByGroupName(@PathVariable groupName: String) {
@@ -24,6 +28,7 @@ class GroupManagementController(
         groupRepository.save(UserGroup(groupName))
     }
 
+    @ApiOperation("Get user group information.")
     @GetMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.OK)
     fun getGroupByGroupName(@PathVariable groupName: String) = GroupBody(
@@ -31,6 +36,7 @@ class GroupManagementController(
                 CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
             })
 
+    @ApiOperation("Modify user group.")
     @PutMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putGroupByGroupName(@PathVariable groupName: String, @RequestBody body: GroupBody) {
@@ -45,6 +51,7 @@ class GroupManagementController(
         }
     }
 
+    @ApiOperation("Deletes user group.")
     @DeleteMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteGroupByGroupName(@PathVariable groupName: String) {
@@ -58,6 +65,7 @@ class GroupManagementController(
         }
     }
 
+    @ApiOperation("List all user group names.")
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
     fun getAllGroups() = groupRepository.findAll().map { it.userGroupName }
