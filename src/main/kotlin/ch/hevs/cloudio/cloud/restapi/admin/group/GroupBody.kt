@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 
 data class GroupBody(
         val name: String,
-        var permissions: Map<String, PrioritizedPermission> = mutableMapOf()
+        var permissions: Map<String, PrioritizedPermission> = emptyMap()
 ) {
     constructor(userGroup: UserGroup) : this(
             name = userGroup.userGroupName,

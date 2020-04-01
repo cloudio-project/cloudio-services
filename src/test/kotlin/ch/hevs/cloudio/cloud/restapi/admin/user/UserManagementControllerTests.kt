@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.admin.user
 
+import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
@@ -338,6 +339,32 @@ class UserManagementControllerTests {
     fun getAllUsersByNonAdmin() {
         assertThrows<AccessDeniedException> {
             userManagementController.getAllUsers()
+        }
+    }
+
+    // Random user name tests
+
+    @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
+    fun randomCharacterUserTest() {
+        val randomCharacters = TestUtil.generateRandomString(15)
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            userManagementController.getUserByUserName(randomCharacters)
+        }
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            userManagementController.putUserPassword(randomCharacters, "12345678900")
+        }
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            val user = userManagementController.getUserByUserName("TestUser")
+            user.name = randomCharacters
+            userManagementController.putUserByUserName(randomCharacters, user)
+        }
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            userManagementController.deleteUser(randomCharacters)
         }
     }
 }

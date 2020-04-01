@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.admin.group
 
+import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
@@ -207,5 +208,33 @@ class GroupManagementControllerTests {
 
         assert(groups.count() == 1)
         assert(groups.first() == "TestGroup")
+    }
+
+    @Test
+    @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
+    fun getAllGroupsByNonAdmin() {
+        assertThrows<AccessDeniedException> {
+            groupManagementController.getAllGroups()
+        }
+    }
+
+    // Random group name tests
+
+    @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
+    fun randomCharacterUserGroupTest() {
+        val randomCharacters = TestUtil.generateRandomString(15)
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            groupManagementController.getGroupByGroupName(randomCharacters)
+        }
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            groupManagementController.putGroupByGroupName(randomCharacters, GroupBody(randomCharacters, emptyMap()))
+        }
+
+        assertThrows<CloudioHttpExceptions.NotFound> {
+            groupManagementController.deleteGroupByGroupName(randomCharacters)
+        }
     }
 }
