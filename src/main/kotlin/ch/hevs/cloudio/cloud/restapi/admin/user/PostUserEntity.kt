@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import org.springframework.security.crypto.password.PasswordEncoder
 
-data class PostUserBody(
+data class PostUserEntity(
         var password: String,
         var permissions: Map<String, PrioritizedPermission> = emptyMap(),
         var groupMemberships: Set<String> = emptySet(),

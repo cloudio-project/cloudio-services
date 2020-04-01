@@ -21,7 +21,7 @@ class GroupManagementController(
     @ApiOperation("Create a new user group.")
     @PostMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun postGroupByGroupName(@PathVariable groupName: String) {
+    fun createGroupByGroupName(@PathVariable groupName: String) {
         if (groupRepository.existsById(groupName)) {
             throw CloudioHttpExceptions.Conflict("Could not create group '$groupName' - group exists.")
         }
@@ -31,7 +31,7 @@ class GroupManagementController(
     @ApiOperation("Get user group information.")
     @GetMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.OK)
-    fun getGroupByGroupName(@PathVariable groupName: String) = GroupBody(
+    fun getGroupByGroupName(@PathVariable groupName: String) = GroupEntity(
             groupRepository.findById(groupName).orElseThrow {
                 CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
             })
@@ -39,7 +39,7 @@ class GroupManagementController(
     @ApiOperation("Modify user group.")
     @PutMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun putGroupByGroupName(@PathVariable groupName: String, @RequestBody body: GroupBody) {
+    fun updateGroupByGroupName(@PathVariable groupName: String, @RequestBody body: GroupEntity) {
         if (groupName != body.name) {
             throw CloudioHttpExceptions.Conflict("Group name in URL and body do not match.")
         }

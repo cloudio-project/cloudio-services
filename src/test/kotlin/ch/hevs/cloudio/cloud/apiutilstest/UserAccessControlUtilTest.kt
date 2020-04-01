@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
+import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import org.junit.After
 import org.junit.Before
@@ -40,16 +40,16 @@ class UserAccessControlUtilTest {
         userName = TestUtil.generateRandomString(15)
         userName2 = TestUtil.generateRandomString(15)
 
-        userManagement.postUserByUserName(userName, PostUserBody(password = "test"))
-        userManagement.postUserByUserName(userName2, PostUserBody(password = "test"))
+        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        userManagement.createUserByUserName(userName2, PostUserEntity(password = "test"))
     }
 
     @After
     fun cleanUp() {
         try {
             //remove users
-            userManagement.deleteUser(userName)
-            userManagement.deleteUser(userName2)
+            userManagement.deleteUserByUserName(userName)
+            userManagement.deleteUserByUserName(userName2)
         } catch (e: Exception) {
         }
     }

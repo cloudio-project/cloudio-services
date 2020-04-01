@@ -10,7 +10,7 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserBody
+import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
@@ -163,7 +163,7 @@ class EndpointManagementUtilTest {
     @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getAccessibleAttributes() {
         val userName = TestUtil.generateRandomString(15)
-        userManagement.postUserByUserName(userName, PostUserBody(password = "test"))
+        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
         UserAccessControlUtil.addUserAccessRight(userRepository,
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 
@@ -172,21 +172,21 @@ class EndpointManagementUtilTest {
         //be sure endpoint is unblocked
         assert(accessibleAttribute.accessibleAttributes["${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint"] == Permission.OWN)
         assert(accessibleAttribute.accessibleAttributes["${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure"] == Permission.OWN)
-        userManagement.deleteUser(userName)
+        userManagement.deleteUserByUserName(userName)
     }
 
     @Test
     @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getOwnedEndpoints() {
         val userName = TestUtil.generateRandomString(15)
-        userManagement.postUserByUserName(userName, PostUserBody(password = "test"))
+        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
         UserAccessControlUtil.addUserAccessRight(userRepository,
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 
         val ownedEndpoint = EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointEntityRepository, userName)
         val endpointParametersAndBlock = EndpointParametersAndBlock(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName, false)
         assert(ownedEndpoint.ownedEndpoints.contains(endpointParametersAndBlock))
-        userManagement.deleteUser(userName)
+        userManagement.deleteUserByUserName(userName)
     }
 
     @Test

@@ -4,7 +4,6 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
@@ -21,7 +20,7 @@ class AccountController(
     @ApiOperation("Get the information about the actual authenticated user.")
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    fun getMyAccount(@ApiIgnore principal: Principal) = AccountBody(userRepository.findById(principal.name).orElseThrow {
+    fun getMyAccount(@ApiIgnore principal: Principal) = AccountEntity(userRepository.findById(principal.name).orElseThrow {
         CloudioHttpExceptions.NotFound("User not found.")
     })
 

@@ -59,7 +59,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteMinimalUser() {
-        userManagementController.postUserByUserName("User1", PostUserBody(
+        userManagementController.createUserByUserName("User1", PostUserEntity(
                 password = "88888888"
         ))
 
@@ -74,16 +74,16 @@ class UserManagementControllerTests {
             assert(!banned)
         }
 
-        userManagementController.deleteUser("User1")
+        userManagementController.deleteUserByUserName("User1")
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.deleteUser("User1")
+            userManagementController.deleteUserByUserName("User1")
         }
     }
 
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteCompleteUser() {
-        userManagementController.postUserByUserName("User1", PostUserBody(
+        userManagementController.createUserByUserName("User1", PostUserEntity(
                 "tototititata",
                 mapOf("#/toto" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH)),
                 setOf("TestGroup"),
@@ -102,9 +102,9 @@ class UserManagementControllerTests {
             assert(!banned)
         }
 
-        userManagementController.deleteUser("User1")
+        userManagementController.deleteUserByUserName("User1")
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.deleteUser("User1")
+            userManagementController.deleteUserByUserName("User1")
         }
     }
 
@@ -112,7 +112,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun recreateExistingUser() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userManagementController.postUserByUserName("TestUser", PostUserBody(
+            userManagementController.createUserByUserName("TestUser", PostUserEntity(
                     password = "88888888"
             ))
         }
@@ -122,7 +122,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInNonExistingGroup() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.postUserByUserName("User1", PostUserBody(
+            userManagementController.createUserByUserName("User1", PostUserEntity(
                     password = "88888888",
                     groupMemberships = setOf("NonexistingGroup")
             ))
@@ -132,7 +132,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInExistingGroup() {
-        userManagementController.postUserByUserName("User1", PostUserBody(
+        userManagementController.createUserByUserName("User1", PostUserEntity(
                 password = "88888888",
                 groupMemberships = setOf("TestGroup")
         ))
@@ -152,7 +152,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAdminUser() {
-        userManagementController.postUserByUserName("Admin1", PostUserBody(
+        userManagementController.createUserByUserName("Admin1", PostUserEntity(
                 password = "1234567812345678",
                 authorities = setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN, Authority.BROKER_ACCESS)
         ))
@@ -173,7 +173,7 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun createUserNotByAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.postUserByUserName("User1", PostUserBody(
+            userManagementController.createUserByUserName("User1", PostUserEntity(
                     password = "88888888"
             ))
         }
@@ -213,7 +213,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun deleteUser() {
-        userManagementController.deleteUser("TestUser")
+        userManagementController.deleteUserByUserName("TestUser")
         assert(userRepository.findAll().count() == 0)
     }
 
@@ -221,7 +221,7 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun deleteUserNonByAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.deleteUser("User1")
+            userManagementController.deleteUserByUserName("User1")
         }
     }
 
@@ -235,7 +235,7 @@ class UserManagementControllerTests {
             it.groupMemberships = emptySet()
             it.permissions = mapOf("349898052345-345-435-345345-435/toto/titi" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
             it.banned = true
-            userManagementController.putUserByUserName("TestUser", it)
+            userManagementController.updateUserByUserName("TestUser", it)
         }
         userRepository.findById("TestUser").orElseThrow().apply {
             assert(userName == "TestUser")
@@ -256,7 +256,7 @@ class UserManagementControllerTests {
             it.permissions = mapOf("349898052345-345-435-345345-435/toto/titi" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
             it.banned = true
             assertThrows<CloudioHttpExceptions.NotFound> {
-                userManagementController.putUserByUserName("TestUser", it)
+                userManagementController.updateUserByUserName("TestUser", it)
             }
         }
     }
@@ -270,7 +270,7 @@ class UserManagementControllerTests {
         }
         userManagementController.getUserByUserName("TestUser").let {
             it.groupMemberships = setOf("TestGroup")
-            userManagementController.putUserByUserName("TestUser", it)
+            userManagementController.updateUserByUserName("TestUser", it)
         }
     }
 
@@ -278,7 +278,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyNonExistentUser() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.putUserByUserName("ThisDoesNotExist", UserBody("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
+            userManagementController.updateUserByUserName("ThisDoesNotExist", UserEntity("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
         }
     }
 
@@ -286,7 +286,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserWhereUserNamesDoNotMatch() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userManagementController.putUserByUserName("TestUser", UserBody("ThestUser", emptyMap(), emptySet(), emptySet(), false))
+            userManagementController.updateUserByUserName("TestUser", UserEntity("ThestUser", emptyMap(), emptySet(), emptySet(), false))
         }
     }
 
@@ -294,7 +294,7 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun modifyUserByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.putUserByUserName("ThisDoesNotExist", UserBody("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
+            userManagementController.updateUserByUserName("ThisDoesNotExist", UserEntity("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
         }
     }
 
@@ -303,7 +303,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun changeUsersPassword() {
-        userManagementController.putUserPassword("TestUser", "toto")
+        userManagementController.changeUserPassword("TestUser", "toto")
         assert(passwordEncoder.matches("toto", userRepository.findByIdOrNull("TestUser")?.passwordHash))
     }
 
@@ -311,7 +311,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun changeNonExistentUsersPassword() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.putUserPassword("TestUserThatDoesNotExist", "toto")
+            userManagementController.changeUserPassword("TestUserThatDoesNotExist", "toto")
         }
     }
 
@@ -319,7 +319,7 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun changeUsersPasswordByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.putUserPassword("TestUser", "toto")
+            userManagementController.changeUserPassword("TestUser", "toto")
         }
         assert(passwordEncoder.matches("TestUserPassword", userRepository.findByIdOrNull("TestUser")?.passwordHash))
     }
@@ -354,17 +354,17 @@ class UserManagementControllerTests {
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.putUserPassword(randomCharacters, "12345678900")
+            userManagementController.changeUserPassword(randomCharacters, "12345678900")
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
             val user = userManagementController.getUserByUserName("TestUser")
             user.name = randomCharacters
-            userManagementController.putUserByUserName(randomCharacters, user)
+            userManagementController.updateUserByUserName(randomCharacters, user)
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.deleteUser(randomCharacters)
+            userManagementController.deleteUserByUserName(randomCharacters)
         }
     }
 }

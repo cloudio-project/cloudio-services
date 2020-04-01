@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint
 
+import ch.hevs.cloudio.cloud.apiutils.EndpointManagementUtil
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.security.Permission
@@ -10,6 +11,7 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -22,7 +24,7 @@ import java.util.*
 
 @Api(tags = ["Endpoint Management"], description = "Allows an user to access and manage endpoints and their actual data.")
 @RestController
-@RequestMapping("/api/v1/endpoint")
+@RequestMapping("/api/v1/endpoints")
 class EndpointManagementController(
         private val endpointEntityRepository: EndpointEntityRepository,
         private val userRepository: UserRepository,
@@ -31,9 +33,10 @@ class EndpointManagementController(
         private val influxProperties: CloudioInfluxProperties
 ) {
     @ApiOperation("Create a new endpoint.")
+    @Authority.EndpointCreation
     @PostMapping("")
     @ResponseStatus(HttpStatus.OK)
-    fun createEndpoint(@RequestParam friendlyName: String, @ApiIgnore principal: Principal) = userRepository.findById(principal.name).orElseThrow {
+    fun createEndpointByFriendlyName(@RequestParam friendlyName: String, @ApiIgnore principal: Principal) = userRepository.findById(principal.name).orElseThrow {
         CloudioHttpExceptions.NotFound("User '${principal.name}' not found.")
     }.let {
         val endpoint = EndpointEntity(UUID.randomUUID(), friendlyName)
@@ -44,8 +47,8 @@ class EndpointManagementController(
     }
 
     @ApiOperation("Get endpoint information.")
-    @GetMapping("{uuid}")
-    fun getEndpoint(@PathVariable uuid: UUID, @ApiIgnore principal: Principal): EndpointEntity {
+    @GetMapping("/{uuid}")
+    fun getEndpointByUUID(@PathVariable uuid: UUID, @ApiIgnore principal: Principal): EndpointEntity {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(principal.name, userRepository, userGroupRepository)
         val genericTopic = "$uuid/#"
@@ -59,6 +62,15 @@ class EndpointManagementController(
             it.fillAttributesFromInfluxDB(influxDB, influxProperties.database)
             PermissionUtils.censorEndpointFromUserPermission(permissionMap, it)
             it
+        }
+    }
+
+    @ApiOperation("List all accessible endpoints.")
+    @GetMapping("")
+    fun getAllAccessibleEndpoints(@ApiIgnore principal: Principal): Collection<EndpointListEntity> {
+        // TODO: Integrate code from util here...
+        return EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointEntityRepository, principal.name).ownedEndpoints.map {
+            EndpointListEntity(UUID.fromString(it.endpointUuid), it.friendlyName, it.blocked ?: false)
         }
     }
 }

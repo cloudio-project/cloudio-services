@@ -22,7 +22,7 @@ class UserManagementController(
     @ApiOperation("Create a new user.")
     @PostMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun postUserByUserName(@PathVariable userName: String, @RequestBody body: PostUserBody) {
+    fun createUserByUserName(@PathVariable userName: String, @RequestBody body: PostUserEntity) {
         if (userRepository.existsById(userName)) {
             throw CloudioHttpExceptions.Conflict("Could not create user '$userName' - User exists.")
         }
@@ -37,14 +37,14 @@ class UserManagementController(
     @ApiOperation("Get user information.")
     @GetMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.OK)
-    fun getUserByUserName(@PathVariable userName: String) = UserBody(userRepository.findById(userName).orElseThrow {
+    fun getUserByUserName(@PathVariable userName: String) = UserEntity(userRepository.findById(userName).orElseThrow {
         CloudioHttpExceptions.NotFound("User '$userName' not found.")
     })
 
     @ApiOperation("Modify user information.")
     @PutMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun putUserByUserName(@PathVariable userName: String, @RequestBody body: UserBody) {
+    fun updateUserByUserName(@PathVariable userName: String, @RequestBody body: UserEntity) {
         if (userName != body.name) {
             throw CloudioHttpExceptions.Conflict("User name in URL and body do not match.")
         }
@@ -64,7 +64,7 @@ class UserManagementController(
     @ApiOperation("Delete user.")
     @DeleteMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteUser(@PathVariable userName: String) {
+    fun deleteUserByUserName(@PathVariable userName: String) {
         if (!userRepository.existsById(userName)) {
             throw CloudioHttpExceptions.NotFound("User '$userName' not found.")
         }
@@ -74,7 +74,7 @@ class UserManagementController(
     @ApiOperation("Change user's password.")
     @PutMapping("/users/{userName}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun putUserPassword(@PathVariable userName: String, @RequestParam password: String) {
+    fun changeUserPassword(@PathVariable userName: String, @RequestParam password: String) {
         userRepository.findById(userName).orElseThrow {
             CloudioHttpExceptions.NotFound("User '$userName' not found.")
         }.let {

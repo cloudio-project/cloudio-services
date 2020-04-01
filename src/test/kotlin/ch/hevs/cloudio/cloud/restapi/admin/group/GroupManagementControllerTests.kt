@@ -58,7 +58,7 @@ class GroupManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createGroup() {
-        groupManagementController.postGroupByGroupName("Group1")
+        groupManagementController.createGroupByGroupName("Group1")
 
         groupRepository.findById("Group1").orElseThrow().apply {
             assert(userGroupName == "Group1")
@@ -70,7 +70,7 @@ class GroupManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun recreateExistingGroup() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            groupManagementController.postGroupByGroupName("TestGroup")
+            groupManagementController.createGroupByGroupName("TestGroup")
         }
     }
 
@@ -78,7 +78,7 @@ class GroupManagementControllerTests {
     @WithMockUser("philip.fry", authorities = ["HTTP_ACCESS"])
     fun createGroupByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            groupManagementController.postGroupByGroupName("Group1")
+            groupManagementController.createGroupByGroupName("Group1")
         }
     }
 
@@ -117,7 +117,7 @@ class GroupManagementControllerTests {
             it.permissions = it.permissions.toMutableMap().apply {
                 set("1234567890/toto", PrioritizedPermission(Permission.OWN, PermissionPriority.LOW))
             }
-            groupManagementController.putGroupByGroupName("TestGroup", it)
+            groupManagementController.updateGroupByGroupName("TestGroup", it)
         }
 
         groupRepository.findById("TestGroup").orElseThrow().apply {
@@ -132,7 +132,7 @@ class GroupManagementControllerTests {
     @WithMockUser("Admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun addPermissionToNonExistentGroup() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            groupManagementController.putGroupByGroupName("TestGroup2", GroupBody("TestGroup2"))
+            groupManagementController.updateGroupByGroupName("TestGroup2", GroupEntity("TestGroup2"))
         }
     }
 
@@ -140,7 +140,7 @@ class GroupManagementControllerTests {
     @WithMockUser("Admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun addPermissionWhereNamesDoNotMatch() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            groupManagementController.putGroupByGroupName("TestGroup", GroupBody("TestGroup2"))
+            groupManagementController.updateGroupByGroupName("TestGroup", GroupEntity("TestGroup2"))
         }
     }
 
@@ -148,7 +148,7 @@ class GroupManagementControllerTests {
     @WithMockUser("sepp.blatter", authorities = ["HTTP_ACCESS"])
     fun addPermissionByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            groupManagementController.putGroupByGroupName("TestGroup", GroupBody("TestGroup"))
+            groupManagementController.updateGroupByGroupName("TestGroup", GroupEntity("TestGroup"))
         }
     }
 
@@ -230,7 +230,7 @@ class GroupManagementControllerTests {
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            groupManagementController.putGroupByGroupName(randomCharacters, GroupBody(randomCharacters, emptyMap()))
+            groupManagementController.updateGroupByGroupName(randomCharacters, GroupEntity(randomCharacters, emptyMap()))
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
