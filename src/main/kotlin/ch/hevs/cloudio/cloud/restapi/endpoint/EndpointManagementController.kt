@@ -43,7 +43,7 @@ class EndpointManagementController(
         endpointEntityRepository.save(endpoint)
         it.permissions["${endpoint.endpointUuid}/#"] = PrioritizedPermission(Permission.OWN, PermissionPriority.HIGHEST)
         userRepository.save(it)
-        endpoint.endpointUuid.toString()
+        endpoint.endpointUuid
     }
 
     @ApiOperation("Get endpoint information.")
