@@ -19,7 +19,7 @@ class CloudioUserDetailsService(
         else -> if (user.banned) {
             throw DisabledException("User \"$username\" is banned.")
         } else {
-            User(user.userName, user.passwordHash, user.authorities.map(Authority::name).filter{ it.startsWith("HTTP_")}.map {
+            User(user.userName, user.passwordHash, user.authorities.map(Authority::name).filter { it.startsWith("HTTP_") }.map {
                 SimpleGrantedAuthority(it)
             }.toList())
         }

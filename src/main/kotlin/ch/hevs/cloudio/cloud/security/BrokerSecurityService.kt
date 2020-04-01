@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.security
 
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -12,23 +13,42 @@ import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.amqp.utils.test.TestUtils
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.annotation.PostConstruct
 
 @Service
 @Profile("authentication", "default")
 class BrokerSecurityService(private val userRepository: UserRepository,
                             private val userGroupRepository: UserGroupRepository,
                             private val endpointEntityRepository: EndpointEntityRepository,
-                            private val passwordEncoder: BCryptPasswordEncoder,
+                            private val passwordEncoder: PasswordEncoder,
                             private val rabbitProperties: RabbitProperties) {
 
     private val log = LogFactory.getLog(BrokerSecurityService::class.java)
     private val uuidPattern = "\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b".toRegex()
+
+    @PostConstruct
+    fun createAdminUserIfUserRepoIsEmpty() {
+        if (userRepository.count() == 0L) {
+            val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+            val password = List(16) { alphabet.random() }.joinToString("")
+            log.warn("*** User repository is empty - creating default admin user 'admin' with password '$password' ***")
+            userRepository.save(User(
+                    userName = "admin",
+                    passwordHash = passwordEncoder.encode(password),
+                    authorities = setOf(
+                            Authority.BROKER_ACCESS, Authority.BROKER_MANAGEMENT_ADMINISTRATOR,
+                            Authority.HTTP_ACCESS, Authority.HTTP_ADMIN,
+                            Authority.ENDPOINT_CREATION)
+            ))
+        }
+    }
 
     @RabbitListener(bindings = [
         QueueBinding(
