@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
+import java.util.*
 import kotlin.test.assertFails
 
 @RunWith(SpringRunner::class)
@@ -192,7 +193,7 @@ class EndpointManagementUtilTest {
     fun randomCharacterEndpointTest() {
         val setAttribute = Attribute(AttributeConstraint.SetPoint, AttributeType.Number, 1578992269.000, 11.0)
 
-        assert(EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(randomCharacters)) == null)
+        assert(EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(UUID.randomUUID().toString())) == null)
 
         assert(EndpointManagementUtil.getNode(endpointEntityRepository, NodeRequest("${endpointParameters.endpointUuid}/$randomCharacters")) == null)
         assertFails { EndpointManagementUtil.getNode(endpointEntityRepository, NodeRequest(randomCharacters)) }
@@ -206,9 +207,9 @@ class EndpointManagementUtilTest {
         assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/$randomCharacters", setAttribute)) }
         assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest(randomCharacters, setAttribute)) }
 
-        assert(!EndpointManagementUtil.blockEndpoint(endpointEntityRepository, EndpointRequest(randomCharacters)))
+        assert(!EndpointManagementUtil.blockEndpoint(endpointEntityRepository, EndpointRequest(UUID.randomUUID().toString())))
 
-        assert(!EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(randomCharacters)))
+        assert(!EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, EndpointRequest(UUID.randomUUID().toString())))
 
         assertFails { EndpointManagementUtil.getAccessibleAttributes(userRepository, userGroupRepository, endpointEntityRepository, randomCharacters) }
 
