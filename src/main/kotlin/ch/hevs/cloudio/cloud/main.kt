@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.model.Authority
-import ch.hevs.cloudio.cloud.restapi.MongoCustomUserDetailsService
+import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
@@ -24,10 +25,16 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import springfox.documentation.builders.ApiInfoBuilder
+import springfox.documentation.builders.PathSelectors
+import springfox.documentation.spi.DocumentationType
+import springfox.documentation.spring.web.plugins.Docket
+import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableSwagger2
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
@@ -105,17 +112,30 @@ class CloudioApplication {
     }
 
     @Bean
-    fun webSecurityConfigurerAdapter(customUserDetailsService: MongoCustomUserDetailsService) = object : WebSecurityConfigurerAdapter() {
+    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
         override fun configure(auth: AuthenticationManagerBuilder) {
-            auth.userDetailsService(customUserDetailsService)
+            auth.userDetailsService(cloudioUserDetailsService)
         }
 
         override fun configure(http: HttpSecurity) {
             http.csrf().disable()
-                    .authorizeRequests().anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
+                    .authorizeRequests().antMatchers("/v2/api-docs").permitAll()
+                    .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
                     .and().sessionManagement().disable()
         }
+    }
+
+    @Bean
+    fun cloudioApiV1Documentation(buildProperties: BuildProperties) = Docket(DocumentationType.SWAGGER_2).apply {
+        select().paths(PathSelectors.ant("/api/v1/**")).build()
+        apiInfo(ApiInfoBuilder().apply {
+            title("cloud.iO API")
+            description("API Documentation for cloud.iO")
+            license("MIT")
+            licenseUrl("https://opensource.org/licenses/MIT")
+            version(buildProperties.version)
+        }.build())
     }
 }
 

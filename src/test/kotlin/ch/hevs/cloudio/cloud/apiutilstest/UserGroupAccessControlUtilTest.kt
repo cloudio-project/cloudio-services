@@ -2,20 +2,25 @@ package ch.hevs.cloudio.cloud.apiutilstest
 
 import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.apiutils.*
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PermissionPriority
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import ch.hevs.cloudio.cloud.restapi.admin.group.GroupManagementController
+import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
+import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertFails
 
+@RunWith(SpringRunner::class)
 @SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserGroupAccessControlUtilTest {
 
     @Autowired
@@ -24,36 +29,43 @@ class UserGroupAccessControlUtilTest {
     @Autowired
     private lateinit var userGroupRepository: UserGroupRepository
 
+    @Autowired
+    private lateinit var userManagement: UserManagementController
+
+    @Autowired
+    private lateinit var groupManagement: GroupManagementController
+
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
 
     private lateinit var userName: String
     private lateinit var userGroupName: String
 
-    @BeforeAll
+    @Before
     fun setup() {
         //create User and user group
         userName = TestUtil.generateRandomString(15)
-        val userTest = TestUtil.createUser(userName)
 
         userGroupName = TestUtil.generateRandomString(15)
-        val userGroupTest = TestUtil.createUserGroup(userGroupName, emptySet())
+        val userGroupTest = TestUtil.createUserGroup(userGroupName)
 
-        UserManagementUtil.createUser(userRepository, userTest)
-        UserGroupUtil.createUserGroup(userGroupRepository, userRepository, userGroupTest)
+        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        groupManagement.createGroupByGroupName(userGroupName)
+        groupManagement.updateGroupByGroupName(userGroupName, userGroupTest)
     }
 
-    @AfterAll
+    @After
     fun cleanUp() {
         try {
             //remove user and user group
-            UserManagementUtil.deleteUser(userRepository, UserRequest(userName))
-            UserGroupUtil.deleteUserGroup(userGroupRepository, userRepository, UserGroupRequest(userGroupName))
+            userManagement.deleteUserByUserName(userName)
+            groupManagement.deleteGroupByGroupName(userGroupName)
         } catch (e: Exception) {
         }
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun addUserGroupAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository,
@@ -61,6 +73,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getUserGroupAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository,
@@ -77,6 +90,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserGroupAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
 
@@ -99,6 +113,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun removeUserGroupAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserGroupAccessControlUtil.addUserGroupAccessRight(userGroupRepository,
@@ -111,6 +126,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun giveUserGroupAccessRightOwn() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         //give own right on topic to username
@@ -126,6 +142,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun giveUserGroupAccessRightNotOwn() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         //give own right on topic to username
@@ -140,6 +157,7 @@ class UserGroupAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun randomCharacterUserGroupAccessTest() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
 

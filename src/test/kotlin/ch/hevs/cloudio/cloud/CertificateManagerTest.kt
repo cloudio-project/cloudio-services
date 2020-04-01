@@ -10,8 +10,10 @@ import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.junit4.SpringRunner
 import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.io.StringWriter
@@ -23,6 +25,8 @@ import java.security.cert.X509Certificate
 import java.util.*
 import java.util.zip.ZipInputStream
 
+@RunWith(SpringRunner::class)
+@SpringBootTest
 class CertificateManagerTest {
     private val properties = CloudioCertificateManagerProperties(
             caPrivateKey = """
@@ -91,7 +95,7 @@ class CertificateManagerTest {
         val p12KeyStore = KeyStore.getInstance("PKCS12")
         p12KeyStore.load(ByteArrayInputStream(response.pkcs12Data), response.password.toCharArray())
         val clientCert = p12KeyStore.getCertificate("") as X509Certificate
-        assertDoesNotThrow { clientCert.checkValidity() }
+        clientCert.checkValidity()
         p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
     }
@@ -152,13 +156,13 @@ class CertificateManagerTest {
         val jksKeystore = KeyStore.getInstance("JKS")
         jksKeystore.load(zip, password.toCharArray())
         val caCert = jksKeystore.getCertificate("") as X509Certificate
-        assertDoesNotThrow { caCert.checkValidity() }
+        caCert.checkValidity()
         val p12File = zip.nextEntry
         assert(p12File.name == "cloud.io/$uuid.p12")
         val p12KeyStore = KeyStore.getInstance("PKCS12")
         p12KeyStore.load(zip, password.toCharArray())
         val clientCert = p12KeyStore.getCertificate("") as X509Certificate
-        assertDoesNotThrow { clientCert.checkValidity() }
+        clientCert.checkValidity()
         p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
     }
 }

@@ -4,6 +4,8 @@ import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import org.springframework.data.repository.findByIdOrNull
 
 
@@ -62,7 +64,7 @@ object PermissionUtils {
 
     // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity) {
-        val topic = endpointEntity.endpointUuid + "/"
+        val topic = endpointEntity.endpointUuid.toString() + "/"
 
         for (node in endpointEntity.endpoint.nodes) {
             val topicNode = topic + node.key + "/"
@@ -106,7 +108,7 @@ object PermissionUtils {
             return mutableMapOf()
         else {
 
-            val topic = endpointEntity.endpointUuid + "/"
+            val topic = endpointEntity.endpointUuid.toString() + "/"
 
             val attributesRight: MutableMap<String, Permission> = mutableMapOf()
             for (node in endpointEntity.endpoint.nodes) {

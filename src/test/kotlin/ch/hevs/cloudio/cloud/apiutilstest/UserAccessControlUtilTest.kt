@@ -2,23 +2,30 @@ package ch.hevs.cloudio.cloud.apiutilstest
 
 import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.apiutils.*
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PermissionPriority
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
+import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.assertFails
 
+@RunWith(SpringRunner::class)
 @SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserAccessControlUtilTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var userManagement: UserManagementController
 
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
@@ -27,29 +34,28 @@ class UserAccessControlUtilTest {
     private lateinit var userName2: String
 
 
-    @BeforeAll
+    @Before
     fun setup() {
         //create Users
         userName = TestUtil.generateRandomString(15)
-        val userTest = TestUtil.createUser(userName)
         userName2 = TestUtil.generateRandomString(15)
-        val userTest2 = TestUtil.createUser(userName2)
 
-        UserManagementUtil.createUser(userRepository, userTest)
-        UserManagementUtil.createUser(userRepository, userTest2)
+        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        userManagement.createUserByUserName(userName2, PostUserEntity(password = "test"))
     }
 
-    @AfterAll
+    @After
     fun cleanUp() {
         try {
             //remove users
-            UserManagementUtil.deleteUser(userRepository, UserRequest(userName))
-            UserManagementUtil.deleteUser(userRepository, UserRequest(userName2))
+            userManagement.deleteUserByUserName(userName)
+            userManagement.deleteUserByUserName(userName2)
         } catch (e: Exception) {
         }
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun addUserAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserAccessControlUtil.addUserAccessRight(userRepository,
@@ -57,6 +63,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getUserAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserAccessControlUtil.addUserAccessRight(userRepository,
@@ -73,6 +80,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserAccessControlUtil.addUserAccessRight(userRepository,
@@ -89,6 +97,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun removeUserAccessRight() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
 
@@ -102,6 +111,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun giveUserAccessRightOwn() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
 
@@ -118,6 +128,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun giveUserAccessRightNotOwn() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         UserAccessControlUtil.addUserAccessRight(userRepository,
@@ -131,6 +142,7 @@ class UserAccessControlUtilTest {
     }
 
     @Test
+    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun randomCharacterUserAccessTest() {
         val topic = "${TestUtil.generateRandomString(15)}/#"
         //shouldn't be able to act on random user

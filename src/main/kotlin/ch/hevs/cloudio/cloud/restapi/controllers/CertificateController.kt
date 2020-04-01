@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateAndKeyZipRequest
 import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
-import ch.hevs.cloudio.cloud.model.Permission
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -48,7 +48,7 @@ class CertificateController(
         val genericTopic = certificateAndKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
-            if (endpointEntityRepository.findByIdOrNull(certificateAndKeyRequest.endpointUuid)!!.blocked) {
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(certificateAndKeyRequest.endpointUuid))!!.blocked) {
                 throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             } else {
                 val (password, pkcs12KeyStore) = certificateManager.generateEndpointKeyAndCertificate(UUID.fromString(certificateAndKeyRequest.endpointUuid))
@@ -76,7 +76,7 @@ class CertificateController(
         val genericTopic = certificateAndKeyZipRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
-            if (endpointEntityRepository.findByIdOrNull(certificateAndKeyZipRequest.endpointUuid)!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(certificateAndKeyZipRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             else {
                 val archive = certificateManager.generateEndpointConfigurationArchive(UUID.fromString(certificateAndKeyZipRequest.endpointUuid),
@@ -105,7 +105,7 @@ class CertificateController(
         val genericTopic = certificateFromKeyRequest.endpointUuid + "/#"
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN)
-            if (endpointEntityRepository.findByIdOrNull(certificateFromKeyRequest.endpointUuid)!!.blocked) {
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(certificateFromKeyRequest.endpointUuid))!!.blocked) {
                 throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
             } else {
                 val certificate = certificateManager.generateEndpointCertificateFromPublicKey(UUID.fromString(certificateFromKeyRequest.endpointUuid),

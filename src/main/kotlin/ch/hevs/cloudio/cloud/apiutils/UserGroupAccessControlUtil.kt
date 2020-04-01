@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -17,13 +17,13 @@ object UserGroupAccessControlUtil {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequestList.userGroupName)
 
         if (userGroup != null) {
-            val permissions = userGroup.permissions.toMutableMap()
+            val permissions = userGroup.permissions
 
             userGroupRightRequestList.userGroupRights.forEach { userGroupRight ->
                 permissions[userGroupRight.topic] = PrioritizedPermission(userGroupRight.permission, userGroupRight.priority)
             }
 
-            userGroup.permissions = permissions.toMap()
+            userGroup.permissions = permissions
 
             userGroupRepository.save(userGroup)
         } else
@@ -35,12 +35,12 @@ object UserGroupAccessControlUtil {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
-            val permissions = userGroup.permissions.toMutableMap()
+            val permissions = userGroup.permissions
 
             if (permissions[userGroupRightRequest.userGroupRight.topic] != null) {
 
                 permissions[userGroupRightRequest.userGroupRight.topic] = PrioritizedPermission(userGroupRightRequest.userGroupRight.permission, userGroupRightRequest.userGroupRight.priority)
-                userGroup.permissions = permissions.toMap()
+                userGroup.permissions = permissions
                 userGroupRepository.save(userGroup)
             } else {
                 throw CloudioApiException(userGroupRightRequest.userGroupRight.topic + " permission doesn't exist in " + userGroupRightRequest.userGroupName)
@@ -54,11 +54,11 @@ object UserGroupAccessControlUtil {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
-            val permissions = userGroup.permissions.toMutableMap()
+            val permissions = userGroup.permissions
 
             if (permissions[userGroupRightRequest.topic] != null) {
                 permissions.remove(userGroupRightRequest.topic)
-                userGroup.permissions = permissions.toMap()
+                userGroup.permissions = permissions
                 userGroupRepository.save(userGroup)
             } else {
                 throw CloudioApiException(userGroupRightRequest.topic + " permission doesn't exist in " + userGroupRightRequest.userGroupName)

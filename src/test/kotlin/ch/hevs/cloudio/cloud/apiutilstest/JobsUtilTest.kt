@@ -8,17 +8,18 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.junit4.SpringRunner
 
+@RunWith(SpringRunner::class)
 @SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JobsUtilTest {
 
     @Autowired
@@ -37,17 +38,17 @@ class JobsUtilTest {
 
     private var messageReceived = false
 
-    @BeforeAll
+    @Before
     fun setup() {
         val friendlyName = "KarolTheEndpoint"
         endpointParameters = EndpointManagementUtil.createEndpoint(endpointEntityRepository, EndpointCreateRequest(friendlyName))
         //simulate an @online that populate the endpoint data model
-        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid, endpointParameters.friendlyName)
+        createdEndpoint = TestUtil.createEndpointEntity(endpointParameters.endpointUuid.toString(), endpointParameters.friendlyName)
         endpointEntityRepository.save(createdEndpoint)
-        jobExecuteRequest = JobExecuteRequest(endpointParameters.endpointUuid, "cmd://listJobs", false, "123soleil", "fake data", 1000)
+        jobExecuteRequest = JobExecuteRequest(endpointParameters.endpointUuid.toString(), "cmd://listJobs", false, "123soleil", "fake data", 1000)
     }
 
-    @AfterAll
+    @After
     fun cleanUp() {
         endpointEntityRepository.deleteById(endpointParameters.endpointUuid)
     }

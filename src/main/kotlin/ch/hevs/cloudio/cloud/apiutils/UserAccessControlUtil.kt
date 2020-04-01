@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.Permission
-import ch.hevs.cloudio.cloud.model.PrioritizedPermission
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 
@@ -16,13 +16,9 @@ object UserAccessControlUtil {
         val user = userRepository.findByIdOrNull(userRightRequestList.userName)
 
         if (user != null) {
-            val permissions = user.permissions.toMutableMap()
-
             userRightRequestList.userRights.forEach { userRight ->
-                permissions[userRight.topic] = PrioritizedPermission(userRight.permission, userRight.priority)
+                user.permissions[userRight.topic] = PrioritizedPermission(userRight.permission, userRight.priority)
             }
-
-            user.permissions = permissions.toMap()
 
             userRepository.save(user)
         } else
@@ -34,12 +30,9 @@ object UserAccessControlUtil {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
-            val permissions = user.permissions.toMutableMap()
+            if (user.permissions[userRightRequest.userRight.topic] != null) {
 
-            if (permissions[userRightRequest.userRight.topic] != null) {
-
-                permissions[userRightRequest.userRight.topic] = PrioritizedPermission(userRightRequest.userRight.permission, userRightRequest.userRight.priority)
-                user.permissions = permissions.toMap()
+                user.permissions[userRightRequest.userRight.topic] = PrioritizedPermission(userRightRequest.userRight.permission, userRightRequest.userRight.priority)
                 userRepository.save(user)
             } else {
                 throw CloudioApiException(userRightRequest.userRight.topic + " permission doesn't exist in " + userRightRequest.userName)
@@ -53,11 +46,8 @@ object UserAccessControlUtil {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
-            val permissions = user.permissions.toMutableMap()
-
-            if (permissions[userRightRequest.topic] != null) {
-                permissions.remove(userRightRequest.topic)
-                user.permissions = permissions.toMap()
+            if (user.permissions[userRightRequest.topic] != null) {
+                user.permissions.remove(userRightRequest.topic)
                 userRepository.save(user)
             } else {
                 throw CloudioApiException(userRightRequest.topic + " permission doesn't exist in " + userRightRequest.userName)
