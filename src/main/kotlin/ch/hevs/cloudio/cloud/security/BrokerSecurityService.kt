@@ -44,8 +44,7 @@ class BrokerSecurityService(private val userRepository: UserRepository,
                     passwordHash = passwordEncoder.encode(password),
                     authorities = setOf(
                             Authority.BROKER_ACCESS, Authority.BROKER_MANAGEMENT_ADMINISTRATOR,
-                            Authority.HTTP_ACCESS, Authority.HTTP_ADMIN,
-                            Authority.ENDPOINT_CREATION)
+                            Authority.HTTP_ACCESS, Authority.HTTP_ADMIN)
             ))
         }
     }
