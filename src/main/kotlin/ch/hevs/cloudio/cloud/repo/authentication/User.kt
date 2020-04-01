@@ -12,6 +12,6 @@ data class User(
         var passwordHash: String = "",
         var permissions: MutableMap<String, PrioritizedPermission> = mutableMapOf(),
         var userGroups: Set<String> = emptySet(),
-        var authorities: Set<Authority> = setOf(Authority.BROKER_ACCESS, Authority.HTTP_ACCESS),
+        var authorities: Set<Authority> = Authority.DEFAULT_AUTHORITIES,
         var banned: Boolean = false
 )

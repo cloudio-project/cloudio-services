@@ -22,4 +22,8 @@ enum class Authority {
     @Retention(AnnotationRetention.RUNTIME)
     @PreAuthorize("hasAuthority('ENDPOINT_CREATION')")
     annotation class EndpointCreation
+
+    companion object {
+        val DEFAULT_AUTHORITIES = setOf(HTTP_ACCESS)
+    }
 }
