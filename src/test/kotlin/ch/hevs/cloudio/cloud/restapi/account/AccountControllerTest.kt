@@ -47,7 +47,7 @@ class AccountControllerTest {
     @Test
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun getAccount() {
-        val account = accountController.getAccount(Principal { "TestUser" })
+        val account = accountController.getMyAccount(Principal { "TestUser" })
 
         assert(account.name == "TestUser")
         assert(account.permissions.count() == 1 && account.permissions["#/toto"] == PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
@@ -59,7 +59,7 @@ class AccountControllerTest {
     @WithMockUser("TestUser2", authorities = ["HTTP_ACCESS"])
     fun getAccountOfNonExistingUser() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.getAccount(Principal { "TestUser2" })
+            accountController.getMyAccount(Principal { "TestUser2" })
         }
     }
 
