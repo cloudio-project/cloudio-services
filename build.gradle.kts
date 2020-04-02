@@ -24,9 +24,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.postgresql:postgresql")
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.64")
     implementation("io.springfox:springfox-swagger2:2.9.2")
@@ -53,6 +55,8 @@ tasks.bootRun {
     dependsOn("cloudio-dev-environment:createDevServices")
     doFirst {
         tasks.bootRun.configure {
+            val adminPassword: String? by project
+
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
             environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
@@ -69,6 +73,12 @@ tasks.bootRun {
 
             // MongoDB.
             environment("spring.data.mongodb.host", "localhost")
+
+            // PostgreSQL.
+            environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
+            environment("spring.datasource.username", "cloudio")
+            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("jpa.hibernate.ddl-auto" ,"create")
         }
     }
 }
@@ -77,6 +87,8 @@ tasks.test {
     dependsOn("cloudio-dev-environment:createDevServices")
     doFirst {
         tasks.test.configure {
+            val adminPassword: String? by project
+
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
             environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
@@ -95,6 +107,13 @@ tasks.test {
             // MongoDB.
             environment("spring.data.mongodb.host", "localhost")
             environment("spring.data.mongodb.database", "cloudiotest")
+
+            // PostgreSQL.
+            environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudiotest")
+            environment("spring.datasource.username", "cloudio")
+            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("jpa.hibernate.ddl-auto" ,"create")
+
         }
     }
 }

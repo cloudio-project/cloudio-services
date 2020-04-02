@@ -13,11 +13,22 @@ services:
       SERVER_KEY: ${SERVER_KEY}
 
   influx:
-    image: influxdb:latest
+    image: influxdb:1.5-alpine
     ports:
     - "8086:8086"
 
   mongo:
-    image: mongo:latest
+    image: mongo:4.0-xenial
     ports:
     - "27017:27017"
+
+  database:
+    image: postgres:12.2-alpine
+    ports:
+    - "5432:5432"
+    environment:
+      POSTGRES_USER: cloudio
+      POSTGRES_DB: cloudio
+      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ./database-init.sql:/docker-entrypoint-initdb.d/init.sql
