@@ -33,6 +33,10 @@ internal object JsonSerializationFormat {
         return mapper.readerForUpdating(transaction).readValue(data)
     }
 
+    fun deserializeDelayed(delayed: Delayed, data: ByteArray){
+        return mapper.readerForUpdating(delayed).readValue(data)
+    }
+
     fun deserializeCloudioLog(cloudioLogMessage: CloudioLogMessage, data: ByteArray) {
         return mapper.readerForUpdating(cloudioLogMessage).readValue(data)
     }
