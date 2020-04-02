@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.admin.user
+package ch.hevs.cloudio.cloud.restapi.admin
 
 import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.security.Authority
@@ -10,6 +10,9 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
+import ch.hevs.cloudio.cloud.restapi.admin.user.UserEntity
+import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows

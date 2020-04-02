@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.endpoint
+package ch.hevs.cloudio.cloud.restapi
 
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
@@ -6,7 +6,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.endpoint.EndpointManagementController
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority

@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.account
+package ch.hevs.cloudio.cloud.restapi
 
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
@@ -6,7 +6,7 @@ import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
-import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.account.AccountController
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
