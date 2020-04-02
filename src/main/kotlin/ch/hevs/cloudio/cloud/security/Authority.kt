@@ -10,8 +10,7 @@ enum class Authority {
 
     HTTP_ACCESS,
     HTTP_ADMIN,
-
-    ENDPOINT_CREATION;
+    HTTP_ENDPOINT_CREATION;
 
     @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
     @Retention(AnnotationRetention.RUNTIME)
@@ -20,6 +19,10 @@ enum class Authority {
 
     @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
     @Retention(AnnotationRetention.RUNTIME)
-    @PreAuthorize("hasAuthority('ENDPOINT_CREATION')")
-    annotation class EndpointCreation
+    @PreAuthorize("hasAuthority('HTTP_ENDPOINT_CREATION') || hasAuthority('HTTP_ADMIN')")
+    annotation class HttpEndpointCreation
+
+    companion object {
+        val DEFAULT_AUTHORITIES = setOf(HTTP_ACCESS)
+    }
 }

@@ -127,14 +127,14 @@ class CloudioApplication {
     }
 
     @Bean
-    fun cloudioApiV1Documentation(buildProperties: BuildProperties) = Docket(DocumentationType.SWAGGER_2).apply {
+    fun cloudioApiV1Documentation(buildProperties: BuildProperties?) = Docket(DocumentationType.SWAGGER_2).apply {
         select().paths(PathSelectors.ant("/api/v1/**")).build()
         apiInfo(ApiInfoBuilder().apply {
             title("cloud.iO API")
             description("API Documentation for cloud.iO")
             license("MIT")
             licenseUrl("https://opensource.org/licenses/MIT")
-            version(buildProperties.version)
+            buildProperties?.let { version(it.version) }
         }.build())
     }
 }

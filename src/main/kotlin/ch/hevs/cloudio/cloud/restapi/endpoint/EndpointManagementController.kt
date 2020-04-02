@@ -33,7 +33,7 @@ class EndpointManagementController(
         private val influxProperties: CloudioInfluxProperties
 ) {
     @ApiOperation("Create a new endpoint.")
-    @Authority.EndpointCreation
+    @Authority.HttpEndpointCreation
     @PostMapping("")
     @ResponseStatus(HttpStatus.OK)
     fun createEndpointByFriendlyName(@RequestParam friendlyName: String, @ApiIgnore principal: Principal) = userRepository.findById(principal.name).orElseThrow {
@@ -43,7 +43,7 @@ class EndpointManagementController(
         endpointEntityRepository.save(endpoint)
         it.permissions["${endpoint.endpointUuid}/#"] = PrioritizedPermission(Permission.OWN, PermissionPriority.HIGHEST)
         userRepository.save(it)
-        endpoint.endpointUuid.toString()
+        endpoint.endpointUuid
     }
 
     @ApiOperation("Get endpoint information.")
@@ -61,13 +61,29 @@ class EndpointManagementController(
         }.let {
             it.fillAttributesFromInfluxDB(influxDB, influxProperties.database)
             PermissionUtils.censorEndpointFromUserPermission(permissionMap, it)
+            // TODO: Exclude data model when returning endpoint.
             it
         }
     }
 
+    // TODO: Update (PUT) Endpoint
+
+    @ApiOperation("Get friendly name of endpoint.")
+    @GetMapping("/{uuid}/friendlyName")
+    fun getEndpointFriendlyNameByUUID(@PathVariable uuid: UUID, @ApiIgnore principal: Principal) = getEndpointByUUID(uuid, principal).friendlyName
+
+    // TODO: Change (PUT) endpoint friendly name.
+
+    @ApiOperation("Get friendly name of endpoint.")
+    @GetMapping("/{uuid}/blocked")
+    fun getEndpointBlockedByUUID(@PathVariable uuid: UUID, @ApiIgnore principal: Principal) = getEndpointByUUID(uuid, principal).blocked
+
+    // TODO: Change (PUT) endpoint blocked.
+
     @ApiOperation("List all accessible endpoints.")
     @GetMapping("")
-    fun getAllAccessibleEndpoints(@ApiIgnore principal: Principal): Collection<EndpointListEntity> {
+    // TODO: We should consider to return all endpoints that the user has access to, not just the owned ones.
+    fun getAllOwnedEndpoints(@ApiIgnore principal: Principal): Collection<EndpointListEntity> {
         // TODO: Integrate code from util here...
         return EndpointManagementUtil.getOwnedEndpoints(userRepository, userGroupRepository, endpointEntityRepository, principal.name).ownedEndpoints.map {
             EndpointListEntity(UUID.fromString(it.endpointUuid), it.friendlyName, it.blocked ?: false)
