@@ -41,7 +41,7 @@ class DelayedService() {
             val messageFormat = JsonSerializationFormat.detect(data)
             if (messageFormat) {
 
-                val delayed = Delayed()
+                val delayed = DelayedContainer()
 
                 JsonSerializationFormat.deserializeDelayed(delayed, data)
 
