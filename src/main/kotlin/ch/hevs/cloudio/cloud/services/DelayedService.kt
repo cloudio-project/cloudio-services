@@ -1,12 +1,9 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.logging.LogFactory
-import org.influxdb.InfluxDB
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.Exchange
@@ -19,8 +16,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("delayed", "default")
-class DelayedService(private val endpointEntityRepository: EndpointEntityRepository, private val influx: InfluxDB,
-                     private val influxProperties: CloudioInfluxProperties) {
+class DelayedService() {
 
     private val log = LogFactory.getLog(DelayedService::class.java)
 
@@ -85,7 +81,10 @@ class DelayedService(private val endpointEntityRepository: EndpointEntityReposit
                                 handleLogs(delayedMessage.topic, log)
                             }
                         }
-                        else -> {}
+                        else -> {
+                            log.error("Unrecognized message with sub-topic ${delayedMessage.topic} " +
+                                    "inside @delayed message from $endpointId")
+                        }
                     }
                 }
             } else {
@@ -97,23 +96,23 @@ class DelayedService(private val endpointEntityRepository: EndpointEntityReposit
     }
 
     fun handleUpdate(topic: String, attribute: Attribute){
-
+        //TODO
     }
 
     fun handleTransaction(topic: String, transaction: Transaction){
-
+        //TODO
     }
 
     fun handleNodeAdded(topic: String, node: Node){
-
+        //TODO
     }
 
     fun handleNodeRemoved(topic: String){
-
+        //TODO
     }
 
     fun handleLogs(topic: String, log: CloudioLogMessage){
-
+        //TODO
     }
 
 }
