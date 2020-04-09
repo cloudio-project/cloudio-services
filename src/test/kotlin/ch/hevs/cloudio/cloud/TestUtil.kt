@@ -44,7 +44,9 @@ object TestUtil {
 
     fun createEndpointEntity(endpointUuid: String, friendlyName: String): EndpointEntity {
         return EndpointEntity(endpointUuid = UUID.fromString(endpointUuid), friendlyName = friendlyName, endpoint =
-        Endpoint(hashMapOf("demoNode" to
+        Endpoint("v0.2",
+                setOf("JSON"),
+                hashMapOf("demoNode" to
                 Node(emptySet(), hashMapOf("demoObject" to
                         CloudioObject("", mutableMapOf(), hashMapOf(
                                 "demoMeasure" to Attribute(AttributeConstraint.Measure, AttributeType.Number, 10.0, 10.0),
