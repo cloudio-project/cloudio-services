@@ -7,8 +7,8 @@ import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserEntity
@@ -32,10 +32,10 @@ class UserManagementControllerTests {
     private lateinit var userManagementController: UserManagementController
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var userRepository: MONGOUserRepository
 
     @Autowired
-    private lateinit var groupRepository: UserGroupRepository
+    private lateinit var groupRepository: MONGOUserGroupRepository
 
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder

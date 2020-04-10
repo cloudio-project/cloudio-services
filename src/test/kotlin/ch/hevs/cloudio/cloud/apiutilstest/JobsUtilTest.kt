@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.JobParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.After
@@ -25,7 +25,7 @@ class JobsUtilTest {
     @Autowired
     val rabbitTemplate = RabbitTemplate()
     @Autowired
-    private lateinit var endpointEntityRepository: EndpointEntityRepository
+    private lateinit var endpointEntityRepository: MONOGOEndpointEntityRepository
 
     @Autowired
     private lateinit var connectionFactory: ConnectionFactory

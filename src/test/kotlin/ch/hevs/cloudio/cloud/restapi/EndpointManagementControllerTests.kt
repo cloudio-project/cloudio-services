@@ -1,11 +1,11 @@
 package ch.hevs.cloudio.cloud.restapi
 
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.endpoint.EndpointManagementController
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
@@ -31,13 +31,13 @@ class EndpointManagementControllerTests {
     private lateinit var endpointManagementController: EndpointManagementController
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var userRepository: MONGOUserRepository
 
     @Autowired
-    private lateinit var groupRepository: UserGroupRepository
+    private lateinit var groupRepository: MONGOUserGroupRepository
 
     @Autowired
-    private lateinit var endpointEntityRepository: EndpointEntityRepository
+    private lateinit var endpointEntityRepository: MONOGOEndpointEntityRepository
 
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder

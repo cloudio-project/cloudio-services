@@ -2,8 +2,8 @@ package ch.hevs.cloudio.cloud.utils
 
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import org.springframework.data.repository.findByIdOrNull
@@ -11,7 +11,7 @@ import org.springframework.data.repository.findByIdOrNull
 
 object PermissionUtils {
 
-    fun permissionFromUserAndGroup(userName: String, userRepository: UserRepository, userGroupRepository: UserGroupRepository): Map<String, PrioritizedPermission> {
+    fun permissionFromUserAndGroup(userName: String, userRepository: MONGOUserRepository, userGroupRepository: MONGOUserGroupRepository): Map<String, PrioritizedPermission> {
         val initialUserPermission = userRepository.findById(userName).get().permissions
         val userGroupSet = userRepository.findById(userName).get().userGroups
 

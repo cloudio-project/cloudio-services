@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.junit.After
@@ -27,7 +27,7 @@ class LogsUtilTest {
     @Autowired
     private lateinit var influx: InfluxDB
     @Autowired
-    private lateinit var endpointEntityRepository: EndpointEntityRepository
+    private lateinit var endpointEntityRepository: MONOGOEndpointEntityRepository
 
     val database = "cloudio"
 

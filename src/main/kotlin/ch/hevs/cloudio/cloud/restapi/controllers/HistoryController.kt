@@ -3,9 +3,9 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
@@ -20,7 +20,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1")
-class HistoryController(val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
+class HistoryController(val influx: InfluxDB, var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
 
     @RequestMapping("/getAttributeHistoryRequest", method = [RequestMethod.POST])
     fun getAttributeHistoryRequest(@RequestBody historyDefaultRequest: HistoryDefaultRequest): QueryResult {

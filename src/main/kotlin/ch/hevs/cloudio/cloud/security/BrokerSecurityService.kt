@@ -1,9 +1,9 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.User
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
@@ -13,7 +13,6 @@ import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.amqp.utils.test.TestUtils
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull
@@ -24,9 +23,9 @@ import javax.annotation.PostConstruct
 
 @Service
 @Profile("authentication", "default")
-class BrokerSecurityService(private val userRepository: UserRepository,
-                            private val userGroupRepository: UserGroupRepository,
-                            private val endpointEntityRepository: EndpointEntityRepository,
+class BrokerSecurityService(private val userRepository: MONGOUserRepository,
+                            private val userGroupRepository: MONGOUserGroupRepository,
+                            private val endpointEntityRepository: MONOGOEndpointEntityRepository,
                             private val passwordEncoder: PasswordEncoder,
                             private val rabbitProperties: RabbitProperties) {
 

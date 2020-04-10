@@ -3,9 +3,9 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -20,7 +20,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1")
-class LogsController(val influx: InfluxDB, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, var userGroupRepository: UserGroupRepository, val influxProperties: CloudioInfluxProperties) {
+class LogsController(val influx: InfluxDB, var userRepository: MONGOUserRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository, var userGroupRepository: MONGOUserGroupRepository, val influxProperties: CloudioInfluxProperties) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()

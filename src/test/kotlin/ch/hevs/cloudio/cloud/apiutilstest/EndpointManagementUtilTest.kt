@@ -7,9 +7,9 @@ import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import ch.hevs.cloudio.cloud.security.Permission
@@ -35,13 +35,13 @@ class EndpointManagementUtilTest {
     val rabbitTemplate = RabbitTemplate()
 
     @Autowired
-    private lateinit var endpointEntityRepository: EndpointEntityRepository
+    private lateinit var endpointEntityRepository: MONOGOEndpointEntityRepository
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var userRepository: MONGOUserRepository
 
     @Autowired
-    private lateinit var userGroupRepository: UserGroupRepository
+    private lateinit var userGroupRepository: MONGOUserGroupRepository
 
     @Autowired
     private lateinit var influx: InfluxDB

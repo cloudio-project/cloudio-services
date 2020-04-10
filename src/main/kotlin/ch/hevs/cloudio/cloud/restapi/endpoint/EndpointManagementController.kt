@@ -7,9 +7,9 @@ import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -26,9 +26,9 @@ import java.util.*
 @RestController
 @RequestMapping("/api/v1/endpoints")
 class EndpointManagementController(
-        private val endpointEntityRepository: EndpointEntityRepository,
-        private val userRepository: UserRepository,
-        private val userGroupRepository: UserGroupRepository,
+        private val endpointEntityRepository: MONOGOEndpointEntityRepository,
+        private val userRepository: MONGOUserRepository,
+        private val userGroupRepository: MONGOUserGroupRepository,
         private val influxDB: InfluxDB,
         private val influxProperties: CloudioInfluxProperties
 ) {

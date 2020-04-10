@@ -4,9 +4,9 @@ import ch.hevs.cloudio.cloud.extension.findAttribute
 import ch.hevs.cloudio.cloud.extension.findObject
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
 import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
@@ -19,14 +19,14 @@ import java.util.*
 
 object EndpointManagementUtil {
 
-    fun createEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
+    fun createEndpoint(endpointEntityRepository: MONOGOEndpointEntityRepository, endpointCreateRequest: EndpointCreateRequest): EndpointParameters {
         val toReturn = EndpointParameters(UUID.randomUUID(), endpointCreateRequest.endpointFriendlyName)
         //create endpoint in endpoint parameters repo
         endpointEntityRepository.save(EndpointEntity(endpointUuid = toReturn.endpointUuid, friendlyName = toReturn.friendlyName))
         return toReturn
     }
 
-    fun getEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
+    fun getEndpoint(endpointEntityRepository: MONOGOEndpointEntityRepository, endpointRequest: EndpointRequest): EndpointEntity? {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointRequest.endpointUuid))
         return if (endpointEntity == null)
             null
@@ -34,7 +34,7 @@ object EndpointManagementUtil {
             endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointRequest.endpointUuid))
     }
 
-    fun getEndpointFriendlyName(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): EndpointFriendlyName? {
+    fun getEndpointFriendlyName(endpointEntityRepository: MONOGOEndpointEntityRepository, endpointRequest: EndpointRequest): EndpointFriendlyName? {
         val endpointParameters = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointRequest.endpointUuid))
         return if (endpointParameters == null)
             null
@@ -43,7 +43,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun getNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest): Node? {
+    fun getNode(endpointEntityRepository: MONOGOEndpointEntityRepository, nodeRequest: NodeRequest): Node? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
         if (splitTopic.size < 2)
             throw CloudioApiException("Node topic wasn't formatted correctly")
@@ -51,7 +51,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun getWotNode(endpointEntityRepository: EndpointEntityRepository, nodeRequest: NodeRequest, host: String): NodeThingDescription? {
+    fun getWotNode(endpointEntityRepository: MONOGOEndpointEntityRepository, nodeRequest: NodeRequest, host: String): NodeThingDescription? {
         val splitTopic = nodeRequest.nodeTopic.split("/")
         if (splitTopic.size < 2)
             throw CloudioApiException("Node topic wasn't formatted correctly")
@@ -61,7 +61,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun getObject(endpointEntityRepository: EndpointEntityRepository, objectRequest: ObjectRequest): CloudioObject? {
+    fun getObject(endpointEntityRepository: MONOGOEndpointEntityRepository, objectRequest: ObjectRequest): CloudioObject? {
         val splitTopic = Stack<String>()
         splitTopic.addAll(objectRequest.objectTopic.split("/").toList().reversed())
         try {
@@ -80,7 +80,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun getAttribute(endpointEntityRepository: EndpointEntityRepository, attributeRequest: AttributeRequest): Attribute? {
+    fun getAttribute(endpointEntityRepository: MONOGOEndpointEntityRepository, attributeRequest: AttributeRequest): Attribute? {
         val splitTopic = Stack<String>()
         splitTopic.addAll(attributeRequest.attributeTopic.split("/").toList().reversed())
         try {
@@ -99,7 +99,7 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest) {
+    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: MONOGOEndpointEntityRepository, attributeSetRequest: AttributeSetRequest) {
         val attribute: Attribute?
 
         try {
@@ -121,7 +121,7 @@ object EndpointManagementUtil {
         }
     }
 
-    fun blockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
+    fun blockEndpoint(endpointEntityRepository: MONOGOEndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointRequest.endpointUuid))
         if (endpointEntity != null) {
             endpointEntity.blocked = true
@@ -131,7 +131,7 @@ object EndpointManagementUtil {
             return false
     }
 
-    fun unblockEndpoint(endpointEntityRepository: EndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
+    fun unblockEndpoint(endpointEntityRepository: MONOGOEndpointEntityRepository, endpointRequest: EndpointRequest): Boolean {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointRequest.endpointUuid))
         if (endpointEntity != null) {
             endpointEntity.blocked = false
@@ -141,7 +141,7 @@ object EndpointManagementUtil {
             return false
     }
 
-    fun getOwnedEndpoints(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): OwnedEndpointsAnswer {
+    fun getOwnedEndpoints(userRepository: MONGOUserRepository, userGroupRepository: MONGOUserGroupRepository, endpointEntityRepository: MONOGOEndpointEntityRepository, userName: String): OwnedEndpointsAnswer {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
 
@@ -164,7 +164,7 @@ object EndpointManagementUtil {
         return OwnedEndpointsAnswer(ownedEndpointParametersSet)
     }
 
-    fun getAccessibleAttributes(userRepository: UserRepository, userGroupRepository: UserGroupRepository, endpointEntityRepository: EndpointEntityRepository, userName: String): AccessibleAttributesAnswer {
+    fun getAccessibleAttributes(userRepository: MONGOUserRepository, userGroupRepository: MONGOUserGroupRepository, endpointEntityRepository: MONOGOEndpointEntityRepository, userName: String): AccessibleAttributesAnswer {
         val permissionMap = PermissionUtils
                 .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
         val endpointsSet: MutableSet<String> = mutableSetOf()

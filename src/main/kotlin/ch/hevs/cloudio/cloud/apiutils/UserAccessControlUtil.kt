@@ -2,17 +2,17 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import org.springframework.data.repository.findByIdOrNull
 
 object UserAccessControlUtil {
 
-    fun getUserAccessRight(userRepository: UserRepository, userRequest: UserRequest): Map<String, PrioritizedPermission>? {
+    fun getUserAccessRight(userRepository: MONGOUserRepository, userRequest: UserRequest): Map<String, PrioritizedPermission>? {
         return userRepository.findByIdOrNull(userRequest.userName)?.permissions
     }
 
     @Throws(CloudioApiException::class)
-    fun addUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList) {
+    fun addUserAccessRight(userRepository: MONGOUserRepository, userRightRequestList: UserRightRequestList) {
         val user = userRepository.findByIdOrNull(userRightRequestList.userName)
 
         if (user != null) {
@@ -26,7 +26,7 @@ object UserAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun modifyUserAccessRight(userRepository: UserRepository, userRightRequest: UserRightRequest) {
+    fun modifyUserAccessRight(userRepository: MONGOUserRepository, userRightRequest: UserRightRequest) {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
@@ -42,7 +42,7 @@ object UserAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun removeUserAccessRight(userRepository: UserRepository, userRightRequest: UserTopicRequest) {
+    fun removeUserAccessRight(userRepository: MONGOUserRepository, userRightRequest: UserTopicRequest) {
         val user = userRepository.findByIdOrNull(userRightRequest.userName)
 
         if (user != null) {
@@ -57,7 +57,7 @@ object UserAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun giveUserAccessRight(userRepository: UserRepository, userRightRequestList: UserRightRequestList, requestUserName: String) {
+    fun giveUserAccessRight(userRepository: MONGOUserRepository, userRightRequestList: UserRightRequestList, requestUserName: String) {
 
         val requestUser = userRepository.findById(requestUserName).get()
 

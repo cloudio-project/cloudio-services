@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.authentication.DisabledException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class CloudioUserDetailsService(
-        private var userRepository: UserRepository
+        private var userRepository: MONGOUserRepository
 ) : UserDetailsService {
     override fun loadUserByUsername(username: String?): UserDetails = when (val user = userRepository.findByIdOrNull(username)) {
         null -> throw UsernameNotFoundException("User \"$username\"not found.")

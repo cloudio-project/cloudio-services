@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.LogParameter
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
@@ -51,7 +51,7 @@ object LogsUtil {
 
     }
 
-    fun getLogsLevel(endpointEntityRepository: EndpointEntityRepository, logsGetRequest: LogsGetRequest): LogsGetAnswer? {
+    fun getLogsLevel(endpointEntityRepository: MONOGOEndpointEntityRepository, logsGetRequest: LogsGetRequest): LogsGetAnswer? {
 
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(logsGetRequest.endpointUuid))
         if (endpointEntity != null) {

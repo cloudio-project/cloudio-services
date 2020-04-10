@@ -4,8 +4,8 @@ import ch.hevs.cloudio.cloud.TestUtil
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.admin.group.GroupManagementController
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
@@ -24,10 +24,10 @@ import kotlin.test.assertFails
 class UserGroupAccessControlUtilTest {
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var userRepository: MONGOUserRepository
 
     @Autowired
-    private lateinit var userGroupRepository: UserGroupRepository
+    private lateinit var userGroupRepository: MONGOUserGroupRepository
 
     @Autowired
     private lateinit var userManagement: UserManagementController

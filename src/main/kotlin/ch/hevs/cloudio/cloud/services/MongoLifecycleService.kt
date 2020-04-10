@@ -3,7 +3,7 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.model.Node
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.restapi.controllers.CertificateController
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
@@ -13,7 +13,7 @@ import java.util.*
 
 @Service
 @Profile("lifecycle-mongo", "default")
-class MongoLifecycleService(val endpointEntityRepository: EndpointEntityRepository) : AbstractLifecycleService() {
+class MongoLifecycleService(val endpointEntityRepository: MONOGOEndpointEntityRepository) : AbstractLifecycleService() {
 
     companion object {
         private val log = LogFactory.getLog(CertificateController::class.java)

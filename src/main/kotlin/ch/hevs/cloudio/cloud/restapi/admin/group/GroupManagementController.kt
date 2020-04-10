@@ -2,8 +2,8 @@ package ch.hevs.cloudio.cloud.restapi.admin.group
 
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class GroupManagementController(
-        private var groupRepository: UserGroupRepository,
-        private var userRepository: UserRepository
+        private var groupRepository: MONGOUserGroupRepository,
+        private var userRepository: MONGOUserRepository
 ) {
     @ApiOperation("Create a new user group.")
     @PostMapping("/groups/{groupName}")

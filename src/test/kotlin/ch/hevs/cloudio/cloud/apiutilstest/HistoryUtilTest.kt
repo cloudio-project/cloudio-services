@@ -6,7 +6,7 @@ import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.AttributeType
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.junit.After
@@ -27,7 +27,7 @@ class HistoryUtilTest {
     private lateinit var influx: InfluxDB
 
     @Autowired
-    private lateinit var endpointEntityRepository: EndpointEntityRepository
+    private lateinit var endpointEntityRepository: MONOGOEndpointEntityRepository
 
     val database = "cloudio"
 

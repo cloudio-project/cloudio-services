@@ -3,8 +3,8 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_AMIN_RIGHT_ERROR_MESSAGE
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1")
-class UserGroupAccessControlController(var userRepository: UserRepository, var userGroupRepository: UserGroupRepository) {
+class UserGroupAccessControlController(var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository) {
 
     @RequestMapping("/getUserGroupAccessRight", method = [RequestMethod.POST])
     fun getUserGroupAccessRight(@RequestBody userGroupRightRequest: UserGroupRequest): Map<String, PrioritizedPermission> {

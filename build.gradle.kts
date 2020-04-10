@@ -29,6 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.postgresql:postgresql")
+    implementation("com.vladmihalcea:hibernate-types-52:2.9.7")
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.64")
     implementation("io.springfox:springfox-swagger2:2.9.2")
@@ -78,7 +79,7 @@ tasks.bootRun {
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
             environment("spring.datasource.username", "cloudio")
             environment("spring.datasource.password", adminPassword ?: "admin")
-            environment("jpa.hibernate.ddl-auto" ,"create")
+            environment("jpa.hibernate.ddl-auto" ,"create-drop")
         }
     }
 }

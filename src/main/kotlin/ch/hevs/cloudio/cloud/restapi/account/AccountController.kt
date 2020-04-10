@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.account
 
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -14,7 +14,7 @@ import java.security.Principal
 @RestController
 @RequestMapping("/api/v1/account")
 class AccountController(
-        private val userRepository: UserRepository,
+        private val userRepository: MONGOUserRepository,
         private val passwordEncoder: PasswordEncoder
 ) {
     @ApiOperation("Get the information about the actual authenticated user.")

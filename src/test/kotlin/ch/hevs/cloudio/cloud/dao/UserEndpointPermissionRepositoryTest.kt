@@ -1,7 +1,5 @@
 package ch.hevs.cloudio.cloud.dao
 
-import ch.hevs.cloudio.cloud.dao.userendpointpermission.UserEndpointPermission
-import ch.hevs.cloudio.cloud.dao.userendpointpermission.UserEndpointPermissionRepository
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import org.junit.Before
 import org.junit.Test

@@ -5,9 +5,9 @@ import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -27,7 +27,7 @@ import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()

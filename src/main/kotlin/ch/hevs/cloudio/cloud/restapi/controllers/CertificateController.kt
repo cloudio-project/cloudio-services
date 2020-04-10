@@ -6,9 +6,9 @@ import ch.hevs.cloudio.cloud.apiutils.CertificateFromKeyRequest
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -31,9 +31,9 @@ import java.util.*
 @RequestMapping("/api/v1")
 class CertificateController(
         private val certificateManagerProperties: CloudioCertificateManagerProperties,
-        private val userGroupRepository: UserGroupRepository,
-        private val userRepository: UserRepository,
-        private val endpointEntityRepository: EndpointEntityRepository,
+        private val userGroupRepository: MONGOUserGroupRepository,
+        private val userRepository: MONGOUserRepository,
+        private val endpointEntityRepository: MONOGOEndpointEntityRepository,
         private val rabbitTemplate: RabbitTemplate,
         private val certificateManager: CertificateManagerProxy) {
 

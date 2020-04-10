@@ -2,18 +2,18 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
+import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import org.springframework.data.repository.findByIdOrNull
 
 object UserGroupAccessControlUtil {
 
-    fun getUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRequest: UserGroupRequest): Map<String, PrioritizedPermission>? {
+    fun getUserGroupAccessRight(userGroupRepository: MONGOUserGroupRepository, userGroupRequest: UserGroupRequest): Map<String, PrioritizedPermission>? {
         return userGroupRepository.findByIdOrNull(userGroupRequest.userGroupName)?.permissions
     }
 
     @Throws(CloudioApiException::class)
-    fun addUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequestList: UserGroupRightRequestList) {
+    fun addUserGroupAccessRight(userGroupRepository: MONGOUserGroupRepository, userGroupRightRequestList: UserGroupRightRequestList) {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequestList.userGroupName)
 
         if (userGroup != null) {
@@ -31,7 +31,7 @@ object UserGroupAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun modifyUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupRightRequest) {
+    fun modifyUserGroupAccessRight(userGroupRepository: MONGOUserGroupRepository, userGroupRightRequest: UserGroupRightRequest) {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
@@ -50,7 +50,7 @@ object UserGroupAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun removeUserGroupAccessRight(userGroupRepository: UserGroupRepository, userGroupRightRequest: UserGroupTopicRequest) {
+    fun removeUserGroupAccessRight(userGroupRepository: MONGOUserGroupRepository, userGroupRightRequest: UserGroupTopicRequest) {
         val userGroup = userGroupRepository.findByIdOrNull(userGroupRightRequest.userGroupName)
 
         if (userGroup != null) {
@@ -68,7 +68,7 @@ object UserGroupAccessControlUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun giveUserGroupAccessRight(userGroupRepository: UserGroupRepository, userRepository: UserRepository, userGroupRightRequestList: UserGroupRightRequestList, requestUserName: String) {
+    fun giveUserGroupAccessRight(userGroupRepository: MONGOUserGroupRepository, userRepository: MONGOUserRepository, userGroupRightRequestList: UserGroupRightRequestList, requestUserName: String) {
 
         val requestUser = userRepository.findById(requestUserName).get()
 
