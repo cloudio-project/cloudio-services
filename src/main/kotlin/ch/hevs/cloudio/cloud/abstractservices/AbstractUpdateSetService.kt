@@ -31,7 +31,7 @@ abstract class AbstractUpdateSetService {
     fun handleUpdateMessage(message: Message) {
         val prefix = message.messageProperties.receivedRoutingKey.split(".")[0]
         try {
-            val attributeId = message.messageProperties.receivedRoutingKey.removePrefix("$prefix.")
+            val attributeTopic = message.messageProperties.receivedRoutingKey.removePrefix("$prefix.")
 
             val data = message.body
             val messageFormat = JsonSerializationFormat.detect(data)
@@ -42,15 +42,30 @@ abstract class AbstractUpdateSetService {
 
                     if (prefix.equals("@update") && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) ||
                             (prefix.equals("@set") && (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint))) {
+
+                        var attributeId = ""
+                        val splitAttributeId = attributeTopic.split(".")
+
+                        //check if topic follow pattern of cloud.iO v0.1 or v0.2
+                        if(splitAttributeId[1] == "nodes" && splitAttributeId[3] == "objects" && splitAttributeId[splitAttributeId.lastIndex-1] == "attributes" ) {
+
+                            splitAttributeId.forEachIndexed { i, topicPart ->
+                                when {
+                                    i % 2 == 0 -> attributeId += topicPart
+                                    i != splitAttributeId.lastIndex -> attributeId += "."
+                                }
+                            }
+                        }else
+                            attributeId = attributeTopic
                         attributeUpdatedSet(attributeId, attribute, prefix)
                     } else {
-                        log.error("The Attribute $attributeId with the constraint ${attribute.constraint} can't be changed with the prefix $prefix")
+                        log.error("The Attribute $attributeTopic with the constraint ${attribute.constraint} can't be changed with the prefix $prefix")
                     }
                 } else {
-                    log.error("The Attribute $attributeId has be $prefix with a timestamp of -1 0r value of null")
+                    log.error("The Attribute $attributeTopic has be $prefix with a timestamp of -1 0r value of null")
                 }
             } else {
-                log.error("Unrecognized message format in $prefix message from $attributeId")
+                log.error("Unrecognized message format in $prefix message from $attributeTopic")
             }
         } catch (e: Exception) {
             log.error("Exception during $prefix message handling:", e)
