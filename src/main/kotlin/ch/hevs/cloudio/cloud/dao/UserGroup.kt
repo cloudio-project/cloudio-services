@@ -15,7 +15,7 @@ data class UserGroup(
 
         @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
         @JoinColumn(name = "user_group_id")
-        val permissions: Set<UserGroupEndpointPermission> = mutableSetOf(),
+        val permissions: MutableSet<UserGroupEndpointPermission> = mutableSetOf(),
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
