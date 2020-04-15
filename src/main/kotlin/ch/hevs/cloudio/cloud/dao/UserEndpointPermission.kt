@@ -13,7 +13,7 @@ data class UserEndpointPermission(
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         val id: Long = 0,
 
-        @Column(name = "user_id", nullable = false)
+        @Column(name = "user_id")
         val userID: Long = 0,
 
         @Column(name = "endpoint_uuid", nullable = false)

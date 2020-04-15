@@ -11,9 +11,10 @@ import javax.persistence.*
 ])
 data class UserGroupEndpointPermission(
         @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         val id: Long = 0,
 
-        @Column(name = "user_group_id", nullable = false)
+        @Column(name = "user_group_id")
         val userGroupID: Long = 0,
 
         @Column(name = "endpoint_uuid", nullable = false)

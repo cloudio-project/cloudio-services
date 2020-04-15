@@ -6,6 +6,7 @@ import java.util.*
 
 @Repository
 interface UserGroupEndpointPermissionRepository : CrudRepository<UserGroupEndpointPermission, Long> {
-    fun findByUserGroupID(id: Long)
-    fun findByEndpointUUID(uuid: UUID)
+    fun findByUserGroupID(userGroupID: Long)
+    fun findByEndpointUUID(endpointUUID: UUID)
+    fun findByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID): Optional<UserGroupEndpointPermission>
 }

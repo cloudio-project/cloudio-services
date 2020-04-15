@@ -7,6 +7,8 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.transaction.support.AbstractPlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import java.util.*
 
 @RunWith(SpringRunner::class)
@@ -15,107 +17,342 @@ class UserEndpointPermissionRepositoryTest {
     @Autowired
     private lateinit var userEndpointPermissionRepository: UserEndpointPermissionRepository
 
+    @Autowired
+    private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var transactionManager: AbstractPlatformTransactionManager
+    private var transactionTemplate: TransactionTemplate? = null
+
+    private var userID: Long = 0
+
     @Before
     fun setup() {
+        transactionTemplate = TransactionTemplate(transactionManager)
         userEndpointPermissionRepository.deleteAll()
+        userRepository.deleteAll()
+        userID = userRepository.save(User(userName = "TestUser")).id
     }
+
+    private fun transaction(block: () -> Unit) = transactionTemplate!!.executeWithoutResult {
+        block()
+    }
+
+    // TODO: Add permissions using user repository for all scenarios.
+    // TODO: Add permission to non-existent user.
 
     @Test
     fun addPermissionOWN() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("sepp.blatter", endpointUUID, EndpointPermission.OWN))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.OWN
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("sepp.blatter", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("sepp.blatter", endpointUUID)).orElseThrow().permission == EndpointPermission.OWN)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.OWN)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionGRANT() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("hugh.grant", endpointUUID, EndpointPermission.GRANT))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.GRANT
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("hugh.grant", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("hugh.grant", endpointUUID)).orElseThrow().permission == EndpointPermission.GRANT)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.GRANT)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.GRANT)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionCONFIGURE() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("max.pain", endpointUUID, EndpointPermission.CONFIGURE))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.CONFIGURE
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("max.pain", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("max.pain", endpointUUID)).orElseThrow().permission == EndpointPermission.CONFIGURE)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.CONFIGURE)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.CONFIGURE)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionWRITE() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("peter.alexander", endpointUUID, EndpointPermission.WRITE))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.WRITE
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("peter.alexander", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("peter.alexander", endpointUUID)).orElseThrow().permission == EndpointPermission.WRITE)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.WRITE)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.WRITE)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionREAD() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("asterix", endpointUUID, EndpointPermission.READ))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.READ
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("asterix", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("asterix", endpointUUID)).orElseThrow().permission == EndpointPermission.READ)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.READ)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.READ)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionBROWSE() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("kurt.felix", endpointUUID, EndpointPermission.BROWSE))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.BROWSE
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("kurt.felix", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("kurt.felix", endpointUUID)).orElseThrow().permission == EndpointPermission.BROWSE)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.BROWSE)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.BROWSE)
+                }
+            }
+        }
     }
 
     @Test
     fun addPermissionACCESS() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("bob", endpointUUID, EndpointPermission.ACCESS))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.ACCESS
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("bob", endpointUUID)))
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("bob", endpointUUID)).orElseThrow().permission == EndpointPermission.ACCESS)
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.ACCESS)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            user.let {
+                assert(user.permissions.count() == 1)
+                user.permissions.first().let {
+                    assert(it.endpointUUID == endpointUUID)
+                    assert(it.permission == EndpointPermission.ACCESS)
+                }
+            }
+        }
     }
 
     @Test
     fun updatePermission() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("franz.beckenbauer", endpointUUID, EndpointPermission.WRITE))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.WRITE
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("franz.beckenbauer", endpointUUID)))
-        assert(userEndpointPermissionRepository.count() == 1L)
-        userEndpointPermissionRepository.save(UserEndpointPermission("franz.beckenbauer", endpointUUID, EndpointPermission.OWN))
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.count() == 1L)
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("franz.beckenbauer", endpointUUID)))
-        assert(userEndpointPermissionRepository.count() == 1L)
-        assert(userEndpointPermissionRepository.findById(UserEndpointPermission.Key("franz.beckenbauer", endpointUUID)).orElseThrow().permission == EndpointPermission.OWN)
+            val user = userRepository.findById(userID).orElseThrow()
+            assert(user.permissions.count() == 1)
+            user.permissions.first().let {
+                assert(it.endpointUUID == endpointUUID)
+                assert(it.permission == EndpointPermission.WRITE)
+            }
+        }
+
+        transaction {
+            userEndpointPermissionRepository.save(UserEndpointPermission(id, userID, endpointUUID, EndpointPermission.OWN))
+        }
+
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.count() == 1L)
+            assert(userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            assert(user.permissions.count() == 1)
+            user.permissions.first().let {
+                assert(it.endpointUUID == endpointUUID)
+                assert(it.permission == EndpointPermission.OWN)
+            }
+        }
     }
 
     @Test
     fun deletePermission() {
         val endpointUUID = UUID.randomUUID()
+        var id: Long = 0
 
-        userEndpointPermissionRepository.save(UserEndpointPermission("hansi.hinterseher", endpointUUID, EndpointPermission.CONFIGURE))
+        transaction {
+            id = userEndpointPermissionRepository.save(UserEndpointPermission(
+                    0,
+                    userID,
+                    endpointUUID,
+                    EndpointPermission.CONFIGURE
+            )).id
+        }
 
-        assert(userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("hansi.hinterseher", endpointUUID)))
-        assert(userEndpointPermissionRepository.count() == 1L)
-        userEndpointPermissionRepository.deleteById(UserEndpointPermission.Key("hansi.hinterseher", endpointUUID))
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.count() == 1L)
 
-        assert(!userEndpointPermissionRepository.existsById(UserEndpointPermission.Key("hansi.hinterseher", endpointUUID)))
-        assert(userEndpointPermissionRepository.count() == 0L)
+            val user = userRepository.findById(userID).orElseThrow()
+            assert(user.permissions.count() == 1)
+        }
+
+        transaction {
+            userEndpointPermissionRepository.deleteById(id)
+        }
+
+
+        transaction {
+            assert(!userEndpointPermissionRepository.existsById(id))
+            assert(userEndpointPermissionRepository.count() == 0L)
+
+            val user = userRepository.findById(userID).orElseThrow()
+            assert(user.permissions.count() == 0)
+        }
+    }
+
+    @Test
+    fun deleteUserDeletesPermissions() {
+        val endpointUUID1 = UUID.randomUUID()
+        val endpointUUID2 = UUID.randomUUID()
+        var id1: Long = 0
+        var id2: Long = 0
+
+        transaction {
+            id1 = userEndpointPermissionRepository.save(UserEndpointPermission(0, userID, endpointUUID1, EndpointPermission.CONFIGURE)).id
+            id2 = userEndpointPermissionRepository.save(UserEndpointPermission(0, userID, endpointUUID2, EndpointPermission.READ)).id
+        }
+
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id1))
+            assert(userEndpointPermissionRepository.existsById(id2))
+            assert(userEndpointPermissionRepository.count() == 2L)
+
+            val userGroup = userRepository.findById(userID).orElseThrow()
+            assert(userGroup.permissions.count() == 2)
+        }
+
+        transaction {
+            userRepository.deleteById(userID)
+        }
+
+        transaction {
+            assert(!userEndpointPermissionRepository.existsById(id1))
+            assert(!userEndpointPermissionRepository.existsById(id2))
+            assert(userEndpointPermissionRepository.count() == 0L)
+        }
     }
 }
