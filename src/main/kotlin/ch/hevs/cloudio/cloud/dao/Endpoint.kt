@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.dao
 
 import ch.hevs.cloudio.cloud.model.Endpoint
-import ch.hevs.cloudio.cloud.model.LogLevel
 import org.hibernate.annotations.Type
 import java.util.*
 import javax.persistence.*
@@ -14,17 +13,20 @@ data class Endpoint(
         val uuid: UUID = UUID(0, 0),
 
         @Column(length = 1024, nullable = false)
-        var friendlyName: String = "Endpoint $uuid",
+        var friendlyName: String = "Unnamed endpoint",
 
         var blocked: Boolean = false,
 
         var online: Boolean = false,
 
-        @Enumerated(EnumType.STRING)
-        @Column(length = 32)
-        var logLevel: LogLevel = LogLevel.ERROR,
+        @Embedded
+        val configuration: EndpointConfiguration = EndpointConfiguration(),
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
-        val dataModel: ch.hevs.cloudio.cloud.model.Endpoint = Endpoint()
+        val dataModel: ch.hevs.cloudio.cloud.model.Endpoint = Endpoint(),
+
+        @Type(type = "jsonb")
+        @Column(columnDefinition = "jsonb")
+        val metaData: MutableMap<String, Any> = mutableMapOf()
 ) : BinaryJsonContainingEntity()
