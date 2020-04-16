@@ -11,10 +11,9 @@ data class User(
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         val id: Long = 0,
 
-        @Column(unique = true, nullable = false)
+        @Column(unique = true, nullable = false, updatable = false)
         val userName: String = "",
 
-        @Column(nullable = false)
         val emailAddress: EmailAddress = EmailAddress(),
 
         @Column(nullable = false)
