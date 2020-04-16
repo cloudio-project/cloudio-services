@@ -15,7 +15,7 @@ import java.util.*
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class UserEndpointPermissionRepositoryTest {
+class UserEndpointPermissionRepositoryTests {
     @Autowired
     private lateinit var userEndpointPermissionRepository: UserEndpointPermissionRepository
 
@@ -545,7 +545,7 @@ class UserEndpointPermissionRepositoryTest {
         }
 
         transaction {
-            userEndpointPermissionRepository.deleteById(id)
+            userEndpointPermissionRepository.deleteByUserIDAndEndpointUUID(userID, endpointUUID)
         }
 
 
@@ -596,7 +596,7 @@ class UserEndpointPermissionRepositoryTest {
     }
 
     @Test
-    fun deleteUserDeletesPermissions() {
+    fun deletingUserDeletesPermissions() {
         val endpointUUID1 = UUID.randomUUID()
         val endpointUUID2 = UUID.randomUUID()
         var id1: Long = 0

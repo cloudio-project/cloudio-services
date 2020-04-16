@@ -15,7 +15,7 @@ import java.util.*
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class UserGroupEndpointPermissionRepositoryTest {
+class UserGroupEndpointPermissionRepositoryTests {
     @Autowired
     private lateinit var userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
 
@@ -467,7 +467,7 @@ class UserGroupEndpointPermissionRepositoryTest {
         }
 
         transaction {
-            userGroupEndpointPermissionRepository.deleteById(id)
+            userGroupEndpointPermissionRepository.deleteByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID)
         }
 
         transaction {
@@ -480,7 +480,7 @@ class UserGroupEndpointPermissionRepositoryTest {
     }
 
     @Test
-    fun deletePermissionThroughUser() {
+    fun deletePermissionThroughUserGroup() {
         val endpointUUID = UUID.randomUUID()
         var id: Long = 0
 
@@ -512,7 +512,7 @@ class UserGroupEndpointPermissionRepositoryTest {
     }
 
     @Test
-    fun deleteUserGroupDeletesPermissions() {
+    fun deletongUserGroupDeletesPermissions() {
         val endpointUUID1 = UUID.randomUUID()
         val endpointUUID2 = UUID.randomUUID()
         var id1: Long = 0
