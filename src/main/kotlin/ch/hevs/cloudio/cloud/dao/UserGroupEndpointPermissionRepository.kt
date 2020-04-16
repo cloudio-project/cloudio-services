@@ -11,4 +11,6 @@ interface UserGroupEndpointPermissionRepository : CrudRepository<UserGroupEndpoi
     fun findByUserGroupID(userGroupID: Long)
     fun findByEndpointUUID(endpointUUID: UUID)
     fun findByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID): Optional<UserGroupEndpointPermission>
+
+    fun deleteByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID)
 }

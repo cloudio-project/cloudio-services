@@ -5,4 +5,6 @@ import java.util.*
 
 interface UserGroupRepository : CrudRepository<UserGroup, Long> {
     fun findByGroupName(groupName: String): Optional<UserGroup>
+
+    fun deleteByGroupName(groupName: String)
 }
