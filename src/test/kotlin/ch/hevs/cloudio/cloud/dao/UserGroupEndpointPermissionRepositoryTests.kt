@@ -36,17 +36,15 @@ class UserGroupEndpointPermissionRepositoryTests {
         userGroupID = userGroupRepository.save(UserGroup(groupName = "TestGroup")).id
     }
 
-    private fun transaction(block: () -> Unit) = transactionTemplate!!.executeWithoutResult {
-        block()
-    }
+    private fun <R> transaction(block: () -> R) = transactionTemplate!!.execute {
+        return@execute block()
+    }!!
 
     @Test
     fun addPermissionOWN() {
         val endpointUUID = UUID.randomUUID()
-        var id: Long = 0
-
-        transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.OWN)).id
+        val id = transaction {
+            userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.OWN)).id
         }
 
         transaction {
@@ -68,7 +66,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.OWN))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.OWN))
             userGroupRepository.save(userGroup)
         }
 
@@ -91,7 +89,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.GRANT)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.GRANT)).id
         }
 
         transaction {
@@ -113,7 +111,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.GRANT))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.GRANT))
             userGroupRepository.save(userGroup)
         }
 
@@ -136,7 +134,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
         }
 
         transaction {
@@ -158,7 +156,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.CONFIGURE))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.CONFIGURE))
             userGroupRepository.save(userGroup)
         }
 
@@ -181,7 +179,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.WRITE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.WRITE)).id
         }
 
         transaction {
@@ -203,7 +201,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.WRITE))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.WRITE))
             userGroupRepository.save(userGroup)
         }
 
@@ -226,7 +224,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.READ)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.READ)).id
         }
 
         transaction {
@@ -248,7 +246,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.READ))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.READ))
             userGroupRepository.save(userGroup)
         }
 
@@ -271,7 +269,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.BROWSE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.BROWSE)).id
         }
 
         transaction {
@@ -293,7 +291,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.BROWSE))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.BROWSE))
             userGroupRepository.save(userGroup)
         }
 
@@ -316,7 +314,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.ACCESS)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.ACCESS)).id
         }
 
         transaction {
@@ -338,7 +336,7 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
-            userGroup.permissions.add(UserGroupEndpointPermission(0, userGroup.id, endpointUUID, EndpointPermission.ACCESS))
+            userGroup.permissions.add(UserGroupEndpointPermission(userGroup.id, endpointUUID, EndpointPermission.ACCESS))
             userGroupRepository.save(userGroup)
         }
 
@@ -361,7 +359,6 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         assertThrows<DataIntegrityViolationException> {
             userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(
-                    0,
                     44,
                     endpointUUID,
                     EndpointPermission.ACCESS
@@ -372,14 +369,12 @@ class UserGroupEndpointPermissionRepositoryTests {
     @Test
     fun updatePermission() {
         val endpointUUID = UUID.randomUUID()
-        var id: Long = 0
-
-        transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.WRITE)).id
+        val permission = transaction {
+            userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.WRITE))
         }
 
         transaction {
-            assert(userGroupEndpointPermissionRepository.existsById(id))
+            assert(userGroupEndpointPermissionRepository.existsById(permission.id))
             assert(userGroupEndpointPermissionRepository.count() == 1L)
 
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
@@ -391,11 +386,12 @@ class UserGroupEndpointPermissionRepositoryTests {
         }
 
         transaction {
-            userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(id, userGroupID, endpointUUID, EndpointPermission.OWN))
+            permission.permission = EndpointPermission.OWN
+            userGroupEndpointPermissionRepository.save(permission)
         }
 
         transaction {
-            assert(userGroupEndpointPermissionRepository.existsById(id))
+            assert(userGroupEndpointPermissionRepository.existsById(permission.id))
             assert(userGroupEndpointPermissionRepository.count() == 1L)
             assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
 
@@ -414,7 +410,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.WRITE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.WRITE)).id
         }
 
         transaction {
@@ -455,7 +451,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
         }
 
         transaction {
@@ -485,7 +481,7 @@ class UserGroupEndpointPermissionRepositoryTests {
         var id: Long = 0
 
         transaction {
-            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
+            id = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID, EndpointPermission.CONFIGURE)).id
         }
 
         transaction {
@@ -512,15 +508,15 @@ class UserGroupEndpointPermissionRepositoryTests {
     }
 
     @Test
-    fun deletongUserGroupDeletesPermissions() {
+    fun deletingUserGroupDeletesPermissions() {
         val endpointUUID1 = UUID.randomUUID()
         val endpointUUID2 = UUID.randomUUID()
         var id1: Long = 0
         var id2: Long = 0
 
         transaction {
-            id1 = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID1, EndpointPermission.CONFIGURE)).id
-            id2 = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(0, userGroupID, endpointUUID2, EndpointPermission.READ)).id
+            id1 = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID1, EndpointPermission.CONFIGURE)).id
+            id2 = userGroupEndpointPermissionRepository.save(UserGroupEndpointPermission(userGroupID, endpointUUID2, EndpointPermission.READ)).id
         }
 
         transaction {

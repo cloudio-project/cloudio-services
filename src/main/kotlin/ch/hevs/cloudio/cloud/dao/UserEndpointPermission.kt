@@ -9,10 +9,6 @@ import javax.persistence.*
     UniqueConstraint(columnNames = ["user_id", "endpoint_uuid"])
 ])
 data class UserEndpointPermission(
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long = 0,
-
         @Column(name = "user_id")
         val userID: Long = 0,
 
@@ -21,4 +17,8 @@ data class UserEndpointPermission(
 
         @Enumerated(EnumType.STRING)
         var permission: EndpointPermission = EndpointPermission.DEFAULT
-)
+) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0
+}

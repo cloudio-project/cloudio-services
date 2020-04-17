@@ -8,10 +8,6 @@ import javax.persistence.*
 @Entity
 @Table(name = "cloudio_endpoint")
 data class Endpoint(
-        @Id
-        @GeneratedValue
-        val uuid: UUID = UUID(0, 0),
-
         @Column(length = 1024, nullable = false)
         var friendlyName: String = "Unnamed endpoint",
 
@@ -29,4 +25,8 @@ data class Endpoint(
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
         val metaData: MutableMap<String, Any> = mutableMapOf()
-) : BinaryJsonContainingEntity()
+) : BinaryJsonContainingEntity() {
+    @Id
+    @GeneratedValue
+    val uuid: UUID = UUID(0, 0)
+}

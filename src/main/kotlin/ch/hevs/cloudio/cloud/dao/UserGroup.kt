@@ -6,10 +6,6 @@ import javax.persistence.*
 @Entity
 @Table(name = "cloudio_user_group")
 data class UserGroup(
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        val id: Long = 0,
-
         @Column(unique = true, nullable = false)
         val groupName: String = "",
 
@@ -20,4 +16,8 @@ data class UserGroup(
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
         val metaData: MutableMap<String, Any> = mutableMapOf()
-) : BinaryJsonContainingEntity()
+) : BinaryJsonContainingEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0
+}

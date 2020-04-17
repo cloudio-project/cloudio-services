@@ -9,15 +9,15 @@ data class EndpointConfiguration(
         @JoinTable(name = "cloudio_endpoint_configuration_properties")
         @Column(name = "value", nullable = false)
         @MapKeyColumn(name="key")
-        var properties: MutableMap<String, String> = mutableMapOf(),
+        val properties: MutableMap<String, String> = mutableMapOf(),
 
         @Lob
         @Column(name = "pem_certificate")
-        val clientCertificate: String = "",
+        var clientCertificate: String = "",
 
         @Lob
         @Column(name = "pem_private_key")
-        val privateKey: String = "",
+        var privateKey: String = "",
 
         @Enumerated(EnumType.STRING)
         @Column(length = 32)
