@@ -1,20 +1,20 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
 import ch.hevs.cloudio.cloud.dao.UserEndpointPermissionRepository
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
+import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
+import ch.hevs.cloudio.cloud.dao.UserGroupRepository
+import ch.hevs.cloudio.cloud.dao.UserRepository
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.core.Authentication
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.io.Serializable
 import java.util.*
 
-@Component
+@Service
 class CloudioPermissionManager(
-        private val userRepository: MONGOUserRepository,
+        private val userRepository: UserRepository,
         private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-        private val userGroupRepository: MONGOUserGroupRepository,
+        private val userGroupRepository: UserGroupRepository,
         private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
 ): PermissionEvaluator {
     override fun hasPermission(authentication: Authentication, subject: Any?, permission: Any?) = when {
