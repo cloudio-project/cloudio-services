@@ -27,6 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.64")
     implementation("io.springfox:springfox-swagger2:2.9.2")
