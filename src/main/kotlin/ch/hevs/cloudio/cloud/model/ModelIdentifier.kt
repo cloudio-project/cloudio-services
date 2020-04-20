@@ -6,12 +6,13 @@ class ModelIdentifier(uri: String) {
     val valid: Boolean
     val action: ActionIdentifier
     val endpoint: UUID
-    val path: List<String>
+    private val segments: List<String>
 
-    fun hasAction() = action != ActionIdentifier.NONE && action != ActionIdentifier.INVALID
+    fun count() = segments.count()
+    operator fun get(index: Int) = segments[index]
 
     init {
-        val splitURI = uri.split(".", "/").toMutableList()
+        val splitURI = uri.split('.', '/').toMutableList()
 
         action = ActionIdentifier.fromURI(splitURI)
         if (action != ActionIdentifier.INVALID) {
@@ -20,27 +21,29 @@ class ModelIdentifier(uri: String) {
             } catch (e: Exception) {
                 null
             }
-            if (uuid != null) {
+            if (uuid != null && (uuid.leastSignificantBits != 0L || uuid.mostSignificantBits != 0L)) {
                 valid = true
                 endpoint = uuid
                 splitURI.removeAt(0)
-                path = splitURI
+                segments = splitURI
             } else {
                 valid = false
                 endpoint = UUID(0, 0)
-                path = emptyList()
+                segments = emptyList()
             }
         } else {
             valid = false
             endpoint = UUID(0, 0)
-            path = emptyList()
+            segments = emptyList()
         }
     }
 
-    override fun toString() = if (valid)
-        (if (action == ActionIdentifier.NONE) mutableListOf() else mutableListOf(action.value)).apply {
+    fun toString(separator: Char) = if (valid)
+        (if (action == ActionIdentifier.NONE) mutableListOf() else mutableListOf(action.toString())).apply {
             add("$endpoint")
-            addAll(path)
-        }.joinToString(".")
+            addAll(segments)
+        }.joinToString("$separator")
     else ""
+
+    override fun toString() = toString(separator = '.')
 }
