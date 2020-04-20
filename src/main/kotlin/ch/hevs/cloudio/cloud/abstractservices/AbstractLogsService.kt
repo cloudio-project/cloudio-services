@@ -2,7 +2,8 @@ package ch.hevs.cloudio.cloud.abstractservices
 
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
 import ch.hevs.cloudio.cloud.model.LogParameter
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -11,7 +12,7 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 
-abstract class AbstractLogsService {
+abstract class AbstractLogsService(private val serializationFormats: Collection<SerializationFormat>) {
 
     companion object {
         private val log = LogFactory.getLog(AbstractLogsService::class.java)
@@ -33,10 +34,10 @@ abstract class AbstractLogsService {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
 
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
                 val logParameter = LogParameter()
-                JsonSerializationFormat.deserializeLogParameter(logParameter, data)
+                messageFormat.deserializeLogParameter(logParameter, data)
                 logLevelChange(endpointUuid, logParameter)
             } else {
                 log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
@@ -62,10 +63,10 @@ abstract class AbstractLogsService {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
 
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
                 val cloudioLog = CloudioLogMessage()
-                JsonSerializationFormat.deserializeCloudioLog(cloudioLog, data)
+                messageFormat.deserializeCloudioLog(cloudioLog, data)
                 if (cloudioLog.timestamp != -1.0)
                     newLog(endpointUuid, cloudioLog)
             } else {

@@ -2,7 +2,8 @@ package ch.hevs.cloudio.cloud.abstractservices
 
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.model.Node
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -11,7 +12,7 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 
-abstract class AbstractLifecycleService {
+abstract class AbstractLifecycleService(private val serializationFormats: Collection<SerializationFormat>) {
 
     companion object {
         private val log = LogFactory.getLog(AbstractLifecycleService::class.java)
@@ -32,10 +33,10 @@ abstract class AbstractLifecycleService {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
                 val endpoint = Endpoint()
-                JsonSerializationFormat.deserializeEndpoint(endpoint, data)
+                messageFormat.deserializeEndpoint(endpoint, data)
                 endpointIsOnline(endpointId, endpoint)
             } else {
                 log.error("Unrecognized message format in @online message from $endpointId")
@@ -80,10 +81,10 @@ abstract class AbstractLifecycleService {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
                 val node = Node()
-                JsonSerializationFormat.deserializeNode(node, data)
+                messageFormat.deserializeNode(node, data)
                 nodeAdded(endpointId, nodeName, node)
             } else {
                 log.error("Unrecognized message format in @nodeAdded message from $endpointId")

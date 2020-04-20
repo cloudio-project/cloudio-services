@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.DeliverCallback
 import org.apache.commons.logging.LogFactory
@@ -24,10 +24,12 @@ abstract class AttributeChangeNotifier(connectionFactory: ConnectionFactory, top
         //create a callback or the queue
         val deliverCallback = DeliverCallback { _, delivery ->
             val message = String(delivery.body, Charset.defaultCharset())
-            val messageFormat = JsonSerializationFormat.detect(message.toByteArray())
-            if (messageFormat) {
+
+            // TODO: Detect actual serialization format from data.
+            val messageFormat = JSONSerializationFormat()
+            if (messageFormat.detect(message.toByteArray())) {
                 val attribute = Attribute()
-                JsonSerializationFormat.deserializeAttribute(attribute, message.toByteArray())
+                messageFormat.deserializeAttribute(attribute, message.toByteArray())
                 if (attribute.timestamp != -1.0 && attribute.value != null) {
                     notifyAttributeChange(attribute)
                     channel.queueDelete(queueName)

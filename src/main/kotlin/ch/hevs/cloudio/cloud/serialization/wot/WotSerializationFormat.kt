@@ -1,12 +1,11 @@
-package ch.hevs.cloudio.cloud.serialization
+package ch.hevs.cloudio.cloud.serialization.wot
 
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.Endpoint
-import ch.hevs.cloudio.cloud.serialization.wot.*
 
 
-object JsonWotSerializationFormat {
+object WotSerializationFormat {
 
     fun wotNodeFromCloudioNode(endpoint: Endpoint, endpointName: String, nodeName: String, host: String): NodeThingDescription? {
 

@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateSetService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.influxdb.BatchOptions
 import org.influxdb.InfluxDB
@@ -16,8 +17,11 @@ import javax.annotation.PostConstruct
 
 @Service
 @Profile("update-influx", "default")
-class InfluxUpdateSetService(private val influx: InfluxDB,
-                             private val influxProperties: CloudioInfluxProperties) : AbstractUpdateSetService() {
+class InfluxUpdateSetService(
+        private val influx: InfluxDB,
+        serializationFormats: Collection<SerializationFormat>,
+        private val influxProperties: CloudioInfluxProperties
+) : AbstractUpdateSetService(serializationFormats) {
     private val log = LogFactory.getLog(InfluxUpdateSetService::class.java)
 
     @PostConstruct
