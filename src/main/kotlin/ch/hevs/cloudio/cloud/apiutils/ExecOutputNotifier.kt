@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.DeliverCallback
@@ -28,10 +28,12 @@ abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: S
         //create a callback or the queue
         val deliverCallback = DeliverCallback { _, delivery ->
             val message = String(delivery.body, Charset.defaultCharset())
-            val messageFormat = JsonSerializationFormat.detect(message.toByteArray())
-            if (messageFormat) {
+
+            // TODO: Detect actual serialization format from data.
+            val messageFormat = JSONSerializationFormat()
+            if (messageFormat.detect(message.toByteArray())) {
                 val jobsLineOutput = JobsLineOutput()
-                JsonSerializationFormat.deserializeJobsLineOutput(jobsLineOutput, message.toByteArray())
+                messageFormat.deserializeJobsLineOutput(jobsLineOutput, message.toByteArray())
                 notifyExecOutput(jobsLineOutput)
             } else {
                 log.error("Unrecognized message format in $topic message")

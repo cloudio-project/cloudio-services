@@ -1,7 +1,8 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.detect
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("delayed", "default")
-class DelayedService() {
+class DelayedService(
+        private val serializationFormats: Collection<SerializationFormat>
+) {
 
     private val log = LogFactory.getLog(DelayedService::class.java)
 
@@ -38,12 +41,12 @@ class DelayedService() {
 
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
 
                 val delayed = DelayedContainer()
 
-                JsonSerializationFormat.deserializeDelayed(delayed, data)
+                messageFormat.deserializeDelayed(delayed, data)
 
                 delayed.messages.forEach { delayedMessage ->
 
