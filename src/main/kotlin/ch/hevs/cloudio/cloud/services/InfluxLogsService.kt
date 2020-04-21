@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
 import ch.hevs.cloudio.cloud.model.LogParameter
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
@@ -12,8 +13,10 @@ import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("logs-influx", "default")
-class InfluxLogsService(private val influx: InfluxDB,
-                        private val influxProperties: CloudioInfluxProperties) : AbstractLogsService() {
+class InfluxLogsService(
+        private val influx: InfluxDB,
+        serializationFormats: Collection<SerializationFormat>,
+        private val influxProperties: CloudioInfluxProperties) : AbstractLogsService(serializationFormats) {
 
     override fun logLevelChange(endpointUuid: String, logParameter: LogParameter) {
         //nothing to do in influx

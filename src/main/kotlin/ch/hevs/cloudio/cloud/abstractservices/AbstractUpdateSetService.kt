@@ -2,7 +2,8 @@ package ch.hevs.cloudio.cloud.abstractservices
 
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -11,7 +12,7 @@ import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 
-abstract class AbstractUpdateSetService {
+abstract class AbstractUpdateSetService(private val serializationFormats: Collection<SerializationFormat>) {
 
     companion object {
         private val log = LogFactory.getLog(AbstractUpdateSetService::class.java)
@@ -34,10 +35,10 @@ abstract class AbstractUpdateSetService {
             val attributeId = message.messageProperties.receivedRoutingKey.removePrefix("$prefix.")
 
             val data = message.body
-            val messageFormat = JsonSerializationFormat.detect(data)
-            if (messageFormat) {
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
                 val attribute = Attribute()
-                JsonSerializationFormat.deserializeAttribute(attribute, data)
+                messageFormat.deserializeAttribute(attribute, data)
                 if (attribute.timestamp != -1.0 && attribute.value != null) {
 
                     if (prefix.equals("@update") && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) ||

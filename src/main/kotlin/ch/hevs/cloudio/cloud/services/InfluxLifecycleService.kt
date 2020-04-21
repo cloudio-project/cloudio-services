@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.model.Node
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
@@ -11,8 +12,10 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("lifecycle-influx", "default")
-class InfluxLifecycleService(private val influx: InfluxDB,
-                             private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService() {
+class InfluxLifecycleService(
+        private val influx: InfluxDB,
+        serializationFormats: Collection<SerializationFormat>,
+        private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService(serializationFormats) {
 
     override fun endpointIsOffline(endpointId: String) {
         influx.write(influxProperties.database, "autogen", Point

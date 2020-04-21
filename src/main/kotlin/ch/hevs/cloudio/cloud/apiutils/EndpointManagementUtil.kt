@@ -8,8 +8,8 @@ import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.serialization.JsonSerializationFormat.serializeAttribute
-import ch.hevs.cloudio.cloud.serialization.JsonWotSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -57,7 +57,7 @@ object EndpointManagementUtil {
             throw CloudioApiException("Node topic wasn't formatted correctly")
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!
 
-        return JsonWotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.endpointUuid.toString(), splitTopic[1], host)
+        return WotSerializationFormat.wotNodeFromCloudioNode(endpointEntity.endpoint, endpointEntity.endpointUuid.toString(), splitTopic[1], host)
     }
 
     @Throws(CloudioApiException::class)
@@ -115,9 +115,11 @@ object EndpointManagementUtil {
             throw CloudioApiException("Attribute is nor a SetPoint, neither a Parameter")
         else {
             //send message to amq.topic queue
+
+            // TODO: Detect actual serialization format from endpoint data model.
             rabbitTemplate.convertAndSend("amq.topic",
                     "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
-                    serializeAttribute(attributeSetRequest.attribute))
+                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute))
         }
     }
 
