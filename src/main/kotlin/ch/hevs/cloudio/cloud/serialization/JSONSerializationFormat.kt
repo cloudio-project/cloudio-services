@@ -6,6 +6,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class JSONSerializationFormat : AbstractJacksonSerializationFormat(Jackson2ObjectMapperBuilder.json().build<ObjectMapper>()) {
-    override fun detect(data: ByteArray): Boolean = data.size > 0 && data[0] == '{'.toByte()
+    override fun detect(data: ByteArray): Boolean = data.isNotEmpty() && data[0] == '{'.toByte()
     override fun identifier() = "JSON"
 }
