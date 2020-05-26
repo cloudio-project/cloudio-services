@@ -1,8 +1,9 @@
 package ch.hevs.cloudio.cloud.model
 
+import java.io.Serializable
 import java.util.*
 
-class ModelIdentifier(uri: String) {
+class ModelIdentifier(uri: String): Serializable {
     val valid: Boolean
     val action: ActionIdentifier
     val endpoint: UUID
