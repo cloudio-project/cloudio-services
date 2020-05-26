@@ -8,7 +8,8 @@ class CloudioUserDetails(
         private val username: String,
         private val password: String,
         private val banned: Boolean,
-        private val authorities: List<SimpleGrantedAuthority>
+        private val authorities: List<SimpleGrantedAuthority>,
+        val groupMembershipIDs: List<Long>
 ): UserDetails {
     override fun getUsername() = username
     override fun getPassword() = password

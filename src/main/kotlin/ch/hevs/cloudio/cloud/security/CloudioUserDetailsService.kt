@@ -21,12 +21,13 @@ class CloudioUserDetailsService(
     private val log = LogFactory.getLog(CloudioUserDetailsService::class.java)
 
     @Transactional
-    override fun loadUserByUsername(userName: String): UserDetails = when (val user = userRepository.findByUserName(userName).orElse(null)) {
-        null -> throw UsernameNotFoundException("User \"$userName\"not found.")
-        else -> CloudioUserDetails(user.id, user.userName, user.password, user.banned, user.authorities.map(Authority::name).map {
-            SimpleGrantedAuthority(it)
-        })
-    }
+    override fun loadUserByUsername(userName: String): UserDetails = userRepository.findByUserName(userName).orElseThrow {
+        UsernameNotFoundException("User \"$userName\"not found.")
+    }.let { user ->
+        CloudioUserDetails(user.id, user.userName, user.password, user.banned, user.authorities.map(Authority::name).map { authority ->
+        SimpleGrantedAuthority(authority)
+    }, user.groupMemberships.map { it.id }) }
+
 
     @PostConstruct
     @Transactional
