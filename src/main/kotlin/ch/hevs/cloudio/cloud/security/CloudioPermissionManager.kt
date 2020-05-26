@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import java.io.Serializable
 import java.util.*
+import javax.transaction.Transactional
 
 @Service
 class CloudioPermissionManager(
@@ -19,7 +20,19 @@ class CloudioPermissionManager(
 
     override fun hasPermission(authentication: Authentication, subject: Any?, permission: Any?) = when {
         subject is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, subject, permission)
+        subject is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> try {
+            hasEndpointPermission(authentication.principal as CloudioUserDetails, UUID.fromString(subject), permission)
+        } catch (e: Exception) {
+            log.error("Invalid endpoint UUID: Authentication = $authentication, subject = $subject, permission = $permission")
+            false
+        }
         subject is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, subject, permission)
+        subject is String && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> ModelIdentifier(subject).let {
+            if (it.valid) hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, it, permission) else {
+                log.error("Invalid model identifier: Authentication = $authentication, subject = $subject, permission = $permission")
+                false
+            }
+        }
         else -> {
             log.error("Unknown permission request: Authentication = $authentication, subject = $subject, permission = $permission")
             false
@@ -35,6 +48,7 @@ class CloudioPermissionManager(
         }
     }
 
+    @Transactional
     fun hasEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID, permission: EndpointPermission) = if (resolveEndpointPermission(userDetails, endpointUUID).fulfills(permission)) {
         log.debug("Permission $permission on endpoint $endpointUUID granted for user ${userDetails.username}")
         true
@@ -43,6 +57,7 @@ class CloudioPermissionManager(
         false
     }
 
+    @Transactional
     fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission): Boolean {
         // Ensure that the model ID is correct.
         if (!modelID.valid) {
@@ -97,10 +112,22 @@ class CloudioPermissionManager(
     }
 
     private fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
-        //var permission = EndpointModelElementPermission.DENY
+        var permission = EndpointModelElementPermission.DENY
 
-        TODO()
+        userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, modelID.endpoint).ifPresent {
+            it.modelPermissions[modelID.modelPath()]?.apply {
+                permission = permission.higher(this)
+            }
+        }
 
-        //return permission
+        userDetails.groupMembershipIDs.forEach { groupID ->
+            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
+                it.modelPermissions[modelID.modelPath()]?.apply {
+                    permission = permission.higher(this)
+                }
+            }
+        }
+
+        return permission
     }
 }

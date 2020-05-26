@@ -49,13 +49,13 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             assert(userGroupEndpointPermissionRepository.existsById(id))
-            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.GRANT)
 
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
             assert(userGroup.permissions.count() == 1)
             userGroup.permissions.first().let {
                 assert(it.endpointUUID == endpointUUID)
-                assert(it.permission == EndpointPermission.OWN)
+                assert(it.permission == EndpointPermission.GRANT)
             }
         }
     }
@@ -72,13 +72,13 @@ class UserGroupEndpointPermissionRepositoryTests {
 
         transaction {
             assert(userGroupEndpointPermissionRepository.existsByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID))
-            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.GRANT)
 
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
             assert(userGroup.permissions.count() == 1)
             userGroup.permissions.first().let {
                 assert(it.endpointUUID == endpointUUID)
-                assert(it.permission == EndpointPermission.OWN)
+                assert(it.permission == EndpointPermission.GRANT)
             }
         }
     }
@@ -393,13 +393,13 @@ class UserGroupEndpointPermissionRepositoryTests {
         transaction {
             assert(userGroupEndpointPermissionRepository.existsById(permission.id))
             assert(userGroupEndpointPermissionRepository.count() == 1L)
-            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.GRANT)
 
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
             assert(userGroup.permissions.count() == 1)
             userGroup.permissions.first().let {
                 assert(it.endpointUUID == endpointUUID)
-                assert(it.permission == EndpointPermission.OWN)
+                assert(it.permission == EndpointPermission.GRANT)
             }
         }
     }
@@ -434,13 +434,13 @@ class UserGroupEndpointPermissionRepositoryTests {
         transaction {
             assert(userGroupEndpointPermissionRepository.existsByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID))
             assert(userGroupEndpointPermissionRepository.count() == 1L)
-            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.OWN)
+            assert(userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(userGroupID, endpointUUID).orElseThrow().permission == EndpointPermission.GRANT)
 
             val userGroup = userGroupRepository.findById(userGroupID).orElseThrow()
             assert(userGroup.permissions.count() == 1)
             userGroup.permissions.first().let {
                 assert(it.endpointUUID == endpointUUID)
-                assert(it.permission == EndpointPermission.OWN)
+                assert(it.permission == EndpointPermission.GRANT)
             }
         }
     }

@@ -31,7 +31,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_ONLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@online/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -81,7 +81,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_OFFLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@offline/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -132,7 +132,7 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
-        assert(id.toString() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toString() == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
     }
 
     @Test
@@ -184,7 +184,7 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
-        assert(id.toString() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toString() == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
     }
 
     @Test
@@ -238,7 +238,7 @@ class ModelIdentifierTests {
         assert(id[0] == "aNode")
         assert(id[1] == "anObject")
         assert(id[2] == "anAttribute")
-        assert(id.toString() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
 
         for (i in 1..99) {
             val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
@@ -252,7 +252,7 @@ class ModelIdentifierTests {
                 assert(id[i + 1] == it)
             }
             assert(id[i + 1] == "anAttribute")
-            assert(id.toString() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
         }
     }
 
@@ -322,7 +322,7 @@ class ModelIdentifierTests {
         assert(id[0] == "aNode")
         assert(id[1] == "anObject")
         assert(id[2] == "anAttribute")
-        assert(id.toString() == "@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toString() == "@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
 
         for (i in 1..99) {
             val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
@@ -336,7 +336,7 @@ class ModelIdentifierTests {
                 assert(id[i + 1] == it)
             }
             assert(id[i + 1] == "anAttribute")
-            assert(id.toString() == "@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toString() == "@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
         }
     }
 
@@ -406,7 +406,7 @@ class ModelIdentifierTests {
         assert(id[0] == "aNode")
         assert(id[1] == "anObject")
         assert(id[2] == "anAttribute")
-        assert(id.toString() == "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toString() == "@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
 
         for (i in 1..99) {
             val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
@@ -420,7 +420,7 @@ class ModelIdentifierTests {
                 assert(id[i + 1] == it)
             }
             assert(id[i + 1] == "anAttribute")
-            assert(id.toString() == "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toString() == "@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
         }
     }
 
@@ -487,7 +487,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.TRANSACTION)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@transaction/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -537,7 +537,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.JOB_EXECUTE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@exec.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@exec/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -587,7 +587,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.JOB_EXECUTE_OUTPUT)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -637,7 +637,7 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.DELAYED)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString() == "@delayed.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString() == "@delayed/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
