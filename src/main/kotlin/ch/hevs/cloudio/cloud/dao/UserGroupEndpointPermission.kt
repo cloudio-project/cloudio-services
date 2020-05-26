@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.dao
 
 import ch.hevs.cloudio.cloud.security.EndpointPermission
-import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 

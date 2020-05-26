@@ -2,8 +2,8 @@ package ch.hevs.cloudio.cloud.security
 
 import ch.hevs.cloudio.cloud.dao.UserEndpointPermissionRepository
 import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
-import ch.hevs.cloudio.cloud.dao.UserGroupRepository
-import ch.hevs.cloudio.cloud.dao.UserRepository
+import ch.hevs.cloudio.cloud.model.ModelIdentifier
+import org.apache.juli.logging.LogFactory
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
@@ -12,28 +12,95 @@ import java.util.*
 
 @Service
 class CloudioPermissionManager(
-        private val userRepository: UserRepository,
         private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-        private val userGroupRepository: UserGroupRepository,
         private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
-): PermissionEvaluator {
+) : PermissionEvaluator {
+    private val log = LogFactory.getLog(CloudioPermissionManager::class.java)
+
     override fun hasPermission(authentication: Authentication, subject: Any?, permission: Any?) = when {
-        subject is UUID && permission is EndpointPermission -> hasEndpointPermission(authentication.name, subject, permission)
-        subject is String && permission is EndpointModelElementPermission -> hasEndpointModelElementPermission(authentication.name, subject, permission)
-        else -> false
+        subject is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, subject, permission)
+        subject is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, subject, permission)
+        else -> {
+            log.error("Unknown permission request: Authentication = $authentication, subject = $subject, permission = $permission")
+            false
+        }
     }
 
     override fun hasPermission(authentication: Authentication, targetId: Serializable?, targetType: String?, permission: Any?) = when {
-        targetType == "Endpoint" && targetId is UUID && permission is EndpointPermission -> hasEndpointPermission(authentication.name, targetId, permission)
-        targetType == "Model" && targetId is String && permission is EndpointModelElementPermission -> hasEndpointModelElementPermission(authentication.name, targetId, permission)
-        else -> false
+        targetType == "Endpoint" && targetId is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, targetId, permission)
+        targetType == "Model" && targetId is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, targetId, permission)
+        else -> {
+            log.error("Unknown permission request: Authentication = $authentication, targetId = $targetId, permission = $permission")
+            false
+        }
     }
 
-    private fun hasEndpointPermission(userName: String, endpointUUID: UUID, permission: EndpointPermission): Boolean {
-        TODO()
+    fun hasEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID, permission: EndpointPermission) = if (resolveEndpointPermission(userDetails, endpointUUID).fulfills(permission)) {
+        log.debug("Permission $permission on endpoint $endpointUUID granted for user ${userDetails.username}")
+        true
+    } else {
+        log.warn("Permission $permission on endpoint $endpointUUID rejected for user ${userDetails.username}")
+        false
     }
 
-    private fun hasEndpointModelElementPermission(username: String, modelPath: String, permission: EndpointModelElementPermission): Boolean {
+    fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission): Boolean {
+        // Ensure that the model ID is correct.
+        if (!modelID.valid) {
+            log.warn("Permission $permission to \"$modelID \"rejected for user \"${userDetails.username}\": Invalid model identifier.")
+            return false
+        }
+
+        // Get the global permission of the user for the endpoint.
+        val endpointPermission = resolveEndpointPermission(userDetails, modelID.endpoint)
+
+        // If the user has no access to the endpoint, reject any access.
+        if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
+            log.debug("Permission $permission to \"$modelID\" rejected for user \"${userDetails.username}\": No access to endpoint.")
+            return false
+        }
+
+        // Check if the user has the permission on the endpoint globally.
+        when (permission) {
+            EndpointModelElementPermission.DENY -> return true
+            EndpointModelElementPermission.VIEW -> if (endpointPermission.fulfills(EndpointPermission.BROWSE)) {
+                log.debug("Permission VIEW to \"$modelID\" granted for user \"${userDetails.username}\": BROWSE+ permission on endpoint.")
+                return true
+            }
+            EndpointModelElementPermission.READ -> if (endpointPermission.fulfills(EndpointPermission.READ)) {
+                log.debug("Permission READ to \"$modelID\" granted for user \"${userDetails.username}\" READ+ permission on endpoint.")
+                return true
+            }
+            EndpointModelElementPermission.WRITE -> if (endpointPermission.fulfills(EndpointPermission.WRITE)) {
+                log.debug("Permission WRITE to \"$modelID\" granted for user \"${userDetails.username}\" WRITE+ permission on endpoint.")
+                return true
+            }
+        }
+
+        // Check for element specific permission.
+        return resolveEndpointModelElementPermission(userDetails, modelID).fulfills(permission)
+    }
+
+    private fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
+        var permission = EndpointPermission.DENY
+
+        userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, endpointUUID).ifPresent {
+            permission = permission.higher(it.permission)
+        }
+
+        userDetails.groupMembershipIDs.forEach { groupID ->
+            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, endpointUUID).ifPresent {
+                permission = permission.higher(it.permission)
+            }
+        }
+
+        return permission
+    }
+
+    private fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
+        //var permission = EndpointModelElementPermission.DENY
+
         TODO()
+
+        //return permission
     }
 }
