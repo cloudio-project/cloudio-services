@@ -35,6 +35,22 @@ enum class EndpointModelElementPermission(private val value: Int) {
      */
     fun fulfills(requirement: EndpointModelElementPermission) = value >= requirement.value
 
+    /**
+     * Returns the higher permission: Either the actual permission or the permission passed as parameter.
+     *
+     * @param permission    Permission to check against.
+     * @return              Higher permission.
+     */
+    fun higher(permission: EndpointModelElementPermission) = arrayOf(this, permission).maxBy { it.value }!!
+
+    /**
+     * Returns the lower permission: Either the actual permission or the permission passed as parameter.
+     *
+     * @param permission    Permission to check against.
+     * @return              Lower permission.
+     */
+    fun lower(permission: EndpointModelElementPermission) = arrayOf(this, permission).minBy { it.value }!!
+
     companion object {
         val DEFAULT = DENY
     }
