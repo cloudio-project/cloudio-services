@@ -19,7 +19,7 @@ class ModelIdentifier(uri: String) : Serializable {
             } catch (e: Exception) {
                 null
             }
-            if (uuid != null && (uuid.leastSignificantBits != 0L || uuid.mostSignificantBits != 0L)) {
+            if (uuid != null && (uuid.leastSignificantBits != 0L || uuid.mostSignificantBits != 0L) && splitURI.none { it.isEmpty() }) {
                 valid = true
                 endpoint = uuid
                 splitURI.removeAt(0)

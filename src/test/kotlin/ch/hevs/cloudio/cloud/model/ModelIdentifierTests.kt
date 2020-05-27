@@ -21,7 +21,7 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier(".").valid)
         assert(!ModelIdentifier("00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
     }
 
     @Test
@@ -154,7 +154,8 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@nodeAdded.00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66..aNode").valid)
         assert(!ModelIdentifier("@nodeAded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
         assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
         assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
@@ -169,7 +170,8 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@nodeAdded/00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
+        assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
+        assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66//aNode").valid)
         assert(!ModelIdentifier("@nodeAded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
         assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
         assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
@@ -206,7 +208,8 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@nodeRemoved.00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66..aNode").valid)
         assert(!ModelIdentifier("@nodeRmoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
         assert(!ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
         assert(!ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
@@ -221,7 +224,8 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@nodeRemoved/00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@nodeRemoved/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
+        assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
+        assert(!ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66//aNode").valid)
         assert(!ModelIdentifier("@nodeRemved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
         assert(!ModelIdentifier("@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
         assert(!ModelIdentifier("@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
@@ -292,9 +296,10 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@update.00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
         assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
         assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
+        assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject..anAttribute").valid)
         assert(!ModelIdentifier("@updat.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
     }
 
@@ -306,9 +311,9 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@update/00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
         assert(!ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
         assert(!ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
+        assert(!ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject//anAttribute").valid)
         assert(!ModelIdentifier("@updat/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
     }
 
@@ -376,9 +381,9 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@set.00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
         assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
         assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
+        assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject..anAttribute").valid)
         assert(!ModelIdentifier("@se.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
     }
 
@@ -390,9 +395,9 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@set/00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
         assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
         assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
+        assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject//anAttribute").valid)
         assert(!ModelIdentifier("@et/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
     }
 
@@ -460,9 +465,9 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@didSet.00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
         assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
         assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
+        assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject..anAttribute").valid)
         assert(!ModelIdentifier("@didSe.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
     }
 
@@ -474,9 +479,9 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@didSet/00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("@didSet/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
-        // TODO assert(!ModelIdentifier("@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
         assert(!ModelIdentifier("@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
         assert(!ModelIdentifier("@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
+        assert(!ModelIdentifier("@didSet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject//anAttribute").valid)
         assert(!ModelIdentifier("@didet/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
     }
 
