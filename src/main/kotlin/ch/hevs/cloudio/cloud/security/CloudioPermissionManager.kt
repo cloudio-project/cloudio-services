@@ -9,7 +9,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import java.io.Serializable
 import java.util.*
-import javax.transaction.Transactional
 
 @Service
 class CloudioPermissionManager(
@@ -48,7 +47,6 @@ class CloudioPermissionManager(
         }
     }
 
-    @Transactional
     fun hasEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID, permission: EndpointPermission) = if (resolveEndpointPermission(userDetails, endpointUUID).fulfills(permission)) {
         log.debug("Permission $permission on endpoint $endpointUUID granted for user ${userDetails.username}")
         true
@@ -57,7 +55,6 @@ class CloudioPermissionManager(
         false
     }
 
-    @Transactional
     fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission): Boolean {
         // Ensure that the model ID is correct.
         if (!modelID.valid) {
@@ -102,9 +99,11 @@ class CloudioPermissionManager(
             permission = permission.higher(it.permission)
         }
 
-        userDetails.groupMembershipIDs.forEach { groupID ->
-            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, endpointUUID).ifPresent {
-                permission = permission.higher(it.permission)
+        if (!permission.fulfills(EndpointPermission.GRANT)) {
+            userDetails.groupMembershipIDs.forEach { groupID ->
+                userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, endpointUUID).ifPresent {
+                    permission = permission.higher(it.permission)
+                }
             }
         }
 
@@ -120,10 +119,12 @@ class CloudioPermissionManager(
             }
         }
 
-        userDetails.groupMembershipIDs.forEach { groupID ->
-            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
-                it.modelPermissions[modelID.modelPath()]?.apply {
-                    permission = permission.higher(this)
+        if (!permission.fulfills(EndpointModelElementPermission.WRITE)) {
+            userDetails.groupMembershipIDs.forEach { groupID ->
+                userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
+                    it.modelPermissions[modelID.modelPath()]?.apply {
+                        permission = permission.higher(this)
+                    }
                 }
             }
         }
