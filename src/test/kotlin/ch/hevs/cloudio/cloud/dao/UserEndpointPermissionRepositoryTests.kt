@@ -417,7 +417,7 @@ class UserEndpointPermissionRepositoryTests {
 
         assertThrows<DataIntegrityViolationException> {
             userEndpointPermissionRepository.save(UserEndpointPermission(
-                    44,
+                    44444,
                     endpointUUID,
                     EndpointPermission.ACCESS
             ))
