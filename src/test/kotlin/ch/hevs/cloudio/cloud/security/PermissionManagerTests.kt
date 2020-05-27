@@ -39,8 +39,7 @@ class PermissionManagerTests {
     private lateinit var transactionManager: AbstractPlatformTransactionManager
     private var transactionTemplate: TransactionTemplate? = null
 
-    private lateinit var testEndpoint1UUID: UUID
-    private lateinit var testEndpoint2UUID: UUID
+    private lateinit var testEndpointUUID: UUID
 
     @Before
     fun setup() {
@@ -48,17 +47,36 @@ class PermissionManagerTests {
         userRepository.deleteAll()
         userGroupRepository.deleteAll()
         endpointRepository.deleteAll()
-        testEndpoint1UUID = endpointRepository.save(Endpoint(
+        testEndpointUUID = endpointRepository.save(Endpoint(
                 friendlyName = "MyEndpoint1"
-        )).uuid
-        testEndpoint2UUID = endpointRepository.save(Endpoint(
-                friendlyName = "MyEndpoint2"
         )).uuid
     }
 
     private fun <R> transaction(block: () -> R): R = transactionTemplate!!.execute {
         return@execute block()
     }!!
+
+    @Test
+    fun invalidEndpointUUID() {
+        transaction {
+            userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.ACCESS))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, "4578", EndpointPermission.OWN))
+    }
 
     @Test
     fun userDenyEndpointPermission() {
@@ -73,33 +91,33 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -110,40 +128,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.ACCESS))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -154,40 +172,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.BROWSE))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -198,40 +216,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.READ))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.READ))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -242,40 +260,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.WRITE))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.WRITE))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -286,40 +304,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.CONFIGURE))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.CONFIGURE))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -330,40 +348,40 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.GRANT))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.GRANT))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
@@ -374,47 +392,47 @@ class PermissionManagerTests {
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.OWN))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.OWN))
             userRepository.save(user)
         }
 
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupAccessEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.ACCESS))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.ACCESS))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -426,40 +444,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupBrowseEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.BROWSE))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.BROWSE))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -471,40 +489,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupReadEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.READ))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.READ))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -516,40 +534,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupWriteEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.WRITE))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.WRITE))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -561,40 +579,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupConfigureEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.CONFIGURE))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.CONFIGURE))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -606,40 +624,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupGrantEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.GRANT))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.GRANT))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -651,40 +669,40 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun groupOwnEndpointPermission() {
         transaction {
             val group = userGroupRepository.save(UserGroup("TestGroup"))
-            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpoint1UUID, EndpointPermission.OWN))
+            group.permissions.add(UserGroupEndpointPermission(group.id, testEndpointUUID, EndpointPermission.OWN))
             userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
@@ -696,38 +714,38 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.ACCESS))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.ACCESS))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.ACCESS))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.ACCESS))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.BROWSE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.BROWSE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.BROWSE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.BROWSE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.READ))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.READ))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.READ))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.READ))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.WRITE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.WRITE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.WRITE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.WRITE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.CONFIGURE))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.CONFIGURE))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.CONFIGURE))
 
-        assert(permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.GRANT))
-        assert(permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.GRANT))
+        assert(permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.GRANT))
+        assert(permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.GRANT))
 
-        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID, EndpointPermission.OWN))
-        assert(!permissionManager.hasPermission(authentication, testEndpoint1UUID.toString(), EndpointPermission.OWN))
+        assert(!permissionManager.hasEndpointPermission(userDetails, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID, EndpointPermission.OWN))
+        assert(!permissionManager.hasPermission(authentication, testEndpointUUID.toString(), EndpointPermission.OWN))
     }
 
     @Test
     fun userDenyEndpointDenyEndpointModelElementPermission() {
-        val modelIdentifier = ModelIdentifier("$testEndpoint1UUID.n1.o1.a1")
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
         transaction {
             val user = userRepository.save(User(
                     userName = "Test",
@@ -754,15 +772,35 @@ class PermissionManagerTests {
     }
 
     @Test
-    fun userAccessEndpointDenyEndpointModelElementPermission() {
-        val modelIdentifier = ModelIdentifier("$testEndpoint1UUID.n1.o1.a1")
+    fun invalidEndpointModelElementIdentifier() {
         transaction {
             val user = userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.ACCESS))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.OWN))
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.VIEW))
+        assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.WRITE))
+    }
+
+    @Test
+    fun userAccessEndpointDenyEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS))
             userRepository.save(user)
         }
 
@@ -784,14 +822,14 @@ class PermissionManagerTests {
 
     @Test
     fun userAccessEndpointViewEndpointModelElementPermission() {
-        val modelIdentifier = ModelIdentifier("$testEndpoint1UUID.n1.o1.a1")
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
         transaction {
             val user = userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            val permission = UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.ACCESS)
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
             permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.VIEW
             user.permissions.add(permission)
             userRepository.save(user)
@@ -815,14 +853,14 @@ class PermissionManagerTests {
 
     @Test
     fun userBrowseEndpointViewEndpointModelElementPermission() {
-        val modelIdentifier = ModelIdentifier("$testEndpoint1UUID.n1.o1.a1")
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
         transaction {
             val user = userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            user.permissions.add(UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.BROWSE))
+            user.permissions.add(UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE))
             userRepository.save(user)
         }
 
@@ -844,14 +882,14 @@ class PermissionManagerTests {
 
     @Test
     fun userAccessEndpointReadEndpointModelElementPermission() {
-        val modelIdentifier = ModelIdentifier("$testEndpoint1UUID.n1.o1.a1")
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
         transaction {
             val user = userRepository.save(User(
                     userName = "Test",
                     emailAddress = EmailAddress("test@null.com"),
                     password = passwordEncoder.encode("MYPASS")
             ))
-            val permission = UserEndpointPermission(user.id, testEndpoint1UUID, EndpointPermission.ACCESS)
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
             permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.READ
             user.permissions.add(permission)
             userRepository.save(user)
