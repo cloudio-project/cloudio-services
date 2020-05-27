@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud.dao
 
 import ch.hevs.cloudio.cloud.security.Authority
 import org.hibernate.annotations.Type
+import org.springframework.data.annotation.CreatedBy
 import javax.persistence.*
 
 @Entity
@@ -34,7 +35,7 @@ data class User(
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
         val metaData: MutableMap<String, Any> = mutableMapOf()
-) : BinaryJsonContainingEntity() {
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0

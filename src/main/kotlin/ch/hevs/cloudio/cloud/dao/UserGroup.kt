@@ -16,7 +16,7 @@ data class UserGroup(
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
         val metaData: MutableMap<String, Any> = mutableMapOf()
-) : BinaryJsonContainingEntity() {
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0

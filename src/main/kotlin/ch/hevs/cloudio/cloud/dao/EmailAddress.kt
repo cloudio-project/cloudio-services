@@ -11,6 +11,8 @@ class EmailAddress(
 
     fun isValid() = emailRegex.matcher(address).matches()
 
+    override fun toString() = address
+
     companion object {
         private val emailRegex = compile(
                 "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +

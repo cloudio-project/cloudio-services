@@ -50,9 +50,3 @@ class CloudioUserDetailsService(
         }
     }
 }
-
-fun UserDetailsService.loadUserByUsernameOrNull(userName: String) = try {
-    loadUserByUsername(userName)
-} catch (e: UsernameNotFoundException) {
-    null
-}

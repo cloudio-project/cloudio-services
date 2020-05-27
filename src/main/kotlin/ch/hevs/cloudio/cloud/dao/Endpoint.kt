@@ -25,7 +25,7 @@ data class Endpoint(
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
         val metaData: MutableMap<String, Any> = mutableMapOf()
-) : BinaryJsonContainingEntity() {
+) : BaseEntity() {
     @Id
     @GeneratedValue
     val uuid: UUID = UUID(0, 0)
