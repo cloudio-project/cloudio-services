@@ -789,6 +789,14 @@ class PermissionManagerTests {
         assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.VIEW))
         assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.READ))
         assert(!permissionManager.hasPermission(authentication, "32589797345/3434", EndpointModelElementPermission.WRITE))
+
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}4", EndpointModelElementPermission.VIEW))
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}4", EndpointModelElementPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}4", EndpointModelElementPermission.WRITE))
+
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}//node", EndpointModelElementPermission.VIEW))
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}//node", EndpointModelElementPermission.READ))
+        assert(!permissionManager.hasPermission(authentication, "${testEndpointUUID}//node", EndpointModelElementPermission.WRITE))
     }
 
     @Test
@@ -807,17 +815,19 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+        transaction {
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
     }
 
     @Test
@@ -838,17 +848,19 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
     }
 
     @Test
@@ -867,17 +879,19 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
     }
 
     @Test
@@ -898,16 +912,214 @@ class PermissionManagerTests {
         val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
 
-        assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
-        assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
 
-        assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
-        assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userBrowseEndpointReadEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE)
+            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.READ
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userReadEndpointReadEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.READ)
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(!permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(!permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userAccessEndpointWriteEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
+            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userBrowseEndpointWriteEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE)
+            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userReadEndpointWriteEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.READ)
+            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
+    }
+
+    @Test
+    fun userWriteEndpointWriteEndpointModelElementPermission() {
+        val modelIdentifier = ModelIdentifier("$testEndpointUUID.n1.o1.a1")
+        transaction {
+            val user = userRepository.save(User(
+                    userName = "Test",
+                    emailAddress = EmailAddress("test@null.com"),
+                    password = passwordEncoder.encode("MYPASS")
+            ))
+            val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.WRITE)
+            user.permissions.add(permission)
+            userRepository.save(user)
+        }
+
+        val userDetails = userDetailsService.loadUserByUsername("Test") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        transaction {
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.VIEW))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.VIEW))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.READ))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.READ))
+
+            assert(permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier, EndpointModelElementPermission.WRITE))
+            assert(permissionManager.hasPermission(authentication, modelIdentifier.toString(), EndpointModelElementPermission.WRITE))
+        }
     }
 }

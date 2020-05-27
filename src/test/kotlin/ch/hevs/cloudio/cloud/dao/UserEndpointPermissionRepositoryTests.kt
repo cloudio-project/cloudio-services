@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.dao
 
+import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import org.junit.Before
 import org.junit.Test
@@ -592,6 +593,42 @@ class UserEndpointPermissionRepositoryTests {
         transaction {
             id1 = userEndpointPermissionRepository.save(UserEndpointPermission(userID, endpointUUID1, EndpointPermission.CONFIGURE)).id
             id2 = userEndpointPermissionRepository.save(UserEndpointPermission(userID, endpointUUID2, EndpointPermission.READ)).id
+        }
+
+        transaction {
+            assert(userEndpointPermissionRepository.existsById(id1))
+            assert(userEndpointPermissionRepository.existsById(id2))
+            assert(userEndpointPermissionRepository.count() == 2L)
+
+            val userGroup = userRepository.findById(userID).orElseThrow()
+            assert(userGroup.permissions.count() == 2)
+        }
+
+        transaction {
+            userRepository.deleteById(userID)
+        }
+
+        transaction {
+            assert(!userEndpointPermissionRepository.existsById(id1))
+            assert(!userEndpointPermissionRepository.existsById(id2))
+            assert(userEndpointPermissionRepository.count() == 0L)
+        }
+    }
+
+    @Test
+    fun deletingUserDeletesModelElementPermissions() {
+        val endpointUUID1 = UUID.randomUUID()
+        val endpointUUID2 = UUID.randomUUID()
+        var id1: Long = 0
+        var id2: Long = 0
+
+        transaction {
+            id1 = userEndpointPermissionRepository.save(UserEndpointPermission(userID, endpointUUID1, EndpointPermission.ACCESS, mutableMapOf(
+                    "n1/o1/a1" to EndpointModelElementPermission.READ
+            ))).id
+            id2 = userEndpointPermissionRepository.save(UserEndpointPermission(userID, endpointUUID2, EndpointPermission.READ, mutableMapOf(
+                    "n2/o2/a2" to EndpointModelElementPermission.WRITE
+            ))).id
         }
 
         transaction {
