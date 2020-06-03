@@ -163,7 +163,7 @@ class EndpointManagementUtilTest {
     @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getAccessibleAttributes() {
         val userName = TestUtil.generateRandomString(15)
-        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        userManagement.createUser(PostUserEntity(name = userName, password = "test", email = "no@thing.com"))
         UserAccessControlUtil.addUserAccessRight(userRepository,
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 
@@ -179,7 +179,7 @@ class EndpointManagementUtilTest {
     @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun getOwnedEndpoints() {
         val userName = TestUtil.generateRandomString(15)
-        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        userManagement.createUser(PostUserEntity(name = userName, password = "test", email = "no@thing.com"))
         UserAccessControlUtil.addUserAccessRight(userRepository,
                 UserRightRequestList(userName, setOf(UserRightTopic("${endpointParameters.endpointUuid}/#", Permission.OWN, PermissionPriority.HIGHEST))))
 

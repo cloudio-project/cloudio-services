@@ -1,29 +1,24 @@
 package ch.hevs.cloudio.cloud.restapi.admin
 
 import ch.hevs.cloudio.cloud.TestUtil
-import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.security.PermissionPriority
-import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import ch.hevs.cloudio.cloud.repo.authentication.User
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
+import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import ch.hevs.cloudio.cloud.security.Authority
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.transaction.support.AbstractPlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -32,77 +27,100 @@ class UserManagementControllerTests {
     private lateinit var userManagementController: UserManagementController
 
     @Autowired
-    private lateinit var userRepository: MONGOUserRepository
+    private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var groupRepository: MONGOUserGroupRepository
+    private lateinit var groupRepository: UserGroupRepository
 
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
+    @Autowired
+    private lateinit var transactionManager: AbstractPlatformTransactionManager
+    private var transactionTemplate: TransactionTemplate? = null
+
     @Before
     fun setup() {
+        transactionTemplate = TransactionTemplate(transactionManager)
         userRepository.deleteAll()
         groupRepository.deleteAll()
-        groupRepository.save(UserGroup(
-                userGroupName = "TestGroup"
-        ))
         userRepository.save(User(
                 userName = "TestUser",
-                passwordHash = passwordEncoder.encode("TestUserPassword"),
-                authorities = setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS),
-                userGroups = setOf("TestGroup"),
-                permissions = mutableMapOf(),
+                emailAddress = EmailAddress("no@thing.com"),
+                password = passwordEncoder.encode("TestUserPassword"),
+                authorities = Authority.DEFAULT_AUTHORITIES.toMutableSet(),
+                groupMemberships = mutableSetOf(UserGroup(
+                        groupName = "TestGroup"
+                )),
+                permissions = mutableSetOf(),
                 banned = false
         ))
     }
+
+    private fun <R> transaction(block: () -> R): R = transactionTemplate!!.execute {
+        return@execute block()
+    }!!
 
     // Create user
 
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteMinimalUser() {
-        userManagementController.createUserByUserName("User1", PostUserEntity(
+        userManagementController.createUser(PostUserEntity(
+                name = "User1",
+                email = "no@thing.com",
                 password = "88888888"
         ))
 
-        val user = userRepository.findByIdOrNull("User1")
-        assert(user != null)
-        user?.apply {
-            assert(userName == "User1")
-            assert(passwordEncoder.matches("88888888", passwordHash))
-            assert(permissions.isEmpty())
-            assert(userGroups.isEmpty())
-            assert(authorities == setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS))
-            assert(!banned)
+        transaction {
+            val user = userRepository.findByUserName("User1").orElse(null)
+            assert(user != null)
+            user?.apply {
+                assert(userName == "User1")
+                assert(emailAddress.toString() == "no@thing.com")
+                assert(passwordEncoder.matches("88888888", password))
+                assert(authorities == Authority.DEFAULT_AUTHORITIES)
+                assert(!banned)
+                assert(groupMemberships.isEmpty())
+                assert(permissions.isEmpty())
+                assert(metaData.isEmpty())
+            }
         }
 
         userManagementController.deleteUserByUserName("User1")
         assertThrows<CloudioHttpExceptions.NotFound> {
             userManagementController.deleteUserByUserName("User1")
         }
+
+        assert(userRepository.findByUserName("User1").isEmpty)
     }
 
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteCompleteUser() {
-        userManagementController.createUserByUserName("User1", PostUserEntity(
-                "tototititata",
-                mapOf("#/toto" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH)),
-                setOf("TestGroup"),
-                setOf(Authority.HTTP_ACCESS),
-                false
+        userManagementController.createUser(PostUserEntity(
+                name = "User1",
+                email = "no@thing.com",
+                password = "tototititata",
+                authorities = setOf(Authority.HTTP_ACCESS),
+                banned = false,
+                groupMemberships = setOf("TestGroup"),
+                metaData = mapOf("test" to true, "toto" to 555)
         ))
 
-        val user = userRepository.findByIdOrNull("User1")
-        assert(user != null)
-        user?.apply {
-            assert(userName == "User1")
-            assert(passwordEncoder.matches("tototititata", passwordHash))
-            assert(permissions.count() == 1 && permissions["#/toto"] == PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
-            assert(userGroups.count() == 1 && userGroups.contains("TestGroup"))
-            assert(authorities == setOf(Authority.HTTP_ACCESS))
-            assert(!banned)
+        transaction {
+            val user = userRepository.findByUserName("User1").orElse(null)
+            assert(user != null)
+            user?.apply {
+                assert(userName == "User1")
+                assert(emailAddress.toString() == "no@thing.com")
+                assert(passwordEncoder.matches("tototititata", password))
+                assert(authorities == setOf(Authority.HTTP_ACCESS))
+                assert(!banned)
+                assert(groupMemberships.count() == 1 && groupMemberships.first().groupName == "TestGroup")
+                assert(permissions.isEmpty())
+                assert(metaData.count() == 2 && metaData["test"] == true && metaData["toto"] == 555)
+            }
         }
 
         userManagementController.deleteUserByUserName("User1")
@@ -115,7 +133,21 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun recreateExistingUser() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userManagementController.createUserByUserName("TestUser", PostUserEntity(
+            userManagementController.createUser(PostUserEntity(
+                    name = "TestUser",
+                    email = "no@thing.com",
+                    password = "88888888"
+            ))
+        }
+    }
+
+    @Test
+    @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
+    fun createUserWithInvalidEmail() {
+        assertThrows<CloudioHttpExceptions.BadRequest> {
+            userManagementController.createUser(PostUserEntity(
+                    name = "TestUser2",
+                    email = "nothing.com",
                     password = "88888888"
             ))
         }
@@ -125,7 +157,9 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInNonExistingGroup() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.createUserByUserName("User1", PostUserEntity(
+            userManagementController.createUser(PostUserEntity(
+                    name = "User1",
+                    email = "no@thing.com",
                     password = "88888888",
                     groupMemberships = setOf("NonexistingGroup")
             ))
@@ -135,40 +169,52 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInExistingGroup() {
-        userManagementController.createUserByUserName("User1", PostUserEntity(
+        userManagementController.createUser(PostUserEntity(
+                name = "User1",
+                email = "no@thing.com",
                 password = "88888888",
                 groupMemberships = setOf("TestGroup")
         ))
 
-        val user = userRepository.findByIdOrNull("User1")
-        assert(user != null)
-        user?.apply {
-            assert(userName == "User1")
-            assert(passwordEncoder.matches("88888888", passwordHash))
-            assert(permissions.isEmpty())
-            assert(userGroups == setOf("TestGroup"))
-            assert(authorities == setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS))
-            assert(!banned)
+        transaction {
+            val user = userRepository.findByUserName("User1").orElse(null)
+            assert(user != null)
+            user?.apply {
+                assert(userName == "User1")
+                assert(emailAddress.toString() == "no@thing.com")
+                assert(passwordEncoder.matches("88888888", password))
+                assert(authorities == Authority.DEFAULT_AUTHORITIES)
+                assert(!banned)
+                assert(groupMemberships.count() == 1 && groupMemberships.first().groupName == "TestGroup")
+                assert(permissions.isEmpty())
+                assert(metaData.isEmpty())
+            }
         }
     }
 
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAdminUser() {
-        userManagementController.createUserByUserName("Admin1", PostUserEntity(
+        userManagementController.createUser(PostUserEntity(
+                name = "Admin1",
+                email = "no@thing.com",
                 password = "1234567812345678",
-                authorities = setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN, Authority.BROKER_ACCESS)
+                authorities = Authority.ALL_AUTHORITIES
         ))
 
-        val user = userRepository.findByIdOrNull("Admin1")
-        assert(user != null)
-        user?.apply {
-            assert(userName == "Admin1")
-            assert(passwordEncoder.matches("1234567812345678", passwordHash))
-            assert(permissions.isEmpty())
-            assert(userGroups.isEmpty())
-            assert(authorities == setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN, Authority.BROKER_ACCESS))
-            assert(!banned)
+        transaction {
+            val user = userRepository.findByUserName("Admin1").orElse(null)
+            assert(user != null)
+            user?.apply {
+                assert(userName == "Admin1")
+                assert(emailAddress.toString() == "no@thing.com")
+                assert(passwordEncoder.matches("1234567812345678", password))
+                assert(authorities == Authority.ALL_AUTHORITIES)
+                assert(!banned)
+                assert(groupMemberships.isEmpty())
+                assert(permissions.isEmpty())
+                assert(metaData.isEmpty())
+            }
         }
     }
 
@@ -176,7 +222,9 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun createUserNotByAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.createUserByUserName("User1", PostUserEntity(
+            userManagementController.createUser(PostUserEntity(
+                    name = "User1",
+                    email = "no@thing.com",
                     password = "88888888"
             ))
         }
@@ -189,10 +237,11 @@ class UserManagementControllerTests {
     fun getUser() {
         val user = userManagementController.getUserByUserName("TestUser")
         assert(user.name == "TestUser")
-        assert(user.authorities == setOf(Authority.HTTP_ACCESS, Authority.BROKER_ACCESS))
-        assert(user.permissions.isEmpty())
-        assert(user.groupMemberships == setOf("TestGroup"))
+        assert(user.email == "no@thing.com")
+        assert(user.authorities == Authority.DEFAULT_AUTHORITIES)
         assert(!user.banned)
+        assert(user.groupMemberships.count() == 1 && user.groupMemberships.first() == "TestGroup")
+        assert(user.metadata.isEmpty())
     }
 
     @Test
@@ -217,7 +266,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun deleteUser() {
         userManagementController.deleteUserByUserName("TestUser")
-        assert(userRepository.findAll().count() == 0)
+        assert(userRepository.count() == 0L)
     }
 
     @Test
@@ -234,19 +283,23 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUser() {
         userManagementController.getUserByUserName("TestUser").let {
+            it.email = "an@other.com"
             it.authorities = setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN)
-            it.groupMemberships = emptySet()
-            it.permissions = mapOf("349898052345-345-435-345345-435/toto/titi" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
             it.banned = true
+            it.groupMemberships = emptySet()
+            it.metadata = mapOf("hans" to "wurst")
             userManagementController.updateUserByUserName("TestUser", it)
         }
-        userRepository.findById("TestUser").orElseThrow().apply {
-            assert(userName == "TestUser")
-            assert(authorities == setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN))
-            assert(userGroups.isEmpty())
-            assert(permissions.count() == 1)
-            assert(permissions["349898052345-345-435-345345-435/toto/titi"] == PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
-            assert(banned)
+
+        transaction {
+            userRepository.findByUserName("TestUser").orElseThrow().apply {
+                assert(userName == "TestUser")
+                assert(emailAddress.toString() == "an@other.com")
+                assert(authorities == setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN))
+                assert(banned)
+                assert(groupMemberships.isEmpty())
+                assert(permissions.isEmpty())
+            }
         }
     }
 
@@ -254,10 +307,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserAddNonExistingGroup() {
         userManagementController.getUserByUserName("TestUser").let {
-            it.authorities = setOf(Authority.HTTP_ACCESS, Authority.HTTP_ADMIN)
             it.groupMemberships = setOf("NonExistingGroup")
-            it.permissions = mapOf("349898052345-345-435-345345-435/toto/titi" to PrioritizedPermission(Permission.READ, PermissionPriority.HIGH))
-            it.banned = true
             assertThrows<CloudioHttpExceptions.NotFound> {
                 userManagementController.updateUserByUserName("TestUser", it)
             }
@@ -267,13 +317,18 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserAddExistingGroup() {
-        userRepository.findById("TestUser").orElseThrow().let {
-            it.userGroups = emptySet()
-            userRepository.save(it)
-        }
-        userManagementController.getUserByUserName("TestUser").let {
-            it.groupMemberships = setOf("TestGroup")
-            userManagementController.updateUserByUserName("TestUser", it)
+        transaction {
+            userRepository.findByUserName("TestUser").orElseThrow().let {
+                it.groupMemberships.clear()
+                userRepository.save(it)
+            }
+            userManagementController.getUserByUserName("TestUser").let {
+                it.groupMemberships = setOf("TestGroup")
+                userManagementController.updateUserByUserName("TestUser", it)
+            }
+            userRepository.findByUserName("TestUser").orElseThrow().apply {
+                assert(groupMemberships.count() == 1 && groupMemberships.first().groupName == "TestGroup")
+            }
         }
     }
 
@@ -281,15 +336,17 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyNonExistentUser() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.updateUserByUserName("ThisDoesNotExist", UserEntity("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
+            userManagementController.updateUserByUserName("ThisDoesNotExist",
+                    UserEntity("ThisDoesNotExist", "no@thing.com", emptySet(), false, emptySet(), emptyMap()))
         }
     }
 
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyUserWhereUserNamesDoNotMatch() {
-        assertThrows<CloudioHttpExceptions.Conflict> {
-            userManagementController.updateUserByUserName("TestUser", UserEntity("ThestUser", emptyMap(), emptySet(), emptySet(), false))
+        assertThrows<CloudioHttpExceptions.BadRequest> {
+            userManagementController.updateUserByUserName("TestUser",
+                    UserEntity("ThestUser", "no@thing.com", emptySet(), false, emptySet(), emptyMap()))
         }
     }
 
@@ -297,7 +354,8 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun modifyUserByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.updateUserByUserName("ThisDoesNotExist", UserEntity("ThisDoesNotExist", emptyMap(), emptySet(), emptySet(), false))
+            userManagementController.updateUserByUserName("ThisDoesNotExist",
+                    UserEntity("ThisDoesNotExist", "no@thing.com", emptySet(), false, emptySet(), emptyMap()))
         }
     }
 
@@ -307,7 +365,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun changeUsersPassword() {
         userManagementController.changeUserPassword("TestUser", "toto")
-        assert(passwordEncoder.matches("toto", userRepository.findByIdOrNull("TestUser")?.passwordHash))
+        assert(passwordEncoder.matches("toto", userRepository.findByUserName("TestUser").orElseThrow().password))
     }
 
     @Test
@@ -324,7 +382,7 @@ class UserManagementControllerTests {
         assertThrows<AccessDeniedException> {
             userManagementController.changeUserPassword("TestUser", "toto")
         }
-        assert(passwordEncoder.matches("TestUserPassword", userRepository.findByIdOrNull("TestUser")?.passwordHash))
+        assert(passwordEncoder.matches("TestUserPassword", userRepository.findByUserName("TestUser").orElseThrow().password))
     }
 
     // Get all users
@@ -348,7 +406,7 @@ class UserManagementControllerTests {
     // Random user name tests
 
     @Test
-    @WithMockUser(username ="root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
+    @WithMockUser(username = "root", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun randomCharacterUserTest() {
         val randomCharacters = TestUtil.generateRandomString(15)
 

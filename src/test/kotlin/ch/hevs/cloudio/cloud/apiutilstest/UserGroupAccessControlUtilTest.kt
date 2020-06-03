@@ -49,7 +49,7 @@ class UserGroupAccessControlUtilTest {
         userGroupName = TestUtil.generateRandomString(15)
         val userGroupTest = TestUtil.createUserGroup(userGroupName)
 
-        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
+        userManagement.createUser(PostUserEntity(name = userName, password = "test", email = "no@thing.com"))
         groupManagement.createGroupByGroupName(userGroupName)
         groupManagement.updateGroupByGroupName(userGroupName, userGroupTest)
     }

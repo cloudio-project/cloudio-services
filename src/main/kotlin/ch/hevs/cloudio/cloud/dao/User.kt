@@ -2,7 +2,6 @@ package ch.hevs.cloudio.cloud.dao
 
 import ch.hevs.cloudio.cloud.security.Authority
 import org.hibernate.annotations.Type
-import org.springframework.data.annotation.CreatedBy
 import javax.persistence.*
 
 @Entity
@@ -11,8 +10,7 @@ data class User(
         @Column(unique = true, nullable = false, updatable = false)
         val userName: String = "",
 
-        @Column(nullable = false)
-        val emailAddress: EmailAddress = EmailAddress(),
+        var emailAddress: EmailAddress = EmailAddress(),
 
         @Column(nullable = false)
         var password: String = "",
@@ -26,7 +24,7 @@ data class User(
         @Column(name = "banned", nullable = false)
         var banned: Boolean = false,
 
-        @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+        @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
         val groupMemberships: MutableSet<UserGroup> = mutableSetOf(),
 
         @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
@@ -35,7 +33,7 @@ data class User(
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
-        val metaData: MutableMap<String, Any> = mutableMapOf()
+        var metaData: MutableMap<String, Any> = mutableMapOf()
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

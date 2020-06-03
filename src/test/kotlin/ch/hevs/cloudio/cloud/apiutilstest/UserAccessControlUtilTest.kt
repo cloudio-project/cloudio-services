@@ -40,8 +40,8 @@ class UserAccessControlUtilTest {
         userName = TestUtil.generateRandomString(15)
         userName2 = TestUtil.generateRandomString(15)
 
-        userManagement.createUserByUserName(userName, PostUserEntity(password = "test"))
-        userManagement.createUserByUserName(userName2, PostUserEntity(password = "test"))
+        userManagement.createUser(PostUserEntity(name = userName, password = "test", email = "no@thing.com"))
+        userManagement.createUser(PostUserEntity(name = userName2, password = "test", email = "no@thing.com"))
     }
 
     @After

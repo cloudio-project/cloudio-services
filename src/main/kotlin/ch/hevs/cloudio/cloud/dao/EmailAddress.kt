@@ -6,7 +6,7 @@ import javax.persistence.Embeddable
 
 @Embeddable
 class EmailAddress(
-        @Column(name = "email_address", nullable = false, unique = true)
+        @Column(name = "email_address", nullable = false)
         val address: String = "") {
 
     fun isValid() = emailRegex.matcher(address).matches()
