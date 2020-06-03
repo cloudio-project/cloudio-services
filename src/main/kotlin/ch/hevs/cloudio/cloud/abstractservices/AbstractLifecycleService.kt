@@ -73,13 +73,14 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
                         type = ExchangeTypes.TOPIC,
                         ignoreDeclarationExceptions = "true"
                 ),
-                key = ["@nodeAdded.*.*"]
+                key = ["@nodeAdded.*.*","@nodeAdded.*.nodes.*"]
         )
     ])
     fun handleNodeAddedMessage(message: Message) {
         try {
-            val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
-            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
+            val splitTopic = message.messageProperties.receivedRoutingKey.split(".")
+            val endpointId = splitTopic[1]
+            val nodeName =  message.messageProperties.receivedRoutingKey.split(".")[splitTopic.lastIndex]
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
@@ -101,13 +102,14 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
                         value = "amq.topic",
                         type = ExchangeTypes.TOPIC,
                         ignoreDeclarationExceptions = "true"),
-                key = ["@nodeRemoved.*.*"]
+                key = ["@nodeRemoved.*.*","@nodeRemoved.*.nodes.*"]
         )
     ])
     fun handleNodeRemovedMessage(message: Message) {
         try {
-            val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
-            val nodeName = message.messageProperties.receivedRoutingKey.split(".")[2]
+            val splitTopic = message.messageProperties.receivedRoutingKey.split(".")
+            val endpointId = splitTopic[1]
+            val nodeName =  message.messageProperties.receivedRoutingKey.split(".")[splitTopic.lastIndex]
             nodeRemoved(endpointId, nodeName)
         } catch (exception: Exception) {
             log.error("Exception during @nodeAdded message handling:", exception)
