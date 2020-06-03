@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -17,7 +17,7 @@ import java.util.*
 
 @Service
 @Profile("set-version-mapper", "default")
-class SetVersionMapperService(val endpointEntityRepository: EndpointEntityRepository, val rabbitTemplate: RabbitTemplate) {
+class SetVersionMapperService(val endpointEntityRepository: EndpointRepository, val rabbitTemplate: RabbitTemplate) {
     private val log = LogFactory.getLog(SetVersionMapperService::class.java)
 
     @RabbitListener(bindings = [
@@ -37,10 +37,10 @@ class SetVersionMapperService(val endpointEntityRepository: EndpointEntityReposi
 
             val uuid = UUID.fromString(splitTopic[1])
 
-            val endpointEntity = endpointEntityRepository.findByIdOrNull(uuid)
+            val endpoint = endpointEntityRepository.findByIdOrNull(uuid)
 
-            if (endpointEntity != null) {
-                if (endpointEntity.endpoint.version == "v0.1" && splitTopic[2] != "node") {
+            if (endpoint != null) {
+                if (endpoint.dataModel.version == "v0.1" && splitTopic[2] != "node") {
                     var topic = ""
                     splitTopic.forEachIndexed { i, topicPart ->
                         topic += when (i) {
