@@ -1,19 +1,22 @@
 package ch.hevs.cloudio.cloud.restapi.account
 
+import ch.hevs.cloudio.cloud.dao.User
 import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import ch.hevs.cloudio.cloud.repo.authentication.User
+import ch.hevs.cloudio.cloud.security.EndpointPermission
+import java.util.*
 
 data class AccountEntity(
         var name: String,
-        var permissions: Map<String, PrioritizedPermission>,
-        var groupMemberships: Set<String>,
-        var authorities: Set<Authority>
+        var email: String,
+        var authorities: Set<Authority>,
+        var groupMemberships: List<String>,
+        var metadata: Map<String, Any>
 ) {
-    constructor(user: User): this(
+    constructor(user: User) : this(
             name = user.userName,
-            permissions = user.permissions,
-            groupMemberships = user.userGroups,
-            authorities = user.authorities
+            email = user.emailAddress.toString(),
+            authorities = user.authorities,
+            groupMemberships = user.groupMemberships.map { it.groupName },
+            metadata = user.metaData
     )
 }

@@ -44,7 +44,7 @@ class CloudioUserDetailsService(
                             Authority.BROKER_ACCESS, Authority.BROKER_MANAGEMENT_ADMINISTRATOR,
                             Authority.HTTP_ACCESS, Authority.HTTP_ADMIN),
                     metaData = mutableMapOf(
-                            "created-by" to "Bootstrap process"
+                            "createdBy" to "Bootstrap process"
                     )
             ))
         }

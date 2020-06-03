@@ -13,14 +13,14 @@ data class Endpoint(
 
         var blocked: Boolean = false,
 
-        var online: Boolean = false,
+        var online: Boolean = false, // TODO: Remove, this will be stored in InfluxDB
 
         @Embedded
         val configuration: EndpointConfiguration = EndpointConfiguration(),
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
-        val dataModel: ch.hevs.cloudio.cloud.model.Endpoint = Endpoint(),
+        val dataModel: Endpoint = Endpoint(),
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")

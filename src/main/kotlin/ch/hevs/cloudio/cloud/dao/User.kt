@@ -11,12 +11,13 @@ data class User(
         @Column(unique = true, nullable = false, updatable = false)
         val userName: String = "",
 
+        @Column(nullable = false)
         val emailAddress: EmailAddress = EmailAddress(),
 
         @Column(nullable = false)
         var password: String = "",
 
-        @ElementCollection(targetClass = Authority::class)
+        @ElementCollection(targetClass = Authority::class, fetch = FetchType.EAGER)
         @JoinTable(name = "cloudio_user_authority")
         @Column(name = "authority", nullable = false, length = 32)
         @Enumerated(EnumType.STRING)
@@ -25,7 +26,7 @@ data class User(
         @Column(name = "banned", nullable = false)
         var banned: Boolean = false,
 
-        @ManyToMany(fetch = FetchType.EAGER, cascade = [CascadeType.ALL])
+        @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
         val groupMemberships: MutableSet<UserGroup> = mutableSetOf(),
 
         @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
