@@ -80,7 +80,7 @@ tasks.bootRun {
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
             environment("spring.datasource.username", "cloudio")
             environment("spring.datasource.password", adminPassword ?: "admin")
-            environment("jpa.hibernate.ddl-auto" ,"create")
+            environment("jpa.hibernate.ddl-auto" ,"update")
         }
     }
 }

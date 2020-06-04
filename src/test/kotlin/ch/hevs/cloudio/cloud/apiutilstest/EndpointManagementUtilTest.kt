@@ -120,7 +120,7 @@ class EndpointManagementUtilTest {
         // TODO: This does not work, InfluxDB driver has no time to save data when blocking the thread.
 
         val endpointEntity = EndpointManagementUtil.getEndpoint(endpointEntityRepository, EndpointRequest(endpointParameters.endpointUuid.toString()))
-        endpointEntity!!.fillAttributesFromInfluxDB(influx, database)
+        endpointEntity!!.endpoint.fillAttributesFromInfluxDB(influx, database, endpointEntity!!.endpointUuid)
         //test if retrieved endpoint is the same
         //assert(endpointEntity.endpoint.nodes["demoNode"]!!.objects["demoObject"]!!.attributes["demoSetPoint"]!!.value == setAttribute.value)
 

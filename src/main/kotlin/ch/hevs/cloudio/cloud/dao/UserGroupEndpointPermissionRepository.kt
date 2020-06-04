@@ -8,8 +8,9 @@ import java.util.*
 interface UserGroupEndpointPermissionRepository : CrudRepository<UserGroupEndpointPermission, Long> {
     fun existsByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID): Boolean
 
-    fun findByUserGroupID(userGroupID: Long)
-    fun findByEndpointUUID(endpointUUID: UUID)
+    fun findByUserGroupID(userGroupID: Long): Collection<UserGroupEndpointPermission>
+    fun findByUserGroupIDIn(userGroupIDs: Collection<Long>): Collection<UserGroupEndpointPermission>
+    fun findByEndpointUUID(endpointUUID: UUID): Collection<UserGroupEndpointPermission>
     fun findByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID): Optional<UserGroupEndpointPermission>
 
     fun deleteByUserGroupIDAndEndpointUUID(userGroupID: Long, endpointUUID: UUID)

@@ -5,5 +5,6 @@ import java.util.*
 data class EndpointListEntity(
         val uuid: UUID,
         val friendlyName: String,
-        val blocked: Boolean
+        val blocked: Boolean,
+        val online: Boolean
 )

@@ -92,7 +92,7 @@ class CloudioPermissionManager(
         return resolveEndpointModelElementPermission(userDetails, modelID).fulfills(permission)
     }
 
-    private fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
+    fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
         var permission = EndpointPermission.DENY
 
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, endpointUUID).ifPresent {
@@ -110,7 +110,7 @@ class CloudioPermissionManager(
         return permission
     }
 
-    private fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
+    fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
         var permission = EndpointModelElementPermission.DENY
 
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, modelID.endpoint).ifPresent {

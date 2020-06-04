@@ -41,9 +41,9 @@ fun CloudioObject.findObject(path: Stack<String>): CloudioObject? = when {
     else -> null
 }
 
-fun EndpointEntity.fillAttributesFromInfluxDB(influx: InfluxDB, database: String) {
-    this.endpoint.nodes.forEach {
-        it.value.fillAttributesFromInfluxDB(influx, database, "${this.endpointUuid}/${it.key}")
+fun Endpoint.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, endpointUuid: UUID) {
+    this.nodes.forEach {
+        it.value.fillAttributesFromInfluxDB(influx, database, "${endpointUuid}/${it.key}")
     }
 }
 

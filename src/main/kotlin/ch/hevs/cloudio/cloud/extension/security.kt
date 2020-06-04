@@ -1,5 +1,7 @@
 package ch.hevs.cloudio.cloud.extension
 
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509CertificateHolder
@@ -7,6 +9,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
+import org.springframework.security.core.Authentication
 import java.io.OutputStream
 import java.io.StringReader
 import java.io.StringWriter
@@ -75,4 +78,8 @@ fun OutputStream.writeJKSTruststore(keyStorePassword: String, certificate: X509C
 fun String.Companion.generateRandomPassword(length: Int = 16): String {
     val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
     return List(length) { alphabet.random() }.joinToString("")
+}
+
+fun Authentication.userDetails(): CloudioUserDetails = Optional.ofNullable(this.principal as? CloudioUserDetails).orElseThrow {
+    CloudioHttpExceptions.InternalServerError("Unable to retrieve user details.")
 }
