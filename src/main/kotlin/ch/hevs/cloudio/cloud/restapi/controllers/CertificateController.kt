@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.*
 
 
-@RestController
-@RequestMapping("/api/v1")
+//@RestController
+//@RequestMapping("/api/v1")
 class CertificateController(
         private val certificateManagerProperties: CloudioCertificateManagerProperties,
         private val userGroupRepository: MONGOUserGroupRepository,

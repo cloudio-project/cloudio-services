@@ -24,7 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import java.security.Principal
 import java.util.*
 
-@RunWith(SpringRunner::class)
+/*@RunWith(SpringRunner::class)
 @SpringBootTest
 class EndpointManagementControllerTests {
     @Autowired
@@ -256,4 +256,4 @@ class EndpointManagementControllerTests {
         assert(endpoints.count() == 1)
         assert(endpoints.first().uuid == endpointUUIDs[9])
     }
-}
+}*/

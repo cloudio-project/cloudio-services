@@ -19,4 +19,4 @@ interface SerializationFormat {
     fun deserializeJobsLineOutput(jobsLineOutput: JobsLineOutput, data: ByteArray)
 }
 
-fun Collection<SerializationFormat>.detect(data: ByteArray) = this.firstOrNull() { it.detect(data) }
+fun Collection<SerializationFormat>.detect(data: ByteArray) = this.firstOrNull { it.detect(data) }

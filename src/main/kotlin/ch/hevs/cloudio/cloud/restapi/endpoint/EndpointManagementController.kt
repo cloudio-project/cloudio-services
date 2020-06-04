@@ -93,10 +93,7 @@ class EndpointManagementController(
     @ApiOperation("List all endpoints accessible to the current user.")
     @GetMapping("/endpoints")
     @ResponseStatus(HttpStatus.OK)
-    fun getAllAccessibleEndpoints(@ApiIgnore authentication: Authentication): Collection<UUID> = authentication.userDetails().let { user ->
-        userEndpointPermissionRepository.findByUserID(user.id).map { it.endpointUUID } +
-                userGroupEndpointPermissionRepository.findByUserGroupIDIn(user.groupMembershipIDs).map { it.endpointUUID }
-    }
+    fun getAllAccessibleEndpoints(@ApiIgnore authentication: Authentication): Collection<UUID> = permissionManager.resolvePermissions(authentication.userDetails()).map { it.endpointUUID }
 
     @ApiOperation("Create a new endpoint.")
     @Authority.HttpEndpointCreation

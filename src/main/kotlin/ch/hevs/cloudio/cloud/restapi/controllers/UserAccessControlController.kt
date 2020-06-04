@@ -10,8 +10,8 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSA
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
-@RestController
-@RequestMapping("/api/v1")
+//@RestController
+//@RequestMapping("/api/v1")
 class UserAccessControlController(var userRepository: MONGOUserRepository) {
 
     @RequestMapping("/getUserAccessRight", method = [RequestMethod.POST])

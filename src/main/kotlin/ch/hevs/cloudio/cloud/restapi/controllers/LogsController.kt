@@ -18,8 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
-@RestController
-@RequestMapping("/api/v1")
+//@RestController
+//@RequestMapping("/api/v1")
 class LogsController(val influx: InfluxDB, var userRepository: MONGOUserRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository, var userGroupRepository: MONGOUserGroupRepository, val influxProperties: CloudioInfluxProperties) {
 
     @Autowired

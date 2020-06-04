@@ -25,8 +25,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.*
 import java.util.concurrent.Executors
 
-@RestController
-@RequestMapping("/api/v1")
+//@RestController
+//@RequestMapping("/api/v1")
 class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository) {
 
     @Autowired

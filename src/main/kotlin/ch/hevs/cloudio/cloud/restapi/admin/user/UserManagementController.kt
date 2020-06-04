@@ -8,11 +8,10 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.hibernate.Hibernate
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
-import javax.transaction.Transactional
 
 @Api(tags = ["User Management"], description = "Allows an admin user to manage users.")
 @RestController
@@ -26,7 +25,14 @@ class UserManagementController(
     @ApiOperation("List all users.")
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
-    fun getAllUsers() = userRepository.findAll().map { it.userName }
+    fun getAllUsers() = userRepository.findAll().map {
+        ListUserEntity(
+                name = it.userName,
+                email = it.emailAddress.toString(),
+                authorities = it.authorities,
+                banned = it.banned
+        )
+    }
 
     @ApiOperation("Create a new user.")
     @PostMapping("/users")
@@ -58,11 +64,10 @@ class UserManagementController(
     @ApiOperation("Get user information.")
     @GetMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.OK)
-    @Transactional
+    @Transactional(readOnly = true)
     fun getUserByUserName(@PathVariable userName: String) = userRepository.findByUserName(userName).orElseThrow {
         CloudioHttpExceptions.NotFound("User '$userName' not found.")
     }.run {
-        Hibernate.initialize(groupMemberships)
         UserEntity(
                 name = userName,
                 email = emailAddress.toString(),
@@ -84,7 +89,6 @@ class UserManagementController(
         userRepository.findByUserName(userName).orElseThrow {
             CloudioHttpExceptions.NotFound("User '$userName' not found.")
         }.run {
-            Hibernate.initialize(groupMemberships)
             emailAddress = EmailAddress(body.email).apply {
                 if (!isValid()) {
                     throw CloudioHttpExceptions.BadRequest("Invalid Email address '${body.email}'.")
@@ -128,6 +132,4 @@ class UserManagementController(
         }
         userRepository.deleteByUserName(userName)
     }
-
-
 }

@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud.dao
 
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
+import ch.hevs.cloudio.cloud.security.AbstractEndpointPermission
 import java.util.*
 import javax.persistence.*
 
@@ -14,19 +15,19 @@ data class UserEndpointPermission(
         val userID: Long = 0,
 
         @Column(name = "endpoint_uuid", nullable = false)
-        val endpointUUID: UUID = UUID(0, 0),
+        override val endpointUUID: UUID = UUID(0, 0),
 
         @Enumerated(EnumType.STRING)
         @Column(length = 32)
-        var permission: EndpointPermission = EndpointPermission.DEFAULT,
+        override var permission: EndpointPermission = EndpointPermission.DEFAULT,
 
         @ElementCollection(fetch = FetchType.LAZY)
         @JoinTable(name = "cloudio_user_endpoint_model_element_permission")
         @Column(name = "permission", nullable = false, length = 32)
         @MapKeyColumn(name="model_path")
         @Enumerated(EnumType.STRING)
-        val modelPermissions: MutableMap<String, EndpointModelElementPermission> = mutableMapOf()
-) {
+        override val modelPermissions: MutableMap<String, EndpointModelElementPermission> = mutableMapOf()
+) : AbstractEndpointPermission() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0

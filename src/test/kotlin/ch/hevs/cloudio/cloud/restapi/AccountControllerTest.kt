@@ -3,6 +3,8 @@ package ch.hevs.cloudio.cloud.restapi
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.restapi.account.AccountController
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioUserDetails
+import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import org.junit.Before
 import org.junit.Test
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.authentication.TestingAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
@@ -30,6 +34,9 @@ class AccountControllerTest {
 
     @Autowired
     private lateinit var endpointRepository: EndpointRepository
+
+    @Autowired
+    lateinit var userDetailsService: CloudioUserDetailsService
 
     private var endpointUUID = UUID(0, 0)
 
@@ -55,7 +62,10 @@ class AccountControllerTest {
     @Test
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun getAccount() {
-        val account = accountController.getMyAccount(Principal { "TestUser" })
+        val userDetails = userDetailsService.loadUserByUsername("TestUser") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        val account = accountController.getMyAccount(authentication)
 
         assert(account.name == "TestUser")
         assert(account.groupMemberships.isEmpty())
@@ -63,17 +73,28 @@ class AccountControllerTest {
     }
 
     @Test
-    @WithMockUser("TestUser2", authorities = ["HTTP_ACCESS"])
+    @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun getAccountOfNonExistingUser() {
+        val authentication = TestingAuthenticationToken(CloudioUserDetails(id = 2000,
+                username = "TestUser2",
+                password = "",
+                authorities = listOf(SimpleGrantedAuthority(Authority.HTTP_ACCESS.toString())),
+                banned = false,
+                groupMembershipIDs = emptyList()
+        ), null)
+
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.getMyAccount(Principal { "TestUser2" })
+            accountController.getMyAccount(authentication)
         }
     }
 
     @Test
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun changePassword() {
-        accountController.changeMyPassword("MyNewPassword123777", Principal { "TestUser" })
+        val userDetails = userDetailsService.loadUserByUsername("TestUser") as CloudioUserDetails
+        val authentication = TestingAuthenticationToken(userDetails, null)
+
+        accountController.changeMyPassword("MyNewPassword123777", authentication)
 
         val user = userRepository.findByUserName("TestUser").orElse(null)
 
@@ -84,8 +105,16 @@ class AccountControllerTest {
     @Test
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun changePasswordOfNonExistingUser() {
+        val authentication = TestingAuthenticationToken(CloudioUserDetails(id = 2000,
+                username = "TestUser2",
+                password = "",
+                authorities = listOf(SimpleGrantedAuthority(Authority.HTTP_ACCESS.toString())),
+                banned = false,
+                groupMembershipIDs = emptyList()
+        ), null)
+
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.changeMyPassword("MyNewPassword123777", Principal { "TestUser2" })
+            accountController.changeMyPassword("MyNewPassword123777", authentication)
         }
     }
 }

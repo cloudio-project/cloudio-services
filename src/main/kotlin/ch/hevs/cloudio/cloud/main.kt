@@ -35,6 +35,8 @@ import springfox.documentation.spring.web.plugins.Docket
 import springfox.documentation.swagger2.annotations.EnableSwagger2
 import java.util.*
 
+// admin - caGpGSNzqeEp7bL3
+
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)

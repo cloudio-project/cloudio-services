@@ -393,7 +393,7 @@ class UserManagementControllerTests {
     fun getAllUsers() {
         val users = userManagementController.getAllUsers()
         assert(users.count() == 1)
-        assert(users.first() == "TestUser")
+        assert(users.first().let { it.name == "TestUser" && it.email == "no@thing.com" && it.authorities == Authority.DEFAULT_AUTHORITIES && !it.banned })
     }
 
     @Test

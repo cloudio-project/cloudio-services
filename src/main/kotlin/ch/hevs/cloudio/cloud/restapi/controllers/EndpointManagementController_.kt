@@ -26,8 +26,8 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 
-@RestController
-@RequestMapping("/api/v1")
+//@RestController
+//@RequestMapping("/api/v1")
 class EndpointManagementController_(var connectionFactory: ConnectionFactory, var influx: InfluxDB, var userGroupRepository: MONGOUserGroupRepository, var userRepository: MONGOUserRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
 
     @Autowired

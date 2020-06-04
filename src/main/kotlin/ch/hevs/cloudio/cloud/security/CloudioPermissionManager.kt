@@ -131,4 +131,28 @@ class CloudioPermissionManager(
 
         return permission
     }
+
+    fun resolvePermissions(userDetails: CloudioUserDetails): Collection<AbstractEndpointPermission> {
+        // First get all endpoint permission the user itself has.
+        val permissions: MutableList<AbstractEndpointPermission> = userEndpointPermissionRepository.findByUserID(userDetails.id).toMutableList()
+
+        // Add all permissions that are higher as the user's permissions from it's group memberships.
+        userGroupEndpointPermissionRepository.findByUserGroupIDIn(userDetails.groupMembershipIDs).forEach { groupPermission ->
+            val existingPermission = permissions.find { it.endpointUUID == groupPermission.endpointUUID }
+            if (existingPermission != null) {
+                existingPermission.permission = existingPermission.permission.higher(groupPermission.permission)
+                if (existingPermission.permission.fulfills(EndpointPermission.WRITE)) {
+                    existingPermission.modelPermissions.clear()
+                } else {
+                    groupPermission.modelPermissions.forEach { (key, permission) ->
+                        existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key] ?: EndpointModelElementPermission.DENY).higher(permission)
+                    }
+                }
+            } else {
+                permissions.add(groupPermission)
+            }
+        }
+
+        return permissions
+    }
 }
