@@ -107,16 +107,6 @@ class UserRepositoryTests {
     }
 
     @Test
-    fun addUserWithExistingEmailAddress() {
-        assertThrows<DataIntegrityViolationException> {
-            userRepository.save(User(
-                    userName = "TestUser2",
-                    emailAddress = EmailAddress("test.user@null.com")
-            ))
-        }
-    }
-
-    @Test
     fun modifyUser() {
         transaction {
             val user = userRepository.findByUserName("TestUser").orElseThrow()

@@ -24,7 +24,7 @@ data class User(
         @Column(name = "banned", nullable = false)
         var banned: Boolean = false,
 
-        @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
+        @ManyToMany(fetch = FetchType.LAZY, cascade = [])
         val groupMemberships: MutableSet<UserGroup> = mutableSetOf(),
 
         @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)

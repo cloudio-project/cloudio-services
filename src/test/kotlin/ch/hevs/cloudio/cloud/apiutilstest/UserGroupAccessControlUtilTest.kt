@@ -6,9 +6,10 @@ import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
-import ch.hevs.cloudio.cloud.restapi.admin.group.GroupManagementController
+import ch.hevs.cloudio.cloud.restapi.admin.usergroup.UserGroupManagementController
 import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
+import ch.hevs.cloudio.cloud.restapi.admin.usergroup.PostUserGroupEntity
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -33,7 +34,7 @@ class UserGroupAccessControlUtilTest {
     private lateinit var userManagement: UserManagementController
 
     @Autowired
-    private lateinit var groupManagement: GroupManagementController
+    private lateinit var userGroupManagement: UserGroupManagementController
 
     //randomChar to retrieve non possible data
     private val randomCharacters: String = TestUtil.generateRandomString(15)
@@ -50,8 +51,8 @@ class UserGroupAccessControlUtilTest {
         val userGroupTest = TestUtil.createUserGroup(userGroupName)
 
         userManagement.createUser(PostUserEntity(name = userName, password = "test", email = "no@thing.com"))
-        groupManagement.createGroupByGroupName(userGroupName)
-        groupManagement.updateGroupByGroupName(userGroupName, userGroupTest)
+        userGroupManagement.createGroup(PostUserGroupEntity(userGroupName))
+        userGroupManagement.updateGroupByGroupName(userGroupName, userGroupTest)
     }
 
     @After
@@ -59,7 +60,7 @@ class UserGroupAccessControlUtilTest {
         try {
             //remove user and user group
             userManagement.deleteUserByUserName(userName)
-            groupManagement.deleteGroupByGroupName(userGroupName)
+            userGroupManagement.deleteGroupByGroupName(userGroupName)
         } catch (e: Exception) {
         }
     }

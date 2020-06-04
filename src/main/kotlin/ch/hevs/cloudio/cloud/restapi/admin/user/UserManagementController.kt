@@ -30,8 +30,8 @@ class UserManagementController(
 
     @ApiOperation("Create a new user.")
     @PostMapping("/users")
-    @Transactional
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
     fun createUser(@RequestBody body: PostUserEntity) {
         if (userRepository.existsByUserName(body.name)) {
             throw CloudioHttpExceptions.Conflict("User '${body.name}' exists.")
@@ -117,7 +117,6 @@ class UserManagementController(
             userRepository.save(it)
         }
     }
-
 
     @ApiOperation("Delete user.")
     @DeleteMapping("/users/{userName}")

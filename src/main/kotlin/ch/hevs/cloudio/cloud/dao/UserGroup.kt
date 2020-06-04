@@ -15,7 +15,7 @@ data class UserGroup(
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
-        val metaData: MutableMap<String, Any> = mutableMapOf()
+        var metaData: MutableMap<String, Any> = mutableMapOf()
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

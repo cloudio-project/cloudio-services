@@ -44,14 +44,15 @@ class UserManagementControllerTests {
         transactionTemplate = TransactionTemplate(transactionManager)
         userRepository.deleteAll()
         groupRepository.deleteAll()
+        val testGroup = groupRepository.save(UserGroup(
+                groupName = "TestGroup"
+        ))
         userRepository.save(User(
                 userName = "TestUser",
                 emailAddress = EmailAddress("no@thing.com"),
                 password = passwordEncoder.encode("TestUserPassword"),
                 authorities = Authority.DEFAULT_AUTHORITIES.toMutableSet(),
-                groupMemberships = mutableSetOf(UserGroup(
-                        groupName = "TestGroup"
-                )),
+                groupMemberships = mutableSetOf(testGroup),
                 permissions = mutableSetOf(),
                 banned = false
         ))
