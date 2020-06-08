@@ -5,7 +5,7 @@ import java.util.*
 
 class ModelIdentifier(uri: String) : Serializable {
     val valid: Boolean
-    val action: ActionIdentifier
+    var action: ActionIdentifier
     val endpoint: UUID
     private val modelPath: List<String>
 
@@ -41,7 +41,9 @@ class ModelIdentifier(uri: String) : Serializable {
 
     fun modelPath(separator: Char = '/') = modelPath.joinToString("$separator")
 
-    fun influxMeasurementName() = "$endpoint.${ modelPath('.')}"
+    fun toAmqpTopic() = "$action.$endpoint.${modelPath('.')}"
+
+    fun toInfluxSeriesName() = "$endpoint.${ modelPath('.')}"
 
     fun resolve(endpoint: Endpoint): Optional<Any> = Optional.ofNullable(when(count()) {
         0 -> endpoint

@@ -13,7 +13,6 @@ import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.apache.juli.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -25,7 +24,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.transaction.Transactional
 
-@Api(tags = ["Endpoint Access"], description = "Allows an user to access and manage endpoints and their actual data.")
+@Api(tags = ["Endpoint Access"], description = "Allows an user to manage endpoints.")
 @RestController
 @RequestMapping("/api/v1")
 class EndpointManagementController(
@@ -36,60 +35,6 @@ class EndpointManagementController(
         private val influxDB: InfluxDB,
         private val influxProperties: CloudioInfluxProperties
 ) {
-    private val log = LogFactory.getLog(EndpointManagementController::class.java)
-    private val antMatcher = AntPathMatcher()
-
-    @GetMapping("/model/**")
-    @ResponseStatus(HttpStatus.OK)
-    fun getModelElement(authentication: Authentication, request: HttpServletRequest): Any {
-
-        // Extract model identifier and check it for validity.
-        val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/model/**", request.requestURI))
-        if (!modelIdentifier.valid || modelIdentifier.action != ActionIdentifier.NONE) {
-            throw CloudioHttpExceptions.BadRequest("Invalid model identifier.")
-        }
-
-        // Check if the endpoint exists.
-        if (!endpointRepository.existsById(modelIdentifier.endpoint)) {
-            throw CloudioHttpExceptions.NotFound("Endpoint not found.")
-        }
-
-        // Resolve the access level the user has to the endpoint and fail if the user has no access to the endpoint.
-        val endpointPermission = permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
-        if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
-        }
-
-        // Retrieve endpoint from repository.
-        val endpoint = endpointRepository.findById(modelIdentifier.endpoint).orElseThrow{
-            CloudioHttpExceptions.NotFound("Endpoint not found.")
-        }
-
-        // If the model path is empty, we return the whole data model of the endpoint.
-        val data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
-            CloudioHttpExceptions.NotFound("Model element not found.")
-        }
-
-        // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        if (!endpointPermission.fulfills(EndpointPermission.BROWSE)) {
-            // TODO: Filter endpoint data based on model element permissions.
-        }
-
-        // Fill data from influxDB.
-        when(data) {
-            is ch.hevs.cloudio.cloud.model.Endpoint -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
-            is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.influxMeasurementName())
-            is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.influxMeasurementName())
-            is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.influxMeasurementName())
-        }
-
-        return data
-    }
-
-
-
-
-
     @ApiOperation("List all endpoints accessible to the current user.")
     @GetMapping("/endpoints")
     @ResponseStatus(HttpStatus.OK)
