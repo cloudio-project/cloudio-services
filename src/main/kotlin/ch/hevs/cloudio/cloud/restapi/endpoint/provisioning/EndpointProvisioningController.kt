@@ -122,6 +122,10 @@ class EndpointProvisioningController(
                                 clientPrivateKey = configuration.privateKey
                         ))
                 EndpointProvisioningDataFormat.JAR_ARCHIVE -> {
+                    if (configuration.privateKey.isEmpty()) {
+                        CloudioHttpExceptions.BadRequest("Endpoint has no private key.")
+                    }
+
                     val password = String.generateRandomPassword()
                     val output = ByteArrayOutputStream()
                     val zip = ZipOutputStream(output)
