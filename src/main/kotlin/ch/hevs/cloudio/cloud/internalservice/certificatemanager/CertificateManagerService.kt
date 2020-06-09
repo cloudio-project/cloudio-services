@@ -82,7 +82,7 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             val (certificate, keyPair) = createAndSignEndpointCertificate(request.endpointUUID!!)
 
             // Return certificate and private key.
-            return GenerateEndpointKeyAndCertificateResponse(request.endpointUUID, certificate.toPEMString(), privateKey.toPEMString())
+            return GenerateEndpointKeyAndCertificateResponse(request.endpointUUID, certificate.toPEMString(), keyPair.private.toPEMString())
         } catch (exception: Exception) {
             log.error("Exception during CertificateManagerService::generateEndpointKeyAndCertificate", exception)
         }
