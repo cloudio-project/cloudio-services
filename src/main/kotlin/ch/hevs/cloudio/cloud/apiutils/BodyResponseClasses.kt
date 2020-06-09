@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission

@@ -2,15 +2,19 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.extension.findAttribute
 import ch.hevs.cloudio.cloud.extension.findObject
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.CloudioObject
+import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.serialization.CBORSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
-import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
+import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -116,10 +120,22 @@ object EndpointManagementUtil {
         else {
             //send message to amq.topic queue
 
-            // TODO: Detect actual serialization format from endpoint data model.
+            val endpointUUID = attributeSetRequest.attributeTopic.split("/")[0]
+            val endpoint = endpointEntityRepository.findById(UUID.fromString(endpointUUID)).get()
+            val serializedAttribute =
+                if(endpoint.endpoint.supportedFormats.contains("JSON")){
+                    println("JSON")
+                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
+                }else if(endpoint.endpoint.supportedFormats.contains("CBOR")){
+                    println("CBOR")
+                    CBORSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
+                }else{
+                    println("DEFAULT")
+                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
+                }
             rabbitTemplate.convertAndSend("amq.topic",
                     "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
-                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute))
+                    serializedAttribute)
         }
     }
 

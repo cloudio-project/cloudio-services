@@ -1,15 +1,16 @@
 package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
-import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.detect
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.DeliverCallback
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
-import java.nio.charset.Charset
 
-abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: String) {
+abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: String,
+                                  serializationFormats: Collection<SerializationFormat>) {
 
     companion object {
         private val log = LogFactory.getLog(ExecOutputNotifier::class.java)
@@ -27,13 +28,11 @@ abstract class ExecOutputNotifier(connectionFactory: ConnectionFactory, topic: S
 
         //create a callback or the queue
         val deliverCallback = DeliverCallback { _, delivery ->
-            val message = String(delivery.body, Charset.defaultCharset())
 
-            // TODO: Detect actual serialization format from data.
-            val messageFormat = JSONSerializationFormat()
-            if (messageFormat.detect(message.toByteArray())) {
+            val messageFormat = serializationFormats.detect(delivery.body)
+            if (messageFormat != null) {
                 val jobsLineOutput = JobsLineOutput()
-                messageFormat.deserializeJobsLineOutput(jobsLineOutput, message.toByteArray())
+                messageFormat.deserializeJobsLineOutput(jobsLineOutput, delivery.body)
                 notifyExecOutput(jobsLineOutput)
             } else {
                 log.error("Unrecognized message format in $topic message")

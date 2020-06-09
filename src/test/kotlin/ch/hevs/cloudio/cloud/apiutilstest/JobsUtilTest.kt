@@ -69,7 +69,7 @@ class JobsUtilTest {
             }
         }
 
-        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository)
         while (!messageReceived) {
             Thread.sleep(100)
             if (System.currentTimeMillis() - startMilli > 5000)

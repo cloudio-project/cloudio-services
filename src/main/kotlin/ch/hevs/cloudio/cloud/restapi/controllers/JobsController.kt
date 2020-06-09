@@ -10,6 +10,7 @@ import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
@@ -27,7 +28,10 @@ import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: UserRepository, var userGroupRepository: UserGroupRepository, var endpointEntityRepository: EndpointEntityRepository) {
+class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: UserRepository,
+                     var userGroupRepository: UserGroupRepository,
+                     var endpointEntityRepository: EndpointEntityRepository,
+                     var serializationFormats: Collection<SerializationFormat>) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -49,7 +53,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             if (!jobExecuteRequest.getOutput) {
-                JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+                JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository)
                 throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } else {
 
@@ -58,14 +62,14 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
                 executor.execute {
                     try {
                         //create a listener for the correct execOutput topic
-                        val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid) {
+                        val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid, serializationFormats) {
                             override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
                                 if (jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
                                 //send the output as a Sse event
                                     emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                             }
                         }
-                        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+                        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository)
                         Thread.sleep(jobExecuteRequest.timeout)
                         emitter.complete()
                         execOutputNotifier.deleteQueue()

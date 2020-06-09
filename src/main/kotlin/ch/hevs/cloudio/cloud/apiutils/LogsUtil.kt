@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.serialization.CBORSerializationFormat
 import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
@@ -44,12 +45,21 @@ object LogsUtil {
 
     }
 
-    fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest) {
+    fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest, endpointEntityRepository: EndpointEntityRepository) {
         val logParameter = LogParameter(logsSetRequest.level.toString())
 
-        // TODO: Detect actual serialization format from endpoint data model.
+        val endpointUUID = logsSetRequest.endpointUuid
+        val endpoint = endpointEntityRepository.findById(UUID.fromString(endpointUUID)).get()
+        val serializedLogParameter =
+                if(endpoint.endpoint.supportedFormats.contains("JSON")){
+                    JSONSerializationFormat().serializeLogParameter(logParameter)
+                }else if(endpoint.endpoint.supportedFormats.contains("CBOR")){
+                    CBORSerializationFormat().serializeLogParameter(logParameter)
+                }else{//default
+                    JSONSerializationFormat().serializeLogParameter(logParameter)
+                }
         rabbitTemplate.convertAndSend("amq.topic",
-                "@logsLevel." + logsSetRequest.endpointUuid, JSONSerializationFormat().serializeLogParameter(logParameter))
+                "@logsLevel." + logsSetRequest.endpointUuid, serializedLogParameter)
 
     }
 

@@ -112,7 +112,7 @@ class LogsUtilTest {
 
     @Test
     fun setLogsLevel() {
-        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid.toString(), LogLevel.FATAL))
+        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid.toString(), LogLevel.FATAL), endpointEntityRepository)
         Thread.sleep(100) //wait for the mqtt message to be send
         val level = LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid.toString()))
         assert(level!!.level == LogLevel.FATAL)

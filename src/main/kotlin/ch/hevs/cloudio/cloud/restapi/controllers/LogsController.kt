@@ -131,7 +131,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
             if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsSetRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-            LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest)
+            LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest, endpointEntityRepository)
             throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } else {
             if (endpointGeneralPermission == null)
