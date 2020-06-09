@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.endpoint
+package ch.hevs.cloudio.cloud.restapi.endpoint.data
 
 import ch.hevs.cloudio.cloud.apiutils.CloudioApiException
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
@@ -25,18 +25,18 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@Api(tags = ["Data Model Access"], description = "Allows an user to access data models of his endpoints.")
+@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of his endpoints.")
 @RestController
-@RequestMapping("/api/v1/access")
-class EndpointAccessController(private val endpointRepository: EndpointRepository,
-                               private val permissionManager: CloudioPermissionManager,
-                               private val influxDB: InfluxDB,
-                               private val influxProperties: CloudioInfluxProperties,
-                               private val serializationFormats: Collection<SerializationFormat>,
-                               private val rabbitTemplate: RabbitTemplate) {
+@RequestMapping("/api/v1/data")
+class EndpointDataAccessController(private val endpointRepository: EndpointRepository,
+                                   private val permissionManager: CloudioPermissionManager,
+                                   private val influxDB: InfluxDB,
+                                   private val influxProperties: CloudioInfluxProperties,
+                                   private val serializationFormats: Collection<SerializationFormat>,
+                                   private val rabbitTemplate: RabbitTemplate) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to the endpoint's data model.")
+    @ApiOperation("Read access to all endpoint's data model.")
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
@@ -44,7 +44,7 @@ class EndpointAccessController(private val endpointRepository: EndpointRepositor
             @ApiIgnore request: HttpServletRequest): Any {
 
         // Extract model identifier and check it for validity.
-        val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/access/**", request.requestURI))
+        val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
         if (!modelIdentifier.valid || modelIdentifier.action != ActionIdentifier.NONE) {
             throw CloudioHttpExceptions.BadRequest("Invalid model identifier.")
         }
@@ -83,19 +83,20 @@ class EndpointAccessController(private val endpointRepository: EndpointRepositor
             is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
         }
 
+        // TODO: We should create an entity class to return.
         return data
     }
 
-    @ApiOperation("Write access to the endpoint's data model.")
+    @ApiOperation("Write access to all endpoint's data model.")
     @PutMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putAttribute(
-            @RequestParam @ApiParam() value: String,
+            @RequestParam @ApiParam("Value to set.") value: String,
             @ApiIgnore authentication: Authentication,
             @ApiIgnore request: HttpServletRequest) {
 
         // Extract model identifier and check it for validity.
-        val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/access/**", request.requestURI))
+        val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
 
         if (!modelIdentifier.valid || modelIdentifier.action != ActionIdentifier.NONE) {
             throw CloudioHttpExceptions.BadRequest("Invalid model identifier.")

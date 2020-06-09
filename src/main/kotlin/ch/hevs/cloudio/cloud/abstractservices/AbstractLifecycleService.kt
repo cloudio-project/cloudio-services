@@ -35,7 +35,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val endpoint = Endpoint()
+                val endpoint = Endpoint(version = "v0.1")
                 messageFormat.deserializeEndpoint(endpoint, data)
                 endpointIsOnline(endpointId, endpoint)
             } else {

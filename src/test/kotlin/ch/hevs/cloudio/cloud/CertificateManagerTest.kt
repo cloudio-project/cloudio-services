@@ -4,7 +4,6 @@ import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointConfigurationArchiveRequest
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter

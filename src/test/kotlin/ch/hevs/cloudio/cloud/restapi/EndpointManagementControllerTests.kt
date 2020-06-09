@@ -1,29 +1,5 @@
 package ch.hevs.cloudio.cloud.restapi
 
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
-import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.User
-import ch.hevs.cloudio.cloud.repo.authentication.UserGroup
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
-import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
-import ch.hevs.cloudio.cloud.restapi.endpoint.EndpointManagementController
-import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.security.PermissionPriority
-import ch.hevs.cloudio.cloud.security.PrioritizedPermission
-import org.junit.Before
-import org.junit.Test
-import org.junit.jupiter.api.assertThrows
-import org.junit.runner.RunWith
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.test.context.junit4.SpringRunner
-import java.security.Principal
-import java.util.*
-
 /*@RunWith(SpringRunner::class)
 @SpringBootTest
 class EndpointManagementControllerTests {

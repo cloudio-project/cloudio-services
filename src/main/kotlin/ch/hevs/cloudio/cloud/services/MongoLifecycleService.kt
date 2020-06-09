@@ -4,7 +4,6 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.model.Endpoint
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
-import ch.hevs.cloudio.cloud.restapi.controllers.CertificateController
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
@@ -20,7 +19,7 @@ class MongoLifecycleService(
 ) : AbstractLifecycleService(serializationFormats) {
 
     companion object {
-        private val log = LogFactory.getLog(CertificateController::class.java)
+        private val log = LogFactory.getLog(MongoLifecycleService::class.java)
     }
 
     override fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {

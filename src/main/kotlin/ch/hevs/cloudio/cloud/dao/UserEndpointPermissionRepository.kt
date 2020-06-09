@@ -12,5 +12,6 @@ interface UserEndpointPermissionRepository : CrudRepository<UserEndpointPermissi
     fun findByEndpointUUID(endpointUUID: UUID): Collection<UserEndpointPermission>
     fun findByUserIDAndEndpointUUID(userID: Long, endpointUUID: UUID): Optional<UserEndpointPermission>
 
+    fun deleteByEndpointUUID(endpointUUID: UUID)
     fun deleteByUserIDAndEndpointUUID(userID: Long, endpointUUID: UUID)
 }

@@ -123,7 +123,7 @@ class CloudioApplication {
 
         override fun configure(http: HttpSecurity) {
             http.csrf().disable()
-                    .authorizeRequests().antMatchers("/v2/api-docs").permitAll()
+                    .authorizeRequests().antMatchers("/v2/api-docs", "/api/v1/provision/*").permitAll()
                     .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
                     .and().sessionManagement().disable()
