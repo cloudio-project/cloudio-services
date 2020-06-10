@@ -2,7 +2,6 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
-import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
@@ -22,7 +21,7 @@ class MongoLogsService(
     override fun logLevelChange(endpointUuid: String, logParameter: LogParameter) {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointUuid))
         if (endpointEntity != null) {
-            endpointEntity.logLevel = LogLevel.valueOf(logParameter.level)
+            endpointEntity.logLevel = logParameter.level
             endpointEntityRepository.save(endpointEntity)
         }
     }
