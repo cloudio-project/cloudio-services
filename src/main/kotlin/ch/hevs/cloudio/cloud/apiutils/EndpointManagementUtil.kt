@@ -10,9 +10,10 @@ import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.serialization.CBORSerializationFormat
-import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -103,7 +104,8 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest) {
+    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository,
+                     attributeSetRequest: AttributeSetRequest, serializationFormats: Collection<SerializationFormat>) {
         val attribute: Attribute?
 
         try {
@@ -122,20 +124,14 @@ object EndpointManagementUtil {
 
             val endpointUUID = attributeSetRequest.attributeTopic.split("/")[0]
             val endpoint = endpointEntityRepository.findById(UUID.fromString(endpointUUID)).get()
-            val serializedAttribute =
-                if(endpoint.endpoint.supportedFormats.contains("JSON")){
-                    println("JSON")
-                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
-                }else if(endpoint.endpoint.supportedFormats.contains("CBOR")){
-                    println("CBOR")
-                    CBORSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
-                }else{
-                    println("DEFAULT")
-                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute)
-                }
+
+
+            val serializationFormat = serializationFormats.fromIdentifiers(endpoint.endpoint.supportedFormats)
+                    ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+
             rabbitTemplate.convertAndSend("amq.topic",
                     "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
-                    serializedAttribute)
+                    serializationFormat.serializeAttribute(attributeSetRequest.attribute))
         }
     }
 

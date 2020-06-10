@@ -4,12 +4,12 @@ import ch.hevs.cloudio.cloud.apiutils.ExecOutputNotifier
 import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
-import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
@@ -53,7 +53,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             if (!jobExecuteRequest.getOutput) {
-                JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository)
+                JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository, serializationFormats)
                 throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } else {
 
@@ -69,7 +69,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
                                     emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                             }
                         }
-                        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository)
+                        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository, serializationFormats)
                         Thread.sleep(jobExecuteRequest.timeout)
                         emitter.complete()
                         execOutputNotifier.deleteQueue()

@@ -231,7 +231,7 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         else {
             try {
-                EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
+                EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest, serializationFormats)
                 throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
                 throw CloudioHttpExceptions.BadRequest("Couldn't set attribute: " + e.message)
