@@ -21,4 +21,6 @@ interface SerializationFormat {
 
 fun Collection<SerializationFormat>.detect(data: ByteArray) = this.firstOrNull { it.detect(data) }
 
-fun Collection<SerializationFormat>.fromIdentifiers(identifiers: Collection<String>) = this.firstOrNull { identifiers.contains(it.identifier()) }
+fun Collection<SerializationFormat>.fromIdentifiers(identifiers: Collection<String>) = this.firstOrNull {
+    (if (identifiers.isEmpty()) listOf("JSON") else identifiers).contains(it.identifier())
+}
