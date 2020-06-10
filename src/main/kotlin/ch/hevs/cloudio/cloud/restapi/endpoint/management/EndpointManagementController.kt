@@ -7,9 +7,12 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -28,7 +31,9 @@ class EndpointManagementController(
         private val endpointRepository: EndpointRepository,
         private val permissionManager: CloudioPermissionManager,
         private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-        private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
+        private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
+        private val serializationFormats: Collection<SerializationFormat>,
+        private val rabbitTemplate: RabbitTemplate
 ) {
     @GetMapping("", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
@@ -321,7 +326,6 @@ class EndpointManagementController(
 
     @PutMapping("/{uuid}/configuration/logLevel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Transactional
 
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
 
@@ -330,7 +334,14 @@ class EndpointManagementController(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
             @RequestParam @ApiParam("Log level.", required = true) logLevel: LogLevel
     ) {
-        // TODO: Set log level via AMQP.
+        val endpoint = endpointRepository.findById(uuid).orElseThrow {
+            CloudioHttpExceptions.NotFound("Endpoint not found.")
+        }
+
+        // Serialize and send the message.
+        val serializationFormat = serializationFormats.fromIdentifiers(endpoint.dataModel.supportedFormats)
+                ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+        rabbitTemplate.convertAndSend("amq.topic", "@logsLevel.$uuid", serializationFormat.serializeLogLevel(logLevel))
     }
 
 

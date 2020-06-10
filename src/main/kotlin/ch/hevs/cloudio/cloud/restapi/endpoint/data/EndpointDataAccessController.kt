@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of his endpoints.")
+@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RestController
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(private val endpointRepository: EndpointRepository,
