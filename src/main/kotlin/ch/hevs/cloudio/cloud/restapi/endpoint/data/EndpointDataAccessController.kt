@@ -147,7 +147,5 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
         }
     }
 
-    // TODO: WOT access
-
     // TODO: Event based subscription, maybe based on SSE or web sockets.
 }

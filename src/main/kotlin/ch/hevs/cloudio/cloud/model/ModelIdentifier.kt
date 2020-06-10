@@ -38,6 +38,7 @@ class ModelIdentifier(uri: String) : Serializable {
 
     fun count() = modelPath.count()
     operator fun get(index: Int) = modelPath[index]
+    fun last() = modelPath.last()
 
     fun modelPath(separator: Char = '/') = modelPath.joinToString("$separator")
 

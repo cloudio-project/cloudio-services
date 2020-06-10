@@ -2,15 +2,12 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
-import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
-import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
-import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
@@ -20,7 +17,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.context.request.async.DeferredResult
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -32,50 +32,6 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
-
-    @RequestMapping("/getWotNode", method = [RequestMethod.POST])
-    fun getWotNode(@RequestBody nodeRequest: NodeRequest, request: HttpServletRequest): NodeThingDescription {
-        val host = request.requestURL.toString().replace("/api/v1/getWotNode", "")
-
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return getWotNode(userName, host, nodeRequest)
-
-    }
-
-    @RequestMapping("/getWotNode/{nodeTopic}", method = [RequestMethod.GET])
-    fun getWotNode(@PathVariable nodeTopic: String, request: HttpServletRequest): NodeThingDescription {
-        val host = request.requestURL.toString().replace("/api/v1/getWotNode/$nodeTopic", "")
-
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return getWotNode(userName, host, NodeRequest(nodeTopic.replace(".","/")))
-    }
-
-    fun getWotNode(userName: String, host: String, nodeRequest: NodeRequest): NodeThingDescription {
-        val permissionMap = PermissionUtils
-                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-        val genericTopic = nodeRequest.nodeTopic + "/#"
-        val splitTopic = genericTopic.split("/")
-        if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this node")
-
-        val nodeThingDescription: NodeThingDescription?
-        try {
-            nodeThingDescription = EndpointManagementUtil.getWotNode(endpointEntityRepository, nodeRequest, host)
-        } catch (e: CloudioApiException) {
-            throw CloudioHttpExceptions.BadRequest("Couldn't get WoT Node: " + e.message)
-        }
-
-        if (nodeThingDescription == null) {
-            throw CloudioHttpExceptions.BadRequest("Couldn't get WoT Node")
-        } else {
-            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
-                throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
-            else
-                return nodeThingDescription
-        }
-    }
 
     @RequestMapping("/notifyAttributeChange", method = [RequestMethod.POST])
     fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
@@ -133,72 +89,6 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
                     throw CloudioHttpExceptions.BadRequest("Attribute doesn't exist")
             } catch (e: CloudioApiException) {
                 throw CloudioHttpExceptions.BadRequest("Couldn't get Attribute: " + e.message)
-            }
-        }
-    }
-
-    @RequestMapping("/blockEndpoint", method = [RequestMethod.POST])
-    fun blockEndpoint(@RequestBody endpointRequest: EndpointRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        //if http admin, can block any endpoint
-        if (userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN)) {
-            val success = EndpointManagementUtil.blockEndpoint(endpointEntityRepository, endpointRequest)
-            if (success)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequest("Couldn't block endpoint")
-        } else {
-            //else need to check user permission on endpoint --> user need to own
-            val permissionMap = PermissionUtils
-                    .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-            val genericTopic = endpointRequest.endpointUuid + "/#"
-
-            val endpointGeneralPermission = permissionMap.get(genericTopic)
-            if (endpointGeneralPermission?.permission == Permission.OWN) {
-                val success = EndpointManagementUtil.blockEndpoint(endpointEntityRepository, endpointRequest)
-                if (success)
-                    throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-                else
-                    throw CloudioHttpExceptions.BadRequest("Couldn't block endpoint")
-            } else {
-                if (endpointGeneralPermission == null)
-                    throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
-                else
-                    throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
-            }
-        }
-    }
-
-    @RequestMapping("/unblockEndpoint", method = [RequestMethod.POST])
-    fun unblockEndpoint(@RequestBody endpointRequest: EndpointRequest) {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        //if http admin, can unblock any endpoint
-        if (userRepository.findById(userName).get().authorities.contains(Authority.HTTP_ADMIN)) {
-            val success = EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, endpointRequest)
-            if (success)
-                throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-            else
-                throw CloudioHttpExceptions.BadRequest("Couldn't block endpoint")
-        } else {
-            //else need to check user permission on endpoint --> user need to own
-            val permissionMap = PermissionUtils
-                    .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-            val genericTopic = endpointRequest.endpointUuid + "/#"
-
-            val endpointGeneralPermission = permissionMap.get(genericTopic)
-            if (endpointGeneralPermission?.permission == Permission.OWN) {
-                val success = EndpointManagementUtil.unblockEndpoint(endpointEntityRepository, endpointRequest)
-                if (success)
-                    throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
-                else
-                    throw CloudioHttpExceptions.BadRequest("Couldn't unblock endpoint")
-            } else {
-                if (endpointGeneralPermission == null)
-                    throw CloudioHttpExceptions.BadRequest("This endpoint doesn't exist")
-                else
-                    throw CloudioHttpExceptions.BadRequest("You don't own this endpoint")
             }
         }
     }

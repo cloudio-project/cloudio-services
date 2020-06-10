@@ -20,11 +20,15 @@ object WotSerializationFormat {
             for (cloudioObject in node.objects) {
                 propertiesMap.putAll(buildProperties("$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
 
+                /* TODO: Once events are implemented, return those here.
                 eventMap.putAll(buildEvents(cloudioObject.key, "$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
+                 */
             }
 
-            val securityDefinition = mapOf("https_sc" to SecurityDefinition(scheme = "basic", input = "query"),
-                    "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null))
+            val securityDefinition = mapOf(
+                    "https_sc" to SecurityDefinition(scheme = "basic", input = "query") /* TODO: Leaving MQTT out for the moment. ,
+                    "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null)*/
+            )
 
             return NodeThingDescription(
                     context = "https://www.w3.org/2019/wot/td/v1",
@@ -57,7 +61,7 @@ object WotSerializationFormat {
                 AttributeConstraint.Status,
                 AttributeConstraint.Measure -> {
                     forms.add(Form(
-                            href = "$host/api/v1/getAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
+                            href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
                             contentType = "application/json"
@@ -66,19 +70,20 @@ object WotSerializationFormat {
                 AttributeConstraint.Parameter,
                 AttributeConstraint.SetPoint -> {
                     forms.add(Form(
-                            href = "$host/api/v1/getAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
+                            href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
                             contentType = "application/json"
                     ))
+                    /* TODO: Leaving out MQTT for the moment.
                     forms.add(Form(
                             href = mqttHost + "/@set/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "writeproperty",
                             subprotocol = null,
                             contentType = "application/json"
-                    ))
+                    ))*/
                     forms.add(Form(
-                            href = "$host/api/v1/setAttribute/" + cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key,
+                            href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "writeproperty",
                             subprotocol = null,
                             contentType = "application/json"
@@ -99,7 +104,7 @@ object WotSerializationFormat {
                     required = setOf("constraint", "type", "timestamp", "value"),
                     enum = null
             )
-            propertiesMap[cloudioObjectTopic.replace("/", ".")+ "." + cloudioAttribute.key] = wotAttribute
+            propertiesMap[cloudioObjectTopic.replace("/", ".") + "." + cloudioAttribute.key] = wotAttribute
         }
 
         return propertiesMap
