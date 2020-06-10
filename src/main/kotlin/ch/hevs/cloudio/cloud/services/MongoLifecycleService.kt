@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
@@ -22,7 +22,7 @@ class MongoLifecycleService(
         private val log = LogFactory.getLog(MongoLifecycleService::class.java)
     }
 
-    override fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {
+    override fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel) {
         val endpointEntity = endpointEntityRepository.findByIdOrNull(UUID.fromString(endpointId))
         if (endpointEntity != null) { //To prevent endpoint creation without the api
             endpointEntity.online = true

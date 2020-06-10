@@ -5,27 +5,27 @@ import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 import java.util.*
 
-@ApiModel("Endpoint", description = "Endpoint details.")
+@ApiModel(description = "Endpoint details.")
 data class EndpointEntity(
-        @ApiModelProperty("The unique identifier of the given endpoint.", readOnly = true)
+        @ApiModelProperty("The unique identifier of the endpoint.", readOnly = true)
         val uuid: UUID,
 
-        @ApiModelProperty("A user defined user-friendly name.", example = "My endpoint")
+        @ApiModelProperty("User-friendly name of the endpoint.", example = "My endpoint")
         val friendlyName: String,
 
-        @ApiModelProperty("If true the endpoint is blocked (can not connect).", example = "false")
-        val blocked: Boolean,
+        @ApiModelProperty("If true the endpoint is banned (can not connect to the broker).", example = "false")
+        val banned: Boolean,
 
-        @ApiModelProperty("If true the endpoint is actually online.", readOnly = true, example = "true")
+        @ApiModelProperty("If true the endpoint is online.", readOnly = true, example = "true")
         val online: Boolean,
 
-        @ApiModelProperty("Metadata assigned to the endpoint.")
+        @ApiModelProperty("Metadata assigned to the endpoint - Can be set to any particular JSON object/structure.")
         val metaData: Map<String, Any>,
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        @ApiModelProperty("cloud.iO endpoint version actually running.", readOnly = true, example = "v0.2", required = false)
+        @ApiModelProperty("Software version actually running on the endpoint.", readOnly = true, example = "v0.2", required = false)
         val version: String?,
 
-        @ApiModelProperty("Supported serialization formats of the endpoint.", readOnly = true, example = "[\"JSON\", \"CBOR\"]")
+        @ApiModelProperty("Serialization formats supported by the endpoint.", readOnly = true, example = "[\"CBOR\", \"JSON\"]")
         val supportedFormats: Set<String>
 )

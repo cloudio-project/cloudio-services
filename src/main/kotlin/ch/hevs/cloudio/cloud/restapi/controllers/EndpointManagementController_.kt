@@ -202,10 +202,4 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
             }
         }
     }
-
-    @RequestMapping("/getAccessibleAttributes", method = [RequestMethod.GET])
-    fun getAccessibleAttributes(): AccessibleAttributesAnswer {
-        val userName = SecurityContextHolder.getContext().authentication.name
-        return EndpointManagementUtil.getAccessibleAttributes(userRepository, userGroupRepository, endpointEntityRepository, userName)
-    }
 }

@@ -17,7 +17,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.junit4.SpringRunner
-import java.security.Principal
 import java.util.*
 
 @RunWith(SpringRunner::class)
@@ -94,7 +93,7 @@ class AccountControllerTest {
         val userDetails = userDetailsService.loadUserByUsername("TestUser") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        accountController.changeMyPassword("MyNewPassword123777", authentication)
+        accountController.putMyPassword("MyNewPassword123777", authentication)
 
         val user = userRepository.findByUserName("TestUser").orElse(null)
 
@@ -114,7 +113,7 @@ class AccountControllerTest {
         ), null)
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.changeMyPassword("MyNewPassword123777", authentication)
+            accountController.putMyPassword("MyNewPassword123777", authentication)
         }
     }
 }

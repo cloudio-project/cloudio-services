@@ -29,7 +29,7 @@ object TestUtil {
 
     fun createEndpointEntity(endpointUuid: String, friendlyName: String): EndpointEntity {
         return EndpointEntity(endpointUuid = UUID.fromString(endpointUuid), friendlyName = friendlyName, endpoint =
-        Endpoint("v0.2",
+        EndpointDataModel("v0.2",
                 setOf("JSON"),
                 hashMapOf("demoNode" to
                 Node(emptySet(), hashMapOf("demoObject" to

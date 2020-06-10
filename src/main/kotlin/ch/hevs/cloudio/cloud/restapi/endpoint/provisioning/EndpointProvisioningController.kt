@@ -6,7 +6,9 @@ import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import io.swagger.annotations.*
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -52,7 +54,7 @@ class EndpointProvisioningController(
     @ApiOperation("Prepare endpoint for provision and returns the token that can be used for provisioning.")
 
     fun prepareProvisionByUUID(
-            @PathVariable @ApiParam("UUID of the endpoint.") uuid: UUID,
+            @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
             @RequestBody @ApiParam("Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
     ): String {
         // Get endpoint.
@@ -60,6 +62,7 @@ class EndpointProvisioningController(
             CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
+        // TODO: Move this step to the second phase to allow an endpoint to post it's public key.
         // Ensure that endpoint has a client certificate.
         if (endpoint.configuration.clientCertificate.isEmpty()) {
             if (endpointProvisioningOptions?.publicKey != null) {
@@ -100,7 +103,7 @@ class EndpointProvisioningController(
 
     @ApiOperation("Get endpoint configuration information for a pending provision token.")
     fun provisionByToken(
-            @PathVariable @ApiParam("Provision token") token: String,
+            @PathVariable @ApiParam("Provision token.", required = true) token: String,
             @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat = EndpointProvisioningDataFormat.JSON
     ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
         CloudioHttpExceptions.Forbidden("Forbidden")

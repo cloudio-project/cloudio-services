@@ -2,12 +2,12 @@ package ch.hevs.cloudio.cloud.serialization.wot
 
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 
 
 object WotSerializationFormat {
 
-    fun wotNodeFromCloudioNode(endpoint: Endpoint, endpointName: String, nodeName: String, host: String): NodeThingDescription? {
+    fun wotNodeFromCloudioNode(endpoint: EndpointDataModel, endpointName: String, nodeName: String, host: String): NodeThingDescription? {
 
         val mqttHost = host.replace("https", "mqtts").replace("http", "mqtts").replace("8081", "8883")
         val node = endpoint.nodes.get(nodeName)

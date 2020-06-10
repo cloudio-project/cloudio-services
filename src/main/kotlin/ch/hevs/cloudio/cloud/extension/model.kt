@@ -2,16 +2,15 @@ package ch.hevs.cloudio.cloud.extension
 
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.CloudioObject
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-fun Endpoint.findAttribute(path: Stack<String>): Attribute? = if (path.size > 1) {
+fun EndpointDataModel.findAttribute(path: Stack<String>): Attribute? = if (path.size > 1) {
     this.nodes[path.pop()]?.findAttribute(path)
 } else {
     null
@@ -41,7 +40,7 @@ fun CloudioObject.findObject(path: Stack<String>): CloudioObject? = when {
     else -> null
 }
 
-fun Endpoint.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, endpointUuid: UUID) {
+fun EndpointDataModel.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, endpointUuid: UUID) {
     this.nodes.forEach {
         it.value.fillAttributesFromInfluxDB(influx, database, "${endpointUuid}/${it.key}")
     }

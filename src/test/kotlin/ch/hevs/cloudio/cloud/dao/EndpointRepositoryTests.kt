@@ -46,7 +46,7 @@ class EndpointRepositoryTests {
             val endpoint = endpointRepository.findById(uuid).orElseThrow()
             assert(endpoint.uuid == uuid)
             assert(endpoint.friendlyName == "Unnamed endpoint")
-            assert(!endpoint.blocked)
+            assert(!endpoint.banned)
             assert(!endpoint.online)
             assert(endpoint.dataModel.nodes.isEmpty())
             assert(endpoint.metaData.isEmpty())
@@ -62,7 +62,7 @@ class EndpointRepositoryTests {
         val uuid = transaction {
             endpointRepository.save(Endpoint(
                     friendlyName = "My awesome endpoint",
-                    blocked = true,
+                    banned = true,
                     online = true,
                     configuration = EndpointConfiguration(
                             properties = mutableMapOf(
@@ -73,7 +73,7 @@ class EndpointRepositoryTests {
                             privateKey = "TG9yZW0gaXBzdW0gZG9sb3Igc2l0IGFtZXQgY29uc2VjdGV0dXIgYWRpcGlzY2luZyBlbGl0IHBlciwgbWF0dGlzIHRlbXB1cyBmaW5pYnVzIGNvbnZh",
                             logLevel = LogLevel.ALL
                     ),
-                    dataModel = Endpoint(
+                    dataModel = EndpointDataModel(
                             nodes = mutableMapOf(
                                     "testNode" to Node(
                                             implements = setOf("ExampleInterface"),
@@ -121,7 +121,7 @@ class EndpointRepositoryTests {
             val endpoint = endpointRepository.findById(uuid).orElseThrow()
             assert(endpoint.uuid == uuid)
             assert(endpoint.friendlyName == "My awesome endpoint")
-            assert(endpoint.blocked)
+            assert(endpoint.banned)
             assert(endpoint.online)
             assert(endpoint.online)
             assert(endpoint.configuration.properties.count() == 2)
@@ -171,7 +171,7 @@ class EndpointRepositoryTests {
 
         transaction {
             endpoint.friendlyName = "Changed friendly name"
-            endpoint.blocked = true
+            endpoint.banned = true
             endpoint.dataModel.nodes["toto"] = Node()
             endpoint.metaData["Version"] = "2.12"
 
@@ -181,7 +181,7 @@ class EndpointRepositoryTests {
         transaction {
             endpointRepository.findById(testEndpointUUID).orElseThrow().let {
                 assert(it.friendlyName == "Changed friendly name")
-                assert(it.blocked)
+                assert(it.banned)
                 assert(it.dataModel.nodes.containsKey("toto"))
                 assert(it.metaData.contains("Version"))
                 assert(it.metaData["Version"] == "2.12")

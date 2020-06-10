@@ -2,7 +2,7 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
@@ -24,7 +24,7 @@ class InfluxLifecycleService(
                 .build())
     }
 
-    override fun endpointIsOnline(endpointId: String, endpoint: Endpoint) {
+    override fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel) {
         influx.write(influxProperties.database, "autogen", Point
                 .measurement(endpointId)
                 .addField("event", "online")

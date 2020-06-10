@@ -45,7 +45,7 @@ class ModelIdentifier(uri: String) : Serializable {
 
     fun toInfluxSeriesName() = "$endpoint.${ modelPath('.')}"
 
-    fun resolve(endpoint: Endpoint): Optional<Any> = Optional.ofNullable(when(count()) {
+    fun resolve(endpoint: EndpointDataModel): Optional<Any> = Optional.ofNullable(when(count()) {
         0 -> endpoint
         1 -> endpoint.nodes[this[0]]
         else -> endpoint.nodes[this[0]]?.let { resolveOnNode(it) }

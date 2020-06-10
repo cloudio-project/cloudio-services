@@ -36,7 +36,7 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
                                    private val rabbitTemplate: RabbitTemplate) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to all endpoint's data model.")
+    @ApiOperation("Read access to endpoint's data model.")
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
@@ -77,7 +77,7 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
 
         // Fill data from influxDB.
         when(data) {
-            is Endpoint -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
+            is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
             is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
             is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
             is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
@@ -146,4 +146,8 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
             else -> throw CloudioHttpExceptions.BadRequest("Only Attributes can be modified.")
         }
     }
+
+    // TODO: WOT access
+
+    // TODO: Event based subscription, maybe based on SSE or web sockets.
 }

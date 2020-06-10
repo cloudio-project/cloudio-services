@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.model.*
 import com.fasterxml.jackson.databind.ObjectMapper
 
 abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapper) : SerializationFormat {
-    override fun deserializeEndpoint(endpoint: Endpoint, data: ByteArray) {
+    override fun deserializeEndpoint(endpoint: EndpointDataModel, data: ByteArray) {
         return mapper.readerForUpdating(endpoint).readValue(data)
     }
 

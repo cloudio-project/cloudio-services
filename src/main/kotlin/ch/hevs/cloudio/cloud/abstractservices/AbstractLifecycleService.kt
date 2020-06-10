@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
@@ -35,7 +35,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val endpoint = Endpoint(version = "v0.1")
+                val endpoint = EndpointDataModel(version = "v0.1")
                 messageFormat.deserializeEndpoint(endpoint, data)
                 endpointIsOnline(endpointId, endpoint)
             } else {
@@ -116,7 +116,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
         }
     }
 
-    abstract fun endpointIsOnline(endpointId: String, endpoint: Endpoint)
+    abstract fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel)
     abstract fun endpointIsOffline(endpointId: String)
     abstract fun nodeAdded(endpointId: String, nodeName: String, node: Node)
     abstract fun nodeRemoved(endpointId: String, nodeName: String)

@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.dao
 
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import org.hibernate.annotations.Type
 import java.util.*
 import javax.persistence.*
@@ -11,7 +11,7 @@ data class Endpoint(
         @Column(length = 1024, nullable = false)
         var friendlyName: String = "Unnamed endpoint",
 
-        var blocked: Boolean = false,
+        var banned: Boolean = false,
 
         var online: Boolean = false, // TODO: Remove, this will be stored in InfluxDB
 
@@ -20,7 +20,7 @@ data class Endpoint(
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
-        val dataModel: Endpoint = Endpoint(),
+        val dataModel: EndpointDataModel = EndpointDataModel(),
 
         @Type(type = "jsonb")
         @Column(columnDefinition = "jsonb")
