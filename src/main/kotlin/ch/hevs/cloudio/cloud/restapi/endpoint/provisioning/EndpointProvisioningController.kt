@@ -45,7 +45,7 @@ class EndpointProvisioningController(
             .body(caCertificate)
 
 
-    @PostMapping("endpoint/{uuid}/provisionToken", produces = ["text/plain"])
+    @PostMapping("/endpoint/{uuid}/provisionToken", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
     @Transactional
 
