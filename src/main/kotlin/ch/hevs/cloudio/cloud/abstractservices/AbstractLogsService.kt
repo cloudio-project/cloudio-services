@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
-import ch.hevs.cloudio.cloud.model.LogParameter
+import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
@@ -36,9 +36,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val logParameter = LogParameter()
-                messageFormat.deserializeLogLevel(logParameter.level, data)
-                logLevelChange(endpointUuid, logParameter)
+                logLevelChanged(endpointUuid, messageFormat.deserializeLogLevel(data))
             } else {
                 log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
             }
@@ -79,7 +77,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
     }
 
     // Abstract method to handle log level change messages.
-    abstract fun logLevelChange(endpointUuid: String, logParameter: LogParameter)
+    abstract fun logLevelChanged(endpointUuid: String, logLevel: LogLevel)
 
     // Abstract method to handle logs messages.
     abstract fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage)

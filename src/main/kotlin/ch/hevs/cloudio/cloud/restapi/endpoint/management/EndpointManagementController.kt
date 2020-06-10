@@ -97,12 +97,12 @@ class EndpointManagementController(
     }.friendlyName
 
 
-    @GetMapping("/{uuid}/blocked", produces = ["application/json"])
+    @GetMapping("/{uuid}/banned", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
 
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
 
-    @ApiOperation("Get blocked state of given endpoint.")
+    @ApiOperation("Returns true if the endpoint is banned (Can not connect to broker) or false if not.")
 
     fun getEndpointBlockedByUUID(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID
@@ -282,13 +282,13 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/blocked")
+    @PutMapping("/{uuid}/banned")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
 
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
 
-    @ApiOperation("Update if an endpoint is blocked or not.")
+    @ApiOperation("Update if an endpoint is banned (Can not connect to broker) or not.")
     fun putEndpointBlockedByUUID(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
             @RequestParam @ApiParam("true to block endpoint, false to unblock endpoint.", required = true) blocked: Boolean

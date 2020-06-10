@@ -37,11 +37,11 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
     }
 
     override fun serializeLogLevel(logLevel: LogLevel): ByteArray {
-        return mapper.writeValueAsBytes(logLevel)
+        return mapper.writeValueAsBytes(mapOf("level" to logLevel))
     }
 
-    override fun deserializeLogLevel(loglevel: LogLevel, data: ByteArray) {
-        return mapper.readerForUpdating(loglevel).readValue(data)
+    override fun deserializeLogLevel(data: ByteArray): LogLevel {
+        return LogLevel.valueOf(mapper.readValue(data, Map::class.java)["level"] as String)
     }
 
     override fun serializeJobParameter(jobParameter: JobParameter): ByteArray {

@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
 import org.influxdb.InfluxDB
@@ -45,11 +44,9 @@ object LogsUtil {
     }
 
     fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest) {
-        val logParameter = LogParameter(logsSetRequest.level)
-
         // TODO: Detect actual serialization format from endpoint data model.
         rabbitTemplate.convertAndSend("amq.topic",
-                "@logsLevel." + logsSetRequest.endpointUuid, JSONSerializationFormat().serializeLogLevel(logParameter.level))
+                "@logsLevel." + logsSetRequest.endpointUuid, JSONSerializationFormat().serializeLogLevel(logsSetRequest.level))
 
     }
 

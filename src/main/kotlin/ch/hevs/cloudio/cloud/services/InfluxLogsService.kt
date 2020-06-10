@@ -3,7 +3,7 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.CloudioLogMessage
-import ch.hevs.cloudio.cloud.model.LogParameter
+import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
@@ -18,7 +18,7 @@ class InfluxLogsService(
         serializationFormats: Collection<SerializationFormat>,
         private val influxProperties: CloudioInfluxProperties) : AbstractLogsService(serializationFormats) {
 
-    override fun logLevelChange(endpointUuid: String, logParameter: LogParameter) {
+    override fun logLevelChanged(endpointUuid: String, logLevel: LogLevel) {
         //nothing to do in influx
     }
 
