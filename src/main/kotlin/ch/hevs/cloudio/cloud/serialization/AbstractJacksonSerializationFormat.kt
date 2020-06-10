@@ -36,12 +36,12 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
         return mapper.readerForUpdating(cloudioLogMessage).readValue(data)
     }
 
-    override fun serializeLogParameter(logParameter: LogParameter): ByteArray {
-        return mapper.writeValueAsBytes(logParameter)
+    override fun serializeLogLevel(logLevel: LogLevel): ByteArray {
+        return mapper.writeValueAsBytes(logLevel)
     }
 
-    override fun deserializeLogParameter(logParameter: LogParameter, data: ByteArray) {
-        return mapper.readerForUpdating(logParameter).readValue(data)
+    override fun deserializeLogLevel(loglevel: LogLevel, data: ByteArray) {
+        return mapper.readerForUpdating(loglevel).readValue(data)
     }
 
     override fun serializeJobParameter(jobParameter: JobParameter): ByteArray {

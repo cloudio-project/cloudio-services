@@ -37,7 +37,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
                 val logParameter = LogParameter()
-                messageFormat.deserializeLogParameter(logParameter, data)
+                messageFormat.deserializeLogLevel(logParameter, data)
                 logLevelChange(endpointUuid, logParameter)
             } else {
                 log.error("Unrecognized message format in @logsLevel message from $endpointUuid")

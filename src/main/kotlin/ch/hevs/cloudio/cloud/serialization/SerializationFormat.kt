@@ -13,8 +13,8 @@ interface SerializationFormat {
     fun deserializeTransaction(transaction: Transaction, data: ByteArray)
     fun deserializeDelayed(delayedContainer: DelayedContainer, data: ByteArray)
     fun deserializeCloudioLog(cloudioLogMessage: CloudioLogMessage, data: ByteArray)
-    fun serializeLogParameter(logParameter: LogParameter): ByteArray
-    fun deserializeLogParameter(logParameter: LogParameter, data: ByteArray)
+    fun serializeLogLevel(logLevel: LogLevel): ByteArray
+    fun deserializeLogLevel(loglevel: LogLevel, data: ByteArray)
     fun serializeJobParameter(jobParameter: JobParameter): ByteArray
     fun deserializeJobsLineOutput(jobsLineOutput: JobsLineOutput, data: ByteArray)
 }
