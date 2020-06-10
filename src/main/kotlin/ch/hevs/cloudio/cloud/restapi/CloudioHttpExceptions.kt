@@ -26,4 +26,8 @@ object CloudioHttpExceptions {
 
     @ResponseStatus(HttpStatus.CONFLICT)
     class Conflict(message: String): RuntimeException(message)
+
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    class InternalServerError(message: String): RuntimeException(message)
 }

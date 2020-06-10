@@ -5,6 +5,7 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.junit.After
@@ -28,6 +29,9 @@ class LogsUtilTest {
     private lateinit var influx: InfluxDB
     @Autowired
     private lateinit var endpointEntityRepository: EndpointEntityRepository
+
+    @Autowired
+    private lateinit var serializationFormats: Collection<SerializationFormat>
 
     val database = "cloudio"
 
@@ -112,7 +116,7 @@ class LogsUtilTest {
 
     @Test
     fun setLogsLevel() {
-        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid.toString(), LogLevel.FATAL))
+        LogsUtil.setLogsLevel(rabbitTemplate, LogsSetRequest(endpointParameters.endpointUuid.toString(), LogLevel.FATAL), endpointEntityRepository, serializationFormats)
         Thread.sleep(100) //wait for the mqtt message to be send
         val level = LogsUtil.getLogsLevel(endpointEntityRepository, LogsGetRequest(endpointParameters.endpointUuid.toString()))
         assert(level!!.level == LogLevel.FATAL)

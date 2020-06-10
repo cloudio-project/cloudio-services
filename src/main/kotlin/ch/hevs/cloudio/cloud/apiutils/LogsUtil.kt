@@ -2,7 +2,9 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.model.LogParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
-import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import org.influxdb.dto.QueryResult
@@ -44,12 +46,19 @@ object LogsUtil {
 
     }
 
-    fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest) {
+    fun setLogsLevel(rabbitTemplate: RabbitTemplate, logsSetRequest: LogsSetRequest,
+                     endpointEntityRepository: EndpointEntityRepository, serializationFormats: Collection<SerializationFormat>) {
         val logParameter = LogParameter(logsSetRequest.level.toString())
 
-        // TODO: Detect actual serialization format from endpoint data model.
+        val endpointUUID = logsSetRequest.endpointUuid
+        val endpoint = endpointEntityRepository.findById(UUID.fromString(endpointUUID)).get()
+
+
+        val serializationFormat = serializationFormats.fromIdentifiers(endpoint.endpoint.supportedFormats)
+                ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+
         rabbitTemplate.convertAndSend("amq.topic",
-                "@logsLevel." + logsSetRequest.endpointUuid, JSONSerializationFormat().serializeLogParameter(logParameter))
+                "@logsLevel." + logsSetRequest.endpointUuid, serializationFormat.serializeLogParameter(logParameter))
 
     }
 

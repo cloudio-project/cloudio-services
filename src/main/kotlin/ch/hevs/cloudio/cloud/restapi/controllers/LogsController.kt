@@ -2,12 +2,13 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 
 import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
-import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import ch.hevs.cloudio.cloud.security.Permission
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.influxdb.dto.QueryResult
@@ -20,7 +21,11 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1")
-class LogsController(val influx: InfluxDB, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, var userGroupRepository: UserGroupRepository, val influxProperties: CloudioInfluxProperties) {
+class LogsController(val influx: InfluxDB, var userRepository: UserRepository,
+                        var endpointEntityRepository: EndpointEntityRepository,
+                        var userGroupRepository: UserGroupRepository,
+                        val influxProperties: CloudioInfluxProperties,
+                        var serializationFormats: Collection<SerializationFormat>) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -131,7 +136,7 @@ class LogsController(val influx: InfluxDB, var userRepository: UserRepository, v
             if (endpointEntityRepository.findByIdOrNull(UUID.fromString(logsSetRequest.endpointUuid))!!.blocked)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
-            LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest)
+            LogsUtil.setLogsLevel(rabbitTemplate, logsSetRequest, endpointEntityRepository, serializationFormats)
             throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
         } else {
             if (endpointGeneralPermission == null)

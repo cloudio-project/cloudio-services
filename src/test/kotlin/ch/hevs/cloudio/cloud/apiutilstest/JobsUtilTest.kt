@@ -6,6 +6,7 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.model.JobParameter
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.After
@@ -29,6 +30,10 @@ class JobsUtilTest {
 
     @Autowired
     private lateinit var connectionFactory: ConnectionFactory
+
+    @Autowired
+    private lateinit var serializationFormats: Collection<SerializationFormat>
+
     private val mapper: ObjectMapper by lazy { ObjectMapper().registerModule(KotlinModule()) }
 
     private lateinit var endpointParameters: EndpointParameters
@@ -69,7 +74,7 @@ class JobsUtilTest {
             }
         }
 
-        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest)
+        JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository, serializationFormats)
         while (!messageReceived) {
             Thread.sleep(100)
             if (System.currentTimeMillis() - startMilli > 5000)

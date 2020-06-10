@@ -13,7 +13,6 @@ import org.springframework.amqp.rabbit.annotation.Exchange
 import org.springframework.amqp.rabbit.annotation.Queue
 import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.amqp.utils.test.TestUtils
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.data.repository.findByIdOrNull

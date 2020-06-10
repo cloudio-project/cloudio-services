@@ -4,8 +4,10 @@ import ch.hevs.cloudio.cloud.apiutils.*
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
-import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.CloudioObject
+import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
@@ -13,8 +15,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.security.PermissionPriority
-import ch.hevs.cloudio.cloud.security.PrioritizedPermission
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
@@ -31,7 +32,11 @@ import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping("/api/v1")
-class EndpointManagementController_(var connectionFactory: ConnectionFactory, var influx: InfluxDB, var userGroupRepository: UserGroupRepository, var userRepository: UserRepository, var endpointEntityRepository: EndpointEntityRepository, val influxProperties: CloudioInfluxProperties) {
+class EndpointManagementController_(var connectionFactory: ConnectionFactory, var influx: InfluxDB,
+                                    var userGroupRepository: UserGroupRepository, var userRepository: UserRepository,
+                                    var endpointEntityRepository: EndpointEntityRepository,
+                                    val influxProperties: CloudioInfluxProperties,
+                                    var serializationFormats: Collection<SerializationFormat>) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -226,7 +231,7 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
             throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
         else {
             try {
-                EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest)
+                EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, attributeSetRequest, serializationFormats)
                 throw CloudioHttpExceptions.OK(CLOUDIO_SUCCESS_MESSAGE)
             } catch (e: CloudioApiException) {
                 throw CloudioHttpExceptions.BadRequest("Couldn't set attribute: " + e.message)
@@ -268,7 +273,7 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
 
                     if (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) {
                         CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@update." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
+                            object : AttributeChangeNotifier(connectionFactory, "@update." + attributeRequestLongpoll.attributeTopic.replace("/", "."),serializationFormats) {
                                 override fun notifyAttributeChange(attribute: Attribute) {
                                     result.setResult(attribute)
                                 }
@@ -276,7 +281,7 @@ class EndpointManagementController_(var connectionFactory: ConnectionFactory, va
                         }
                     } else if (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint) {
                         CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@set." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
+                            object : AttributeChangeNotifier(connectionFactory, "@set." + attributeRequestLongpoll.attributeTopic.replace("/", "."),serializationFormats) {
                                 override fun notifyAttributeChange(attribute: Attribute) {
                                     result.setResult(attribute)
                                 }

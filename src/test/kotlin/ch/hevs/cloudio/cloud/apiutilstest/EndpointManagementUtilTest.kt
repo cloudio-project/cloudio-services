@@ -14,6 +14,7 @@ import ch.hevs.cloudio.cloud.restapi.admin.user.PostUserEntity
 import ch.hevs.cloudio.cloud.restapi.admin.user.UserManagementController
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.influxdb.InfluxDB
 import org.junit.After
 import org.junit.Before
@@ -48,6 +49,9 @@ class EndpointManagementUtilTest {
 
     @Autowired
     private lateinit var userManagement: UserManagementController
+
+    @Autowired
+    private lateinit var serializationFormats: Collection<SerializationFormat>
 
     val database = "cloudio"
 
@@ -115,7 +119,7 @@ class EndpointManagementUtilTest {
     @Test
     fun setAttributeSetPoint() {
         val setAttribute = Attribute(AttributeConstraint.SetPoint, AttributeType.Number, 1578992269.000, 11.0)
-        EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint", setAttribute))
+        EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoSetPoint", setAttribute), serializationFormats)
         Thread.sleep(3000) //to be sure @set message is transferred to influxDB (3000ms is default batch time)
         // TODO: This does not work, InfluxDB driver has no time to save data when blocking the thread.
 
@@ -143,7 +147,7 @@ class EndpointManagementUtilTest {
     @Test
     fun setAttributeNotSetPoint() {
         val setAttribute = Attribute(AttributeConstraint.SetPoint, AttributeType.Number, 1578992269.000, 11.0)
-        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure", setAttribute)) }
+        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/demoMeasure", setAttribute), serializationFormats) }
 
     }
 
@@ -204,8 +208,8 @@ class EndpointManagementUtilTest {
         assert(EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/$randomCharacters")) == null)
         assertFails { EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest(randomCharacters)) }
 
-        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/$randomCharacters", setAttribute)) }
-        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest(randomCharacters, setAttribute)) }
+        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest("${endpointParameters.endpointUuid}/demoNode/demoObject/$randomCharacters", setAttribute), serializationFormats) }
+        assertFails { EndpointManagementUtil.setAttribute(rabbitTemplate, endpointEntityRepository, AttributeSetRequest(randomCharacters, setAttribute), serializationFormats) }
 
         assert(!EndpointManagementUtil.blockEndpoint(endpointEntityRepository, EndpointRequest(UUID.randomUUID().toString())))
 

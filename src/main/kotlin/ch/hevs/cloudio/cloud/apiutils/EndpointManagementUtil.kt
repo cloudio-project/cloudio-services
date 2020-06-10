@@ -2,15 +2,20 @@ package ch.hevs.cloudio.cloud.apiutils
 
 import ch.hevs.cloudio.cloud.extension.findAttribute
 import ch.hevs.cloudio.cloud.extension.findObject
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.CloudioObject
+import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.EndpointEntity
 import ch.hevs.cloudio.cloud.repo.EndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.UserRepository
+import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.serialization.JSONSerializationFormat
-import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
+import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import ch.hevs.cloudio.cloud.serialization.wot.NodeThingDescription
+import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.data.repository.findByIdOrNull
@@ -99,7 +104,8 @@ object EndpointManagementUtil {
     }
 
     @Throws(CloudioApiException::class)
-    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository, attributeSetRequest: AttributeSetRequest) {
+    fun setAttribute(rabbitTemplate: RabbitTemplate, endpointEntityRepository: EndpointEntityRepository,
+                     attributeSetRequest: AttributeSetRequest, serializationFormats: Collection<SerializationFormat>) {
         val attribute: Attribute?
 
         try {
@@ -116,10 +122,16 @@ object EndpointManagementUtil {
         else {
             //send message to amq.topic queue
 
-            // TODO: Detect actual serialization format from endpoint data model.
+            val endpointUUID = attributeSetRequest.attributeTopic.split("/")[0]
+            val endpoint = endpointEntityRepository.findById(UUID.fromString(endpointUUID)).get()
+
+
+            val serializationFormat = serializationFormats.fromIdentifiers(endpoint.endpoint.supportedFormats)
+                    ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+
             rabbitTemplate.convertAndSend("amq.topic",
                     "@set." + attributeSetRequest.attributeTopic.replace("/", "."),
-                    JSONSerializationFormat().serializeAttribute(attributeSetRequest.attribute))
+                    serializationFormat.serializeAttribute(attributeSetRequest.attribute))
         }
     }
 
