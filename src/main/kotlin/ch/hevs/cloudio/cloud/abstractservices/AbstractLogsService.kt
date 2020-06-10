@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
-import ch.hevs.cloudio.cloud.model.CloudioLogMessage
+import ch.hevs.cloudio.cloud.model.LogMessage
 import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
@@ -63,7 +63,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val cloudioLog = CloudioLogMessage()
+                val cloudioLog = LogMessage()
                 messageFormat.deserializeCloudioLog(cloudioLog, data)
                 if (cloudioLog.timestamp != -1.0)
                     newLog(endpointUuid, cloudioLog)
@@ -80,5 +80,5 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
     abstract fun logLevelChanged(endpointUuid: String, logLevel: LogLevel)
 
     // Abstract method to handle logs messages.
-    abstract fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage)
+    abstract fun newLog(endpointUuid: String, logMessage: LogMessage)
 }

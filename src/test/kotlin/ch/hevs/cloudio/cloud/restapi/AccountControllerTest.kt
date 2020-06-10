@@ -93,7 +93,7 @@ class AccountControllerTest {
         val userDetails = userDetailsService.loadUserByUsername("TestUser") as CloudioUserDetails
         val authentication = TestingAuthenticationToken(userDetails, null)
 
-        accountController.putMyPassword("MyNewPassword123777", authentication)
+        accountController.putMyPassword("TestUserPassword", "MyNewPassword123777", authentication)
 
         val user = userRepository.findByUserName("TestUser").orElse(null)
 
@@ -113,7 +113,7 @@ class AccountControllerTest {
         ), null)
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            accountController.putMyPassword("MyNewPassword123777", authentication)
+            accountController.putMyPassword("TestUserPassword", "MyNewPassword123777", authentication)
         }
     }
 }

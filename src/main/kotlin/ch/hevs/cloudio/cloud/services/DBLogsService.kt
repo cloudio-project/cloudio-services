@@ -2,7 +2,7 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
-import ch.hevs.cloudio.cloud.model.CloudioLogMessage
+import ch.hevs.cloudio.cloud.model.LogMessage
 import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.springframework.context.annotation.Profile
@@ -22,7 +22,7 @@ class DBLogsService(
         }
     }
 
-    override fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage) {
+    override fun newLog(endpointUuid: String, logMessage: LogMessage) {
         //nothing to do in mongo
     }
 }

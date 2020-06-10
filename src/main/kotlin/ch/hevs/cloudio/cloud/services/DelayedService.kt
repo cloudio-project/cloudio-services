@@ -80,7 +80,7 @@ class DelayedService(
                         "@logs" -> {
                             val innerData = delayedMessage.data
                             if(innerData is LinkedHashMap<*, *>) {
-                                val log = mapper.convertValue(innerData, CloudioLogMessage::class.java)
+                                val log = mapper.convertValue(innerData, LogMessage::class.java)
                                 handleLogs(delayedMessage.topic, log)
                             }
                         }
@@ -114,7 +114,7 @@ class DelayedService(
         //TODO
     }
 
-    fun handleLogs(topic: String, log: CloudioLogMessage){
+    fun handleLogs(topic: String, log: LogMessage){
         //TODO
     }
 
