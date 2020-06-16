@@ -20,10 +20,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.util.*
 
 
@@ -131,5 +128,27 @@ class CertificateController(
                 .contentType(MediaType.parseMediaType("application/x-x509-user-cert"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.pem\"")
                 .body(ca)
+    }
+
+    @RequestMapping("/createCertificateAndKeyAsPEM", method = [RequestMethod.GET])
+    fun createCertificateAndKeyAsPEM(@RequestParam endpointUuid: UUID): String {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        val permissionMap = PermissionUtils
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
+        val genericTopic = "$endpointUuid/#"
+        val endpointGeneralPermission = permissionMap.get(genericTopic)
+        if (endpointGeneralPermission?.permission == Permission.OWN) {
+            if (endpointEntityRepository.findByIdOrNull(endpointUuid)!!.blocked) {
+                throw CloudioHttpExceptions.BadRequest(CLOUDIO_BLOCKED_ENDPOINT)
+            } else {
+                return certificateManager.generateEndpointKeyAndCertificateAsPEM(endpointUuid)
+            }
+        } else {
+            if (endpointGeneralPermission == null)
+                throw CloudioHttpExceptions.NotFound("Endpoint doesn't exist")
+            else
+                throw CloudioHttpExceptions.Forbidden("You don't own this endpoint")
+        }
     }
 }

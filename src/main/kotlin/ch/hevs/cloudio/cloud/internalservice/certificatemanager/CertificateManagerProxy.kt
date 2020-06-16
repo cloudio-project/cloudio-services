@@ -53,4 +53,11 @@ class CertificateManagerProxy(private val rabbitTemplate: RabbitTemplate) {
         }
         return response.pkcs12Data
     }
+
+    fun generateEndpointKeyAndCertificateAsPEM(endpointUUID: UUID): String {
+        return rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
+                "CertificateManagerService::generateEndpointKeyAndCertificateAsPEM",
+                endpointUUID.toString())
+                as String
+    }
 }

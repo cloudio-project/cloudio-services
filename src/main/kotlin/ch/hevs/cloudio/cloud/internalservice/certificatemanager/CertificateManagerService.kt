@@ -176,6 +176,34 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         return null
     }
 
+    @RabbitListener(bindings = [
+        QueueBinding(
+                value = Queue(
+                        name = "cloudio.service.internal.CertificateManagerService::generateEndpointKeyAndCertificateAsPEM",
+                        exclusive = "true"
+                ),
+                exchange = Exchange(
+                        name = "cloudio.service.internal",
+                        type = ExchangeTypes.DIRECT
+                ),
+                key = ["CertificateManagerService::generateEndpointKeyAndCertificateAsPEM"]
+        )
+    ])
+    fun generateEndpointKeyAndCertificateAsPEM(uuid: String): String? {
+        try {
+            // Generate and sign certificate for endpoint.
+            val (certificate, keyPair) = createAndSignEndpointCertificate(UUID.fromString(uuid))
+
+            // Save the certificate and private key to PEM strings.
+            return certificate.toPEMString() + "\n\n" + keyPair.private.toPEMString()
+        } catch (exception: Exception) {
+            log.error("Exception during CertificateManagerService::generateEndpointKeyAndCertificate", exception)
+        }
+        return null
+    }
+
+
+
     private fun createAndSignEndpointCertificate(uuid: UUID): Pair<X509Certificate, KeyPair> {
         val keyPair = keyPairGenerator.generateKeyPair()
         return Pair(signCertificate(uuid, keyPair.public), keyPair)
