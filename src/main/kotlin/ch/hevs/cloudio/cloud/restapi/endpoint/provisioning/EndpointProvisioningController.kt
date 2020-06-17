@@ -166,7 +166,7 @@ class EndpointProvisioningController(
                             .contentType(MediaType.parseMediaType("application/java-archive"))
                             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${it.endpointUUID}.jar\"")
                             .header("Endpoint", it.endpointUUID.toString())
-                            .body(output)
+                            .body(output.toByteArray())
                 }
             }
         }
