@@ -22,7 +22,7 @@ data class ProvisionToken(
     companion object {
         private fun generateToken(): String {
             val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-            return List(255) { alphabet.random() }.joinToString("")
+            return List(64) { alphabet.random() }.joinToString("")
         }
     }
 }
