@@ -21,7 +21,7 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Api(tags = ["Endpoint Provisioning"], description = "Allows users to provision their endpoints.")
+@Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")
 @RestController
 @RequestMapping("/api/v1")
 class EndpointProvisioningController(
@@ -33,26 +33,19 @@ class EndpointProvisioningController(
         certificateManager.getCACertificate()
     }
 
-
     @GetMapping("/ca-certificate", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
-
     @ApiOperation("Returns the certificate used by the certificate authority of the cloud.iO installation.")
-
     fun getCaCertificate() = ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("application/x-x509-user-cert"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.crt\"")
             .body(caCertificate)
 
-
     @PostMapping("/endpoint/{uuid}/provisionToken", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
     @Transactional
-
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
-
     @ApiOperation("Prepare endpoint for provision and returns the token that can be used for provisioning.")
-
     fun prepareProvisionByUUID(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
             @RequestBody @ApiParam("Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
@@ -62,30 +55,12 @@ class EndpointProvisioningController(
             CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
-        // TODO: Move this step to the second phase to allow an endpoint to post it's public key.
-        // Ensure that endpoint has a client certificate.
-        if (endpoint.configuration.clientCertificate.isEmpty()) {
-            if (endpointProvisioningOptions?.publicKey != null) {
-                val certificate = certificateManager.generateEndpointCertificateFromPublicKey(uuid, endpointProvisioningOptions.publicKey)
-                endpoint.configuration.clientCertificate = certificate
-                endpoint.configuration.privateKey = ""
-            } else {
-                val certificateAndKey = certificateManager.generateEndpointKeyAndCertificate(uuid)
-                endpoint.configuration.clientCertificate = certificateAndKey.first
-                endpoint.configuration.privateKey = certificateAndKey.second
-            }
-        }
-        if (endpoint.configuration.clientCertificate.isEmpty()) {
-            throw CloudioHttpExceptions.InternalServerError("Unable to create client authentication certificate.")
-        }
-
         // Add custom properties.
         endpointProvisioningOptions?.customProperties?.run {
             endpoint.configuration.properties.putAll(this)
         }
 
-
-        // Remove pending tokens.
+        // Remove pending tokens for this endpoint.
         provisionTokenRepository.deleteByEndpointUUID(uuid)
 
         // Add a token to the provision token database.
@@ -100,20 +75,36 @@ class EndpointProvisioningController(
 
     @GetMapping("/provision/{token}")
     @ResponseStatus(HttpStatus.OK)
-
     @ApiOperation("Get endpoint configuration information for a pending provision token.")
     fun provisionByToken(
             @PathVariable @ApiParam("Provision token.", required = true) token: String,
-            @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat = EndpointProvisioningDataFormat.JSON
+            @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
+            @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
     ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
         CloudioHttpExceptions.Forbidden("Forbidden")
     }.let {
         endpointRepository.findById(it.endpointUUID).orElseThrow {
             CloudioHttpExceptions.NotFound("Not found")
         }.run {
+
+            if (configuration.clientCertificate.isEmpty()) {
+                if (publicKey != null) {
+                    val certificate = certificateManager.generateEndpointCertificateFromPublicKey(uuid, publicKey)
+                    configuration.clientCertificate = certificate
+                    configuration.privateKey = ""
+                } else {
+                    val certificateAndKey = certificateManager.generateEndpointKeyAndCertificate(uuid)
+                    configuration.clientCertificate = certificateAndKey.first
+                    configuration.privateKey = certificateAndKey.second
+                }
+            }
+            if (configuration.clientCertificate.isEmpty()) {
+                throw CloudioHttpExceptions.InternalServerError("Unable to create client authentication certificate.")
+            }
+
             provisionTokenRepository.delete(it)
 
-            when (endpointProvisionDataFormat) {
+            when (endpointProvisionDataFormat ?:  EndpointProvisioningDataFormat.JSON) {
                 EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType("application/json"))
                         .header("Endpoint", uuid.toString())
