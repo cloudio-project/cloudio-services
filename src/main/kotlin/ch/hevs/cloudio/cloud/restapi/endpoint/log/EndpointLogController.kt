@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.endpoint.logs
+package ch.hevs.cloudio.cloud.restapi.endpoint.log
 
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.LogLevel
@@ -15,7 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/logs")
+@RequestMapping("/api/v1/endpoints")
 @Api(
         tags = ["Endpoint Log Access"],
         description = "Access endpoint logs."
@@ -24,7 +24,7 @@ class EndpointLogController(
         private val influx: InfluxDB,
         private val influxProperties: CloudioInfluxProperties
 ) {
-    @GetMapping("/{uuid}", produces = ["application/json"])
+    @GetMapping("/{uuid}/log", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @ApiOperation("Retrieve log output of a given endpoint in JSON format.")

@@ -1,4 +1,4 @@
-package ch.hevs.cloudio.cloud.restapi.endpoint.logs
+package ch.hevs.cloudio.cloud.restapi.endpoint.log
 
 import ch.hevs.cloudio.cloud.model.LogLevel
 import com.fasterxml.jackson.annotation.JsonInclude
