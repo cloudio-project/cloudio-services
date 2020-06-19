@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.extension.toPrivateKey
 import ch.hevs.cloudio.cloud.extension.toX509Certificate
@@ -15,16 +14,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.io.StringWriter
 import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.PrivateKey
 import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.util.*
-import java.util.zip.ZipInputStream
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
