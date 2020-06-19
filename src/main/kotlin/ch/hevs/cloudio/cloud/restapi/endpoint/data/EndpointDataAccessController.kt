@@ -28,12 +28,14 @@ import javax.servlet.http.HttpServletRequest
 @Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RestController
 @RequestMapping("/api/v1/data")
-class EndpointDataAccessController(private val endpointRepository: EndpointRepository,
-                                   private val permissionManager: CloudioPermissionManager,
-                                   private val influxDB: InfluxDB,
-                                   private val influxProperties: CloudioInfluxProperties,
-                                   private val serializationFormats: Collection<SerializationFormat>,
-                                   private val rabbitTemplate: RabbitTemplate) {
+class EndpointDataAccessController(
+        private val endpointRepository: EndpointRepository,
+        private val permissionManager: CloudioPermissionManager,
+        private val influxDB: InfluxDB,
+        private val influxProperties: CloudioInfluxProperties,
+        private val serializationFormats: Collection<SerializationFormat>,
+        private val rabbitTemplate: RabbitTemplate
+) {
     private val antMatcher = AntPathMatcher()
 
     @ApiOperation("Read access to endpoint's data model.")
@@ -61,7 +63,7 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
         }
 
         // Retrieve endpoint from repository.
-        val endpoint = endpointRepository.findById(modelIdentifier.endpoint).orElseThrow{
+        val endpoint = endpointRepository.findById(modelIdentifier.endpoint).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
@@ -76,7 +78,7 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
         }
 
         // Fill data from influxDB.
-        when(data) {
+        when (data) {
             is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
             is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
             is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
@@ -109,7 +111,7 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
         }
 
         // Retrieve endpoint from repository.
-        val endpoint = endpointRepository.findById(modelIdentifier.endpoint).orElseThrow{
+        val endpoint = endpointRepository.findById(modelIdentifier.endpoint).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
@@ -119,12 +121,12 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
         }
 
         // Ensure that it is an attribute and send the value using AMQP.
-        when(data) {
+        when (data) {
             is Attribute -> if (data.constraint != AttributeConstraint.SetPoint && data.constraint != AttributeConstraint.Parameter)
                 throw CloudioApiException("Attribute is not a SetPoint, nor a Parameter.")
             else {
                 // Convert value to target datatype.
-                val typedValue = when(data.type) {
+                val typedValue = when (data.type) {
                     AttributeType.Invalid -> throw CloudioHttpExceptions.InternalServerError("Invalid datatype.")
                     AttributeType.Boolean -> value.toBoolean()
                     AttributeType.Integer -> value.toLong()
@@ -148,4 +150,66 @@ class EndpointDataAccessController(private val endpointRepository: EndpointRepos
     }
 
     // TODO: Event based subscription, maybe based on SSE or web sockets.
+
+    /* Existing code:
+    @RequestMapping("/notifyAttributeChange", method = [RequestMethod.POST])
+    fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return notifyAttributeChange(userName, attributeRequestLongpoll)
+    }
+
+    @RequestMapping("/notifyAttributeChange/{attributeTopic}/{timeout}", method = [RequestMethod.GET])
+    fun notifyAttributeChange(@PathVariable attributeTopic: String, @PathVariable timeout: Long): DeferredResult<Attribute> {
+        val userName = SecurityContextHolder.getContext().authentication.name
+
+        return notifyAttributeChange(userName, AttributeRequestLongpoll(attributeTopic.replace(".", "/"), timeout))
+    }
+
+    fun notifyAttributeChange(userName: String, attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
+        val permissionMap = PermissionUtils
+                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
+
+        val splitTopic = attributeRequestLongpoll.attributeTopic.split("/")
+        if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
+            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
+
+        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
+            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
+        else {
+            try {
+                val attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest(attributeRequestLongpoll.attributeTopic))
+                if (attribute != null) {
+
+                    val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
+                            CloudioHttpExceptions.Timeout("No attribute change after " + attributeRequestLongpoll.timeout + "ms on topic: " + attributeRequestLongpoll.attributeTopic))
+
+                    if (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) {
+                        CompletableFuture.runAsync {
+                            object : AttributeChangeNotifier(connectionFactory, "@update." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
+                                override fun notifyAttributeChange(attribute: Attribute) {
+                                    result.setResult(attribute)
+                                }
+                            }
+                        }
+                    } else if (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint) {
+                        CompletableFuture.runAsync {
+                            object : AttributeChangeNotifier(connectionFactory, "@set." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
+                                override fun notifyAttributeChange(attribute: Attribute) {
+                                    result.setResult(attribute)
+                                }
+                            }
+                        }
+                    } else
+                        throw CloudioHttpExceptions.BadRequest("Attribute with constraint ${attribute.constraint} can't send notification")
+
+                    return result
+                } else
+                    throw CloudioHttpExceptions.BadRequest("Attribute doesn't exist")
+            } catch (e: CloudioApiException) {
+                throw CloudioHttpExceptions.BadRequest("Couldn't get Attribute: " + e.message)
+            }
+        }
+    }
+    */
 }

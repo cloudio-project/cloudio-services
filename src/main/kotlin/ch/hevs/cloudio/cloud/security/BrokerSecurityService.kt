@@ -1,9 +1,9 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
-import ch.hevs.cloudio.cloud.repo.authentication.User
+import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
+import ch.hevs.cloudio.cloud.repo.authentication.User
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
@@ -25,7 +25,7 @@ import javax.annotation.PostConstruct
 @Profile("authentication", "default")
 class BrokerSecurityService(private val userRepository: MONGOUserRepository,
                             private val userGroupRepository: MONGOUserGroupRepository,
-                            private val endpointEntityRepository: MONOGOEndpointEntityRepository,
+                            private val endpointRepository: EndpointRepository,
                             private val passwordEncoder: PasswordEncoder,
                             private val rabbitProperties: RabbitProperties) {
 
@@ -83,8 +83,8 @@ class BrokerSecurityService(private val userRepository: MONGOUserRepository,
                         "refused"
                     }
                 } else {   // Authentication with certificates --> Endpoint.
-                    val endpoint = endpointEntityRepository.findById(UUID.fromString(id))
-                    if (endpoint.isPresent && !endpoint.get().blocked) {
+                    val endpoint = endpointRepository.findById(UUID.fromString(id))
+                    if (endpoint.isPresent && !endpoint.get().banned) {
                         log.debug("Access granted for endpoint \"$id\" using client certificate.")
                         "allow"
                     } else {
@@ -139,8 +139,8 @@ class BrokerSecurityService(private val userRepository: MONGOUserRepository,
                 } else {
                     when (uuidPattern.matches(id)) {
                         true -> {
-                            if (id == routingKey[1] && endpointEntityRepository.existsById(UUID.fromString(id))) {
-                                if (!endpointEntityRepository.findByIdOrNull(UUID.fromString(id))!!.blocked) {
+                            if (id == routingKey[1] && endpointRepository.existsById(UUID.fromString(id))) {
+                                if (!endpointRepository.findByIdOrNull(UUID.fromString(id))!!.banned) {
                                     log.debug("Access to topic $routingKey granted for endpoint $id")
                                     "allow"
                                 } else {
@@ -170,11 +170,11 @@ class BrokerSecurityService(private val userRepository: MONGOUserRepository,
                                     log.warn("Access to topic $routingKey refused for user $id - invalid topic")
                                     "deny"
                                 }
-                                !endpointEntityRepository.existsById(UUID.fromString(routingKey[1])) -> {
+                                !endpointRepository.existsById(UUID.fromString(routingKey[1])) -> {
                                     log.warn("Access to topic $routingKey refused for user $id - endpoint does not exist")
                                     "deny"
                                 }
-                                endpointEntityRepository.findByIdOrNull(UUID.fromString(routingKey[1]))!!.blocked -> {
+                                endpointRepository.findByIdOrNull(UUID.fromString(routingKey[1]))!!.banned -> {
                                     log.warn("Access to topic $routingKey refused for user $id - endpoint is blocked")
                                     "deny"
                                 }

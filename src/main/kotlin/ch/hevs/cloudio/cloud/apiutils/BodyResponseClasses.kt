@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.apiutils
 
-import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
+import ch.hevs.cloudio.cloud.model.Attribute
+import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.security.PermissionPriority
@@ -52,8 +52,6 @@ data class UserGroupRightRequest(val userGroupName: String, val userGroupRight: 
 data class EndpointCreateRequest(val endpointFriendlyName: String)
 
 data class EndpointRequest(val endpointUuid: String)
-
-data class EndpointAnswer(val endpointFriendlyName: String, val endpointEntity: EndpointEntity)
 
 data class EndpointFriendlyName(val endpointFriendlyName: String)
 

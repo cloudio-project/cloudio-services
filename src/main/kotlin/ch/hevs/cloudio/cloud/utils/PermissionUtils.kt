@@ -1,7 +1,9 @@
 package ch.hevs.cloudio.cloud.utils
 
-import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.repo.EndpointEntity
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.AttributeType
+import ch.hevs.cloudio.cloud.model.CloudioObject
+import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.security.Permission
@@ -63,17 +65,6 @@ object PermissionUtils {
     }
 
     // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
-    fun censorEndpointFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity) {
-        val topic = endpointEntity.endpointUuid.toString() + "/"
-
-        for (node in endpointEntity.endpoint.nodes) {
-            val topicNode = topic + node.key + "/"
-            censorNodeFromUserPermission(permissionMap, topicNode, node.value)
-        }
-
-    }
-
-    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
     fun censorNodeFromUserPermission(permissionMap: Map<String, PrioritizedPermission>, topic: String, node: Node) {
 
         for (cloudioObject in node.objects) {
@@ -100,24 +91,6 @@ object PermissionUtils {
             val innerTopicObject = innerTopic + innerCloudioObject.key + "/"
             censorObjectFromUserPermission(permissionMap, innerTopicObject, innerCloudioObject.value)
         }
-    }
-
-    // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.
-    fun getAccessibleAttributesFromEndpoint(permissionMap: Map<String, PrioritizedPermission>, endpointEntity: EndpointEntity): MutableMap<String, Permission> {
-        if (endpointEntity.blocked)
-            return mutableMapOf()
-        else {
-
-            val topic = endpointEntity.endpointUuid.toString() + "/"
-
-            val attributesRight: MutableMap<String, Permission> = mutableMapOf()
-            for (node in endpointEntity.endpoint.nodes) {
-                val topicNode = topic + node.key + "/"
-                attributesRight.putAll(getAccessibleAttributesFromNode(permissionMap, topicNode, node.value, attributesRight))
-            }
-            return attributesRight
-        }
-
     }
 
     // TODO: This can be done using @PostFilter annotation and PermissionEvaluator bean.

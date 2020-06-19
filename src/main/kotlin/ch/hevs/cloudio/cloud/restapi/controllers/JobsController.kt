@@ -3,13 +3,13 @@ package ch.hevs.cloudio.cloud.restapi.controllers
 import ch.hevs.cloudio.cloud.apiutils.ExecOutputNotifier
 import ch.hevs.cloudio.cloud.apiutils.JobExecuteRequest
 import ch.hevs.cloudio.cloud.apiutils.JobsUtil
+import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.model.JobsLineOutput
-import ch.hevs.cloudio.cloud.security.Permission
-import ch.hevs.cloudio.cloud.repo.MONOGOEndpointEntityRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserGroupRepository
 import ch.hevs.cloudio.cloud.repo.authentication.MONGOUserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions.CLOUDIO_SUCCESS_MESSAGE
+import ch.hevs.cloudio.cloud.security.Permission
 import ch.hevs.cloudio.cloud.utils.PermissionUtils
 import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
@@ -20,14 +20,13 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.*
 import java.util.concurrent.Executors
 
 //@RestController
 //@RequestMapping("/api/v1")
-class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository, var endpointEntityRepository: MONOGOEndpointEntityRepository) {
+class JobsController(var connectionFactory: ConnectionFactory, val influx: InfluxDB, var userRepository: MONGOUserRepository, var userGroupRepository: MONGOUserGroupRepository, var endpointEntityRepository: EndpointRepository) {
 
     @Autowired
     val rabbitTemplate = RabbitTemplate()
@@ -45,7 +44,7 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
         val endpointGeneralPermission = permissionMap.get(genericTopic)
         if (endpointGeneralPermission?.permission == Permission.OWN) {
 
-            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(jobExecuteRequest.endpointUuid))!!.blocked)
+            if (endpointEntityRepository.findByIdOrNull(UUID.fromString(jobExecuteRequest.endpointUuid))!!.banned)
                 throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
 
             if (!jobExecuteRequest.getOutput) {
