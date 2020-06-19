@@ -41,10 +41,10 @@ class EndpointProvisioningController(
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.crt\"")
             .body(caCertificate)
 
-    @PostMapping("/endpoint/{uuid}/provisionToken", produces = ["text/plain"])
+    @PostMapping("/endpoints/{uuid}/provisionToken", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
     @Transactional
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @ApiOperation("Prepare endpoint for provision and returns the token that can be used for provisioning.")
     fun prepareProvisionByUUID(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
