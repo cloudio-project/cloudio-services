@@ -93,7 +93,8 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
             bindings = [
                 QueueBinding(
                         value = Queue(
-                                name = "cloudio.service.internal.CertificateManagerService::generateEndpointCertificateFromPublicKey"
+                                name = "cloudio.service.internal.CertificateManagerService::generateEndpointCertificateFromPublicKey",
+                                exclusive = "true"
                         ),
                         exchange = Exchange(
                                 name = "cloudio.service.internal",
