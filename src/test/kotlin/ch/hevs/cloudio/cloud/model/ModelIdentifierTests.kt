@@ -11,8 +11,13 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.NONE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
+        assert(id.modelPath() == "")
+        assert(id.modelPath('.') == "")
+        assert(id.toAMQPTopic() == "")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "")
+        assert(id.toInfluxSeriesName() == "")
         assert(id.toString() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
-        assert(id.toString('/') == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString('.') == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -22,6 +27,8 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("00000000-0000-0000-0000-000000000000").valid)
         assert(!ModelIdentifier("c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
+        assert(!ModelIdentifier("@upsdate.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
+        assert(!ModelIdentifier("@upsdate/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
     }
 
     @Test
@@ -31,7 +38,13 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_ONLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
+        assert(id.modelPath() == "")
+        assert(id.modelPath('.') == "")
+        assert(id.toAMQPTopic() == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toInfluxSeriesName() == "")
         assert(id.toString() == "@online/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString('.') == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -41,7 +54,13 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_ONLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString('/') == "@online/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.modelPath() == "")
+        assert(id.modelPath('.') == "")
+        assert(id.toAMQPTopic() == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toInfluxSeriesName() == "")
+        assert(id.toString() == "@online/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString('.') == "@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -81,7 +100,13 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_OFFLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
+        assert(id.modelPath() == "")
+        assert(id.modelPath('.') == "")
+        assert(id.toAMQPTopic() == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toInfluxSeriesName() == "")
         assert(id.toString() == "@offline/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString('.') == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -91,7 +116,13 @@ class ModelIdentifierTests {
         assert(id.action == ActionIdentifier.ENDPOINT_OFFLINE)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 0)
-        assert(id.toString('/') == "@offline/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.modelPath() == "")
+        assert(id.modelPath('.') == "")
+        assert(id.toAMQPTopic() == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toInfluxSeriesName() == "")
+        assert(id.toString() == "@offline/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.toString('.') == "@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
     }
 
     @Test
@@ -132,7 +163,27 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
+        assert(id.modelPath() == "aNode")
+        assert(id.modelPath('.') == "aNode")
+        assert(id.toAMQPTopic() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
         assert(id.toString() == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.toString('.') == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+
+        val idv01 = ModelIdentifier("@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.NODE_ADDED)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 1)
+        assert(idv01[0] == "aNode")
+        assert(idv01.modelPath() == "aNode")
+        assert(idv01.modelPath('.') == "aNode")
+        assert(idv01.toAMQPTopic() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toString() == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(idv01.toString('.') == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
     }
 
     @Test
@@ -143,7 +194,27 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
-        assert(id.toString('/') == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.modelPath() == "aNode")
+        assert(id.modelPath('.') == "aNode")
+        assert(id.toAMQPTopic() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toString() == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.toString('.') == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+
+        val idv01 = ModelIdentifier("@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/nodes/aNode")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.NODE_ADDED)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 1)
+        assert(idv01[0] == "aNode")
+        assert(idv01.modelPath() == "aNode")
+        assert(idv01.modelPath('.') == "aNode")
+        assert(idv01.toAMQPTopic() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toString() == "@nodeAdded/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(idv01.toString('.') == "@nodeAdded.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
     }
 
     @Test
@@ -186,7 +257,27 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
+        assert(id.modelPath() == "aNode")
+        assert(id.modelPath('.') == "aNode")
+        assert(id.toAMQPTopic() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
         assert(id.toString() == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.toString('.') == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+
+        val idv01 = ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.NODE_REMOVED)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 1)
+        assert(idv01[0] == "aNode")
+        assert(idv01.modelPath() == "aNode")
+        assert(idv01.modelPath('.') == "aNode")
+        assert(idv01.toAMQPTopic() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toString() == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(idv01.toString('.') == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
     }
 
     @Test
@@ -197,7 +288,27 @@ class ModelIdentifierTests {
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
         assert(id.count() == 1)
         assert(id[0] == "aNode")
-        assert(id.toString('/') == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.modelPath() == "aNode")
+        assert(id.modelPath('.') == "aNode")
+        assert(id.toAMQPTopic() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(id.toString() == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(id.toString('.') == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+
+        val idv01 = ModelIdentifier("@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66/nodes/aNode")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.NODE_REMOVED)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 1)
+        assert(idv01[0] == "aNode")
+        assert(idv01.modelPath() == "aNode")
+        assert(idv01.modelPath('.') == "aNode")
+        assert(idv01.toAMQPTopic() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
+        assert(idv01.toString() == "@nodeRemoved/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode")
+        assert(idv01.toString('.') == "@nodeRemoved.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode")
     }
 
     @Test
@@ -242,7 +353,13 @@ class ModelIdentifierTests {
         assert(id[0] == "aNode")
         assert(id[1] == "anObject")
         assert(id[2] == "anAttribute")
+        assert(id.modelPath() == "aNode/anObject/anAttribute")
+        assert(id.modelPath('.') == "aNode.anObject.anAttribute")
+        assert(id.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.anObject.attributes.anAttribute")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
         assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
+        assert(id.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
 
         for (i in 1..99) {
             val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
@@ -256,7 +373,50 @@ class ModelIdentifierTests {
                 assert(id[i + 1] == it)
             }
             assert(id[i + 1] == "anAttribute")
+            assert(id.modelPath() == "aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(id.modelPath('.') == "aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.${objectNames.joinToString(".objects.")}.attributes.anAttribute")
+            assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
             assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(id.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+        }
+
+        val idv01 = ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.anObject.attributes.anAttribute")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.ATTRIBUTE_UPDATE)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 3)
+        assert(idv01[0] == "aNode")
+        assert(idv01[1] == "anObject")
+        assert(idv01[2] == "anAttribute")
+        assert(idv01.modelPath() == "aNode/anObject/anAttribute")
+        assert(idv01.modelPath('.') == "aNode.anObject.anAttribute")
+        assert(idv01.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.anObject.attributes.anAttribute")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(idv01.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
+        assert(idv01.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+
+        for (i in 1..99) {
+            val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
+            val idv01 = ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.${objectNames.joinToString(".objects.")}.attributes.anAttribute")
+            assert(idv01.valid)
+            assert(idv01.action == ActionIdentifier.ATTRIBUTE_UPDATE)
+            assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+            assert(idv01.count() == i + 2)
+            assert(idv01[0] == "aNode")
+            objectNames.forEachIndexed {i, it ->
+                assert(idv01[i + 1] == it)
+            }
+            assert(idv01[i + 1] == "anAttribute")
+            assert(idv01.modelPath() == "aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(idv01.modelPath('.') == "aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.${objectNames.joinToString(".objects.")}.attributes.anAttribute")
+            assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(idv01.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
         }
     }
 
@@ -270,7 +430,13 @@ class ModelIdentifierTests {
         assert(id[0] == "aNode")
         assert(id[1] == "anObject")
         assert(id[2] == "anAttribute")
-        assert(id.toString('/') == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
+        assert(id.modelPath() == "aNode/anObject/anAttribute")
+        assert(id.modelPath('.') == "aNode.anObject.anAttribute")
+        assert(id.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.anObject.attributes.anAttribute")
+        assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
+        assert(id.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
 
         for (i in 1..99) {
             val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
@@ -284,7 +450,50 @@ class ModelIdentifierTests {
                 assert(id[i + 1] == it)
             }
             assert(id[i + 1] == "anAttribute")
-            assert(id.toString('/') == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(id.modelPath() == "aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(id.modelPath('.') == "aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.${objectNames.joinToString(".objects.")}.attributes.anAttribute")
+            assert(id.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(id.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(id.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+        }
+
+        val idv01 = ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/nodes/aNode/objects/anObject/attributes/anAttribute")
+        assert(idv01.valid)
+        assert(idv01.action == ActionIdentifier.ATTRIBUTE_UPDATE)
+        assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+        assert(idv01.count() == 3)
+        assert(idv01[0] == "aNode")
+        assert(idv01[1] == "anObject")
+        assert(idv01[2] == "anAttribute")
+        assert(idv01.modelPath() == "aNode/anObject/anAttribute")
+        assert(idv01.modelPath('.') == "aNode.anObject.anAttribute")
+        assert(idv01.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(idv01.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.anObject.attributes.anAttribute")
+        assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+        assert(idv01.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute")
+        assert(idv01.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute")
+
+        for (i in 1..99) {
+            val objectNames = List(i) { List(8) { ('a'..'z').random() }.joinToString() }
+            val idv01 = ModelIdentifier("@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/nodes/aNode/objects/${objectNames.joinToString("/objects/")}/attributes/anAttribute")
+            assert(idv01.valid)
+            assert(idv01.action == ActionIdentifier.ATTRIBUTE_UPDATE)
+            assert(idv01.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
+            assert(idv01.count() == i + 2)
+            assert(idv01[0] == "aNode")
+            objectNames.forEachIndexed {i, it ->
+                assert(idv01[i + 1] == it)
+            }
+            assert(idv01[i + 1] == "anAttribute")
+            assert(idv01.modelPath() == "aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(idv01.modelPath('.') == "aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toAMQPTopic() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toAMQPTopicForVersion01Endpoints() == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.nodes.aNode.objects.${objectNames.joinToString(".objects.")}.attributes.anAttribute")
+            assert(idv01.toInfluxSeriesName() == "c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
+            assert(idv01.toString() == "@update/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/${objectNames.joinToString("/")}/anAttribute")
+            assert(idv01.toString('.') == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.${objectNames.joinToString(".")}.anAttribute")
         }
     }
 

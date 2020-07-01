@@ -138,7 +138,7 @@ class EndpointDataAccessController(
                 val serializationFormat = serializationFormats.fromIdentifiers(endpoint.dataModel.supportedFormats)
                         ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
                 rabbitTemplate.convertAndSend("amq.topic",
-                        modelIdentifier.toAmqpTopic(),
+                        if (endpoint.dataModel.version != "v0.1") modelIdentifier.toAMQPTopic() else modelIdentifier.toAMQPTopicForVersion01Endpoints(),
                         serializationFormat.serializeAttribute(Attribute(
                                 data.constraint,
                                 data.type,

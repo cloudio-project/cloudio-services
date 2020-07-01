@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
@@ -10,14 +11,14 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.util.*
-
 
 @Service
 @Profile("set-version-mapper", "default")
-class SetVersionMapperService(val endpointEntityRepository: EndpointRepository, val rabbitTemplate: RabbitTemplate) {
+class SetVersionMapperService(
+        private val endpointRepository: EndpointRepository,
+        private val rabbitTemplate: RabbitTemplate
+) {
     private val log = LogFactory.getLog(SetVersionMapperService::class.java)
 
     @RabbitListener(bindings = [
@@ -33,28 +34,15 @@ class SetVersionMapperService(val endpointEntityRepository: EndpointRepository, 
     ])
     fun handleSetMessage(message: Message) {
         try {
-            val splitTopic = message.messageProperties.receivedRoutingKey.split(".")
-
-            val uuid = UUID.fromString(splitTopic[1])
-
-            val endpoint = endpointEntityRepository.findByIdOrNull(uuid)
-
-            if (endpoint != null) {
-                if (endpoint.dataModel.version == "v0.1" && splitTopic[2] != "node") {
-                    var topic = ""
-                    splitTopic.forEachIndexed { i, topicPart ->
-                        topic += when (i) {
-                            0, 1 -> ("$topicPart.")                        //@set and uudi
-                            2 -> ("node.$topicPart.")                      // add "node." before node name
-                            splitTopic.size - 1 -> ("attribute.$topicPart")// add "attribute." before node attribute
-                            else -> ("object.$topicPart.")                 // add "object." before node object
-                        }
+            val modelIdentifier = ModelIdentifier(message.messageProperties.receivedRoutingKey)
+            if (modelIdentifier.valid) {
+                endpointRepository.findById(modelIdentifier.endpoint).ifPresent {
+                    if (it.dataModel.version == "v0.1") {
+                        rabbitTemplate.convertAndSend("amq.topic", modelIdentifier.toAMQPTopicForVersion01Endpoints(), message)
                     }
-                    rabbitTemplate.convertAndSend("amq.topic", topic, message)
                 }
             }
         } catch (exception: Exception) {
-
             log.error("Exception during @set message translation from v0.2 to v0.1:", exception)
         }
     }

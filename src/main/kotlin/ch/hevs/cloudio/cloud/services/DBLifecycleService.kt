@@ -54,6 +54,7 @@ class DBLifecycleService(
     override fun nodeRemoved(endpointId: String, nodeName: String) {
         val endpointEntity = endpointRepository.findByIdOrNull(UUID.fromString(endpointId))
         if (endpointEntity != null) {
+            // TODO: It would be better to mark the node as not connected rather than removing it from the datamodel!
             endpointEntity.dataModel.nodes.remove(nodeName)
             endpointRepository.save(endpointEntity)
         }
