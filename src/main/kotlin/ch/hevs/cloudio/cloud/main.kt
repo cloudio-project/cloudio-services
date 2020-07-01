@@ -22,6 +22,7 @@ import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.data.domain.AuditorAware
+import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -39,6 +40,7 @@ import java.util.*
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableSwagger2
+@EnableScheduling
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
