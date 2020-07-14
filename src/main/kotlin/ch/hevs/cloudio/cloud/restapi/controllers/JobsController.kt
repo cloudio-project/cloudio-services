@@ -62,11 +62,10 @@ class JobsController(var connectionFactory: ConnectionFactory, val influx: Influ
                 executor.execute {
                     try {
                         //create a listener for the correct execOutput topic
-                        val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid, serializationFormats) {
+                        val execOutputNotifier = object : ExecOutputNotifier(connectionFactory, "@execOutput." + jobExecuteRequest.endpointUuid + "." + jobExecuteRequest.correlationID, serializationFormats) {
                             override fun notifyExecOutput(jobsLineOutput: JobsLineOutput) {
-                                if (jobsLineOutput.correlationID == jobExecuteRequest.correlationID)
                                 //send the output as a Sse event
-                                    emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
+                                emitter.send(SseEmitter.event().id(jobsLineOutput.correlationID).data(jobsLineOutput.data))
                             }
                         }
                         JobsUtil.executeJob(rabbitTemplate, jobExecuteRequest, endpointEntityRepository, serializationFormats)
