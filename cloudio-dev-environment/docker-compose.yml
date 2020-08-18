@@ -17,11 +17,6 @@ services:
     ports:
     - "8086:8086"
 
-  mongo:
-    image: mongo:4.0-xenial
-    ports:
-    - "27017:27017"
-
   database:
     image: postgres:12.2-alpine
     ports:
