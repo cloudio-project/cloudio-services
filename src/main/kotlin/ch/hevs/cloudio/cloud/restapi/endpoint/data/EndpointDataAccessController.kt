@@ -126,7 +126,7 @@ class EndpointDataAccessController(
                 throw CloudioApiException("Attribute is not a SetPoint, nor a Parameter.")
             else {
                 // Convert value to target datatype.
-                val typedValue = when (data.type) {
+                val typedValue: Any = when (data.type) {
                     AttributeType.Invalid -> throw CloudioHttpExceptions.InternalServerError("Invalid datatype.")
                     AttributeType.Boolean -> value.toBoolean()
                     AttributeType.Integer -> value.toLong()
