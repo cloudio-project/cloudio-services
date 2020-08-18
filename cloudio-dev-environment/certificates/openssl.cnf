@@ -1,53 +1,62 @@
 [ ca ]
-default_ca = cloudio-dev-ca
+default_ca = cloudio_ca
 
-[ cloudio-dev-ca ]
-certificate = ca.cer
-private_key = ca.key
 
-database = .index.txt
-new_certs_dir = .signed
+[ cloudio_ca ]
+dir = .
+certificate = $dir/ca.cer
+database = $dir/.index.txt
+new_certs_dir = $dir/.signed
+private_key = $dir/ca.key
 serial = .serial
 
 default_crl_days = 7
 default_days = 3650
-default_md = sha1
+default_md = sha256
 
-policy = ca_policy
+policy = cloudio_ca_policy
 x509_extensions = certificate_extensions
 
-[ ca_policy ]
+
+[ cloudio_ca_policy ]
 commonName = supplied
 stateOrProvinceName = optional
 countryName = optional
 emailAddress = optional
 organizationName = optional
 organizationalUnitName = optional
+domainComponent = optional
+
 
 [ certificate_extensions ]
 basicConstraints = CA:false
 
+
 [ req ]
 default_bits = 2048
-default_keyfile = ca.key
-default_md = sha1
+default_keyfile = ./ca.key
+default_md = sha256
 prompt = yes
 distinguished_name = root_ca_distinguished_name
 x509_extensions = root_ca_extensions
 
+
 [ root_ca_distinguished_name ]
 commonName = hostname
+
 
 [ root_ca_extensions ]
 basicConstraints = CA:true
 keyUsage = keyCertSign, cRLSign
 
+
 [ client_ca_extensions ]
 basicConstraints = CA:false
-keyUsage = digitalSignature
+keyUsage = digitalSignature,keyEncipherment
 extendedKeyUsage = 1.3.6.1.5.5.7.3.2
+
 
 [ server_ca_extensions ]
 basicConstraints = CA:false
-keyUsage = keyEncipherment
+keyUsage = digitalSignature,keyEncipherment
 extendedKeyUsage = 1.3.6.1.5.5.7.3.1
