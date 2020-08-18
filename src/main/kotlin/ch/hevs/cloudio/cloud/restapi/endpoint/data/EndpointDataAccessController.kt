@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.data
 
-import ch.hevs.cloudio.cloud.apiutils.CloudioApiException
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
@@ -123,7 +122,7 @@ class EndpointDataAccessController(
         // Ensure that it is an attribute and send the value using AMQP.
         when (data) {
             is Attribute -> if (data.constraint != AttributeConstraint.SetPoint && data.constraint != AttributeConstraint.Parameter)
-                throw CloudioApiException("Attribute is not a SetPoint, nor a Parameter.")
+                throw CloudioHttpExceptions.BadRequest("Attribute is not a SetPoint, nor a Parameter.")
             else {
                 // Convert value to target datatype.
                 val typedValue: Any = when (data.type) {
