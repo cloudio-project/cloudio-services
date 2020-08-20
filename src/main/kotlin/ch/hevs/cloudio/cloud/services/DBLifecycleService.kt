@@ -7,56 +7,46 @@ import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-@Profile("lifecycle-mongo", "default")
+@Profile("lifecycle-db", "default")
 class DBLifecycleService(
         private val endpointRepository: EndpointRepository,
         serializationFormats: Collection<SerializationFormat>
 ) : AbstractLifecycleService(serializationFormats) {
+    private val log = LogFactory.getLog(DBLifecycleService::class.java)
 
-    companion object {
-        private val log = LogFactory.getLog(DBLifecycleService::class.java)
-    }
-
-    override fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel) {
-        val endpointEntity = endpointRepository.findByIdOrNull(UUID.fromString(endpointId))
-        if (endpointEntity != null) {
-            endpointEntity.online = true
-            endpointEntity.dataModel.version = endpoint.version
-            endpointEntity.dataModel.supportedFormats = endpoint.supportedFormats
-            endpointEntity.dataModel.nodes.clear()
-            endpointEntity.dataModel.nodes.putAll(endpoint.nodes)
-            endpointRepository.save(endpointEntity)
-        } else
-            log.error("Endpoint tried to use @online on $endpointId whose hasn't been created by using cloud.iO API")
-    }
-
-    override fun endpointIsOffline(endpointId: String) {
-        val endpointEntity = endpointRepository.findByIdOrNull(UUID.fromString(endpointId))
-        if (endpointEntity != null) {
-            endpointEntity.online = false
-            endpointRepository.save(endpointEntity)
+    override fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
+        endpoint.online = true
+        endpoint.dataModel.version = dataModel.version
+        endpoint.dataModel.supportedFormats = dataModel.supportedFormats
+        dataModel.nodes.forEach {
+            it.value.online = true
+            endpoint.dataModel.nodes[it.key] = it.value
         }
+        endpointRepository.save(endpoint)
     }
 
-    override fun nodeAdded(endpointId: String, nodeName: String, node: Node) {
-        val endpointEntity = endpointRepository.findByIdOrNull(UUID.fromString(endpointId))
-        if (endpointEntity != null) {
-            endpointEntity.dataModel.nodes[nodeName] = node
-            endpointRepository.save(endpointEntity)
+    override fun endpointIsOffline(uuid: String) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
+        endpoint.online = false
+        endpoint.dataModel.nodes.forEach {
+            it.value.online = false
         }
+        endpointRepository.save(endpoint)
     }
 
-    override fun nodeRemoved(endpointId: String, nodeName: String) {
-        val endpointEntity = endpointRepository.findByIdOrNull(UUID.fromString(endpointId))
-        if (endpointEntity != null) {
-            // TODO: It would be better to mark the node as not connected rather than removing it from the datamodel!
-            endpointEntity.dataModel.nodes.remove(nodeName)
-            endpointRepository.save(endpointEntity)
+    override fun nodeAdded(uuid: String, nodeName: String, node: Node) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
+        node.online = true
+        endpoint.dataModel.nodes[nodeName] = node
+        endpointRepository.save(endpoint)
+    }
+
+    override fun nodeRemoved(uuid: String, nodeName: String) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
+        endpoint.dataModel.nodes[nodeName]?.run {
+            online = false
+            endpointRepository.save(endpoint)
         }
     }
 }

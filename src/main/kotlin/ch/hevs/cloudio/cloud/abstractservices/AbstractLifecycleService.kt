@@ -116,8 +116,8 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
         }
     }
 
-    abstract fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel)
-    abstract fun endpointIsOffline(endpointId: String)
-    abstract fun nodeAdded(endpointId: String, nodeName: String, node: Node)
-    abstract fun nodeRemoved(endpointId: String, nodeName: String)
+    abstract fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel)
+    abstract fun endpointIsOffline(uuid: String)
+    abstract fun nodeAdded(uuid: String, nodeName: String, node: Node)
+    abstract fun nodeRemoved(uuid: String, nodeName: String)
 }

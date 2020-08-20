@@ -17,31 +17,31 @@ class InfluxLifecycleService(
         serializationFormats: Collection<SerializationFormat>,
         private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService(serializationFormats) {
 
-    override fun endpointIsOffline(endpointId: String) {
+    override fun endpointIsOffline(uuid: String) {
         influx.write(influxProperties.database, "autogen", Point
-                .measurement(endpointId)
+                .measurement(uuid)
                 .addField("event", "offline")
                 .build())
     }
 
-    override fun endpointIsOnline(endpointId: String, endpoint: EndpointDataModel) {
+    override fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel) {
         influx.write(influxProperties.database, "autogen", Point
-                .measurement(endpointId)
+                .measurement(uuid)
                 .addField("event", "online")
                 .build())
     }
 
-    override fun nodeAdded(endpointId: String, nodeName: String, node: Node) {
+    override fun nodeAdded(uuid: String, nodeName: String, node: Node) {
         influx.write(influxProperties.database, "autogen", Point
-                .measurement(endpointId)
+                .measurement(uuid)
                 .tag("node", nodeName)
                 .addField("event", "added")
                 .build())
     }
 
-    override fun nodeRemoved(endpointId: String, nodeName: String) {
+    override fun nodeRemoved(uuid: String, nodeName: String) {
         influx.write(influxProperties.database, "autogen", Point
-                .measurement(endpointId)
+                .measurement(uuid)
                 .tag("node", nodeName)
                 .addField("event", "removed")
                 .build())
