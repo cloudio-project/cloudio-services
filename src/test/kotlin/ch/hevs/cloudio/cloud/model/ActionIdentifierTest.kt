@@ -434,13 +434,65 @@ class ActionIdentifierTest {
 
         mutableListOf("@delayed", "e7b45562-cf44-4940-8441-f0892e32328c").let {
             val action = ActionIdentifier.fromURI(it)
-            assert(action == ActionIdentifier.DELAYED)
+            assert(action == ActionIdentifier.DELAYED_MESSAGES)
             assert(it.count() == 1)
             assert(it.first() == "e7b45562-cf44-4940-8441-f0892e32328c")
             assert(action.toString() == "@delayed")
         }
 
         mutableListOf("@delayed", "e7b45562-cf44-4940-8441-f0892e32328c", "to_long").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.INVALID)
+            assert(it.count() == 2)
+            assert(it.first() == "e7b45562-cf44-4940-8441-f0892e32328c")
+            assert(action.toString() == "INVALID")
+        }
+    }
+
+    @Test
+    fun testFromURILogLevel() {
+        mutableListOf("@logsLevel").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.INVALID)
+            assert(it.count() == 0)
+            assert(action.toString() == "INVALID")
+        }
+
+        mutableListOf("@logsLevel", "e7b45562-cf44-4940-8441-f0892e32328c").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.LOG_LEVEL)
+            assert(it.count() == 1)
+            assert(it.first() == "e7b45562-cf44-4940-8441-f0892e32328c")
+            assert(action.toString() == "@logsLevel")
+        }
+
+        mutableListOf("@logsLevel", "e7b45562-cf44-4940-8441-f0892e32328c", "to_long").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.INVALID)
+            assert(it.count() == 2)
+            assert(it.first() == "e7b45562-cf44-4940-8441-f0892e32328c")
+            assert(action.toString() == "INVALID")
+        }
+    }
+
+    @Test
+    fun testFromURILogOutput() {
+        mutableListOf("@logs").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.INVALID)
+            assert(it.count() == 0)
+            assert(action.toString() == "INVALID")
+        }
+
+        mutableListOf("@logs", "e7b45562-cf44-4940-8441-f0892e32328c").let {
+            val action = ActionIdentifier.fromURI(it)
+            assert(action == ActionIdentifier.LOG_OUTPUT)
+            assert(it.count() == 1)
+            assert(it.first() == "e7b45562-cf44-4940-8441-f0892e32328c")
+            assert(action.toString() == "@logs")
+        }
+
+        mutableListOf("@logs", "e7b45562-cf44-4940-8441-f0892e32328c", "to_long").let {
             val action = ActionIdentifier.fromURI(it)
             assert(action == ActionIdentifier.INVALID)
             assert(it.count() == 2)

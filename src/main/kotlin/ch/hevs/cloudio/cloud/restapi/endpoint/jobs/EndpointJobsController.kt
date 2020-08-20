@@ -1,14 +1,13 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.jobs
 
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
-import ch.hevs.cloudio.cloud.model.JobParameter
-import ch.hevs.cloudio.cloud.model.JobsLineOutput
+import ch.hevs.cloudio.cloud.model.JobExecCommand
+import ch.hevs.cloudio.cloud.model.JobExecOutput
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import com.rabbitmq.client.CancelCallback
-import com.rabbitmq.client.Channel
 import com.rabbitmq.client.DeliverCallback
 import io.swagger.annotations.Api
 import org.apache.juli.logging.LogFactory
@@ -22,7 +21,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.io.IOException
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.Executors
 
 @RestController
 @RequestMapping("/api/v1/endpoints")
@@ -50,7 +48,7 @@ class EndpointJobsController(
             CloudioHttpExceptions.NotFound("Endpoint not found.")
         }.dataModel.supportedFormats)
                 ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
-        val jobParameter = JobParameter(
+        val jobParameter = JobExecCommand(
                 jobURI = body.jobURI,
                 sendOutput = body.enableOutput,
                 correlationID = body.correlationID,
@@ -65,7 +63,7 @@ class EndpointJobsController(
                     val tag = basicConsume(it.queue, true,
                             DeliverCallback { _, message ->
                                 serializationFormats.detect(message.body)?.run {
-                                    val output = JobsLineOutput()
+                                    val output = JobExecOutput()
                                     deserializeJobsLineOutput(output, message.body)
                                     emitter.send(SseEmitter.event().data(output.data).build())
                                 }

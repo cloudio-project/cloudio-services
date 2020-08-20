@@ -28,8 +28,8 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
         return mapper.readerForUpdating(transaction).readValue(data)
     }
 
-    override fun deserializeDelayed(delayedContainer: DelayedContainer, data: ByteArray){
-        return mapper.readerForUpdating(delayedContainer).readValue(data)
+    override fun deserializeDelayed(delayedMessages: DelayedMessages, data: ByteArray){
+        return mapper.readerForUpdating(delayedMessages).readValue(data)
     }
 
     override fun deserializeCloudioLog(logMessage: LogMessage, data: ByteArray) {
@@ -44,11 +44,11 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
         return LogLevel.valueOf(mapper.readValue(data, Map::class.java)["level"] as String)
     }
 
-    override fun serializeJobParameter(jobParameter: JobParameter): ByteArray {
-        return mapper.writeValueAsBytes(jobParameter)
+    override fun serializeJobParameter(jobExecCommand: JobExecCommand): ByteArray {
+        return mapper.writeValueAsBytes(jobExecCommand)
     }
 
-    override fun deserializeJobsLineOutput(jobsLineOutput: JobsLineOutput, data: ByteArray) {
-        return mapper.readerForUpdating(jobsLineOutput).readValue(data)
+    override fun deserializeJobsLineOutput(jobExecOutput: JobExecOutput, data: ByteArray) {
+        return mapper.readerForUpdating(jobExecOutput).readValue(data)
     }
 }

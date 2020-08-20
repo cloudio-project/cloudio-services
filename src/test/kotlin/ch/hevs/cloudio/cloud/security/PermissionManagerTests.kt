@@ -840,7 +840,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.VIEW
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.VIEW
             user.permissions.add(permission)
             userRepository.save(user)
         }
@@ -904,7 +904,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.READ
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.READ
             user.permissions.add(permission)
             userRepository.save(user)
         }
@@ -937,7 +937,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.READ
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.READ
             user.permissions.add(permission)
             userRepository.save(user)
         }
@@ -1002,7 +1002,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.ACCESS)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.WRITE
             user.permissions.add(permission)
             userRepository.save(user)
         }
@@ -1035,7 +1035,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.BROWSE)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.WRITE
             user.permissions.add(permission)
             userRepository.save(user)
         }
@@ -1068,7 +1068,7 @@ class PermissionManagerTests {
                     password = passwordEncoder.encode("MYPASS")
             ))
             val permission = UserEndpointPermission(user.id, testEndpointUUID, EndpointPermission.READ)
-            permission.modelPermissions[modelIdentifier.modelPath()] = EndpointModelElementPermission.WRITE
+            permission.modelPermissions[modelIdentifier.toModelPath()] = EndpointModelElementPermission.WRITE
             user.permissions.add(permission)
             userRepository.save(user)
         }

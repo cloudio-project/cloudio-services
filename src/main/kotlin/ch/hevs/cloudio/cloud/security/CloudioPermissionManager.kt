@@ -114,7 +114,7 @@ class CloudioPermissionManager(
         var permission = EndpointModelElementPermission.DENY
 
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, modelID.endpoint).ifPresent {
-            it.modelPermissions[modelID.modelPath()]?.apply {
+            it.modelPermissions[modelID.toModelPath()]?.apply {
                 permission = permission.higher(this)
             }
         }
@@ -122,7 +122,7 @@ class CloudioPermissionManager(
         if (!permission.fulfills(EndpointModelElementPermission.WRITE)) {
             userDetails.groupMembershipIDs.forEach { groupID ->
                 userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
-                    it.modelPermissions[modelID.modelPath()]?.apply {
+                    it.modelPermissions[modelID.toModelPath()]?.apply {
                         permission = permission.higher(this)
                     }
                 }

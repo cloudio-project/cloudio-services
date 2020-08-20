@@ -44,7 +44,7 @@ class DelayedService(
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
 
-                val delayed = DelayedContainer()
+                val delayed = DelayedMessages()
 
                 messageFormat.deserializeDelayed(delayed, data)
 

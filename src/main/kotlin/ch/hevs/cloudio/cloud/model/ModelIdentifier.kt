@@ -3,10 +3,30 @@ package ch.hevs.cloudio.cloud.model
 import java.io.Serializable
 import java.util.*
 
+/**
+ * Identifies an element in the cloud.iO data model. This can be an endpoint, a node, an object, an attribute or a special function/entity (like jobs, logs, delayed message,...).
+ *
+ * @param uri   URI of the model identifier.
+ */
 class ModelIdentifier(uri: String) : Serializable {
+    /**
+     * If true the model identifier is valid.
+     * Note that as many constraints as possible are already checked for validity during the construction of an object.
+     */
     val valid: Boolean
+
+    /**
+     * The action if present.
+     * If no action is present (can be the case when referring a REST resource) the value will be [ActionIdentifier.NONE].
+     * If the value is [ActionIdentifier.INVALID], the identifier seems not to be valid.
+     */
     var action: ActionIdentifier
+
+    /**
+     * UUID of the endpoint. Always present if the model identifier is valid.
+     */
     val endpoint: UUID
+
     private val modelPath: List<String>
 
     init {
@@ -48,14 +68,48 @@ class ModelIdentifier(uri: String) : Serializable {
         }
     }
 
+    /**
+     * Returns the number of path components (excluding action and endpoint UUID) are present.
+     *
+     * @return Number of path components.
+     */
     fun count() = modelPath.count()
+
+    /**
+     * Returns the path component at the specified position.
+     *
+     * @param index Position.
+     * @return      Path component at requested index.
+     */
     operator fun get(index: Int) = modelPath[index]
+
+    /**
+     * Returns the last path component.
+     *
+     * @return  Last path component.
+     */
     fun last() = modelPath.last()
 
-    fun modelPath(separator: Char = '/') = modelPath.joinToString("$separator")
+    /**
+     * Returns the model path with the requested separator.
+     *
+     * @param separator Seperator to use for path construction. Defaults to '/'.
+     * @return          Model path.
+     */
+    fun toModelPath(separator: Char = '/') = modelPath.joinToString("$separator")
 
-    fun toAMQPTopic() = if (valid && action != ActionIdentifier.NONE) "$action.$endpoint${if (count() > 0) "." else ""}${modelPath('.')}" else ""
+    /**
+     * Returns the corresponding AMQP topic.
+     *
+     * @return AMQP topic.
+     */
+    fun toAMQPTopic() = if (valid && action != ActionIdentifier.NONE) "$action.$endpoint${if (count() > 0) "." else ""}${toModelPath('.')}" else ""
 
+    /**
+     * Returns the corresponding AMQP topic in the v0.1 format for compatibility with older endpoints.
+     *
+     * @return AMQP topic on v0.1 format.
+     */
     fun toAMQPTopicForVersion01Endpoints() = if (valid && action != ActionIdentifier.NONE)
         "$action.$endpoint${if (count() > 0) "." else ""}" + modelPath.mapIndexed { i, s ->
             when (i) {
@@ -66,14 +120,32 @@ class ModelIdentifier(uri: String) : Serializable {
         }.joinToString(".")
     else ""
 
-    fun toInfluxSeriesName() = if (valid && count() > 0) "$endpoint.${modelPath('.')}" else ""
+    /**
+     * Returns the corresponding ID used to identify the time series in InfluxDB.
+     *
+     * @return InfluxDB series name.
+     */
+    fun toInfluxSeriesName() = if (valid && count() > 0) "$endpoint.${toModelPath('.')}" else ""
 
-    fun resolve(endpoint: EndpointDataModel): Optional<Any> = Optional.ofNullable(when (count()) {
+    /**
+     * Searches the endpoint data model element referenced by itself in the passed endpoint data model.
+     *
+     * Note that the method does not check that the endpoint's UUID matches!
+     *
+     * @param endpoint  Endpoint to search for the data model element.
+     * @return          Either the endpoint data model element referenced by itself or nothing if not found.
+     */
+    fun resolve(endpoint: EndpointDataModel): Optional<Any> = Optional.ofNullable(if (!valid) null else when (count()) {
         0 -> endpoint
         1 -> endpoint.nodes[this[0]]
         else -> endpoint.nodes[this[0]]?.let { resolveOnNode(it) }
     })
 
+    /**
+     * Returns a string representation of the model identifier.
+     *
+     * @return String representation.
+     */
     fun toString(separator: Char) = if (valid)
         (if (action == ActionIdentifier.NONE) mutableListOf() else mutableListOf(action.toString())).apply {
             add("$endpoint")

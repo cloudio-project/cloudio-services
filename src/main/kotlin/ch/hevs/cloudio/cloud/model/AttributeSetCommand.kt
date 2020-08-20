@@ -1,12 +1,14 @@
 package ch.hevs.cloudio.cloud.model
 
 /**
- * Represents an attribute (data model leaf) of a cloud.iO endpoint's data model. Send by an endpoint on an attribute update (@update) and as port of a @online or @nodeAdded message.
- * @see ActionIdentifier.ATTRIBUTE_UPDATE
- * @see ActionIdentifier.ENDPOINT_ONLINE
- * @see ActionIdentifier.NODE_ADDED
+ * Send from the cloud to an endpoint in order to change the value of an attribute using the action @set.
+ * @see ActionIdentifier.ATTRIBUTE_SET
  */
-data class Attribute(
+data class AttributeSetCommand(
+        /**
+         * Correlation ID to send with the request to the endpoint has received in the @set message
+         */
+        val correlationID: String = "",
         /**
          * Defines if the attribute can be read or written from the cloud or if it is static.
          */
@@ -18,13 +20,13 @@ data class Attribute(
         var type: AttributeType = AttributeType.Invalid,
 
         /**
-         * Timestamp of the last value change (reported to the cloud) of the attribute or timestamp of the set request from the the cloud to the endpoint.
+         * Timestamp.
          * UNIX Epoch time in seconds, floating point type allows higher resolution than seconds.
          */
         var timestamp: Double = -1.0,
 
         /**
-         * Attribute's value.
+         * Attribute's new value to set.
          * The type has to match [Attribute.type]
          */
         var value: Any? = null

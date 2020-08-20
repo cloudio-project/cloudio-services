@@ -11,12 +11,12 @@ interface SerializationFormat {
     fun serializeAttribute(attribute: Attribute): ByteArray
     fun deserializeAttribute(attribute: Attribute, data: ByteArray)
     fun deserializeTransaction(transaction: Transaction, data: ByteArray)
-    fun deserializeDelayed(delayedContainer: DelayedContainer, data: ByteArray)
+    fun deserializeDelayed(delayedMessages: DelayedMessages, data: ByteArray)
     fun deserializeCloudioLog(logMessage: LogMessage, data: ByteArray)
     fun serializeLogLevel(logLevel: LogLevel): ByteArray
     fun deserializeLogLevel(data: ByteArray): LogLevel
-    fun serializeJobParameter(jobParameter: JobParameter): ByteArray
-    fun deserializeJobsLineOutput(jobsLineOutput: JobsLineOutput, data: ByteArray)
+    fun serializeJobParameter(jobExecCommand: JobExecCommand): ByteArray
+    fun deserializeJobsLineOutput(jobExecOutput: JobExecOutput, data: ByteArray)
 }
 
 fun Collection<SerializationFormat>.detect(data: ByteArray) = this.firstOrNull { it.detect(data) }
