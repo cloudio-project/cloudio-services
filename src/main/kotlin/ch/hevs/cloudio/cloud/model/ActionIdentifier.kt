@@ -21,7 +21,7 @@ enum class ActionIdentifier(
     TRANSACTION("@transaction", 1, 1),
 
     JOB_EXECUTE("@exec", 1 , 1),
-    JOB_EXECUTE_OUTPUT("@execOutput", 1, 1),
+    JOB_EXECUTE_OUTPUT("@execOutput", 2, 2),
 
     DELAYED("@delayed", 1, 1);
 
