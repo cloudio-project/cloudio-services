@@ -796,22 +796,26 @@ class ModelIdentifierTests {
 
     @Test
     fun validExecOutputAMQP() {
-        val id = ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        val id = ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.2486765")
         assert(id.valid)
         assert(id.action == ActionIdentifier.JOB_EXECUTE_OUTPUT)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
-        assert(id.count() == 0)
-        assert(id.toString() == "@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.count() == 1)
+        assert(id[0] == "2486765")
+        assert(id.last() == "2486765")
+        assert(id.toString() == "@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/2486765")
     }
 
     @Test
     fun validExecOutputREST() {
-        val id = ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        val id = ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/2486765")
         assert(id.valid)
         assert(id.action == ActionIdentifier.JOB_EXECUTE_OUTPUT)
         assert(id.endpoint == UUID.fromString("c7bfaa1c-857f-438a-b5f0-447e3cd34f66"))
-        assert(id.count() == 0)
-        assert(id.toString('/') == "@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(id.count() == 1)
+        assert(id[0] == "2486765")
+        assert(id.last() == "2486765")
+        assert(id.toString('/') == "@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/2486765")
     }
 
     @Test
@@ -823,10 +827,10 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@exeOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
         assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.").valid)
-        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode").valid)
-        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject").valid)
-        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anAttribute").valid)
-        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.aNode.anObject.anotherObject.anAttribute").valid)
+        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.45768434.aNode").valid)
+        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.45768434.aNode.anObject").valid)
+        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.45768434.aNode.anObject.anAttribute").valid)
+        assert(!ModelIdentifier("@execOutput.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.45768434.aNode.anObject.anotherObject.anAttribute").valid)
     }
 
     @Test
@@ -838,10 +842,11 @@ class ModelIdentifierTests {
         assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0--447e3cd34f66").valid)
         assert(!ModelIdentifier("@xecOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66").valid)
         assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
-        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode").valid)
-        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject").valid)
-        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anAttribute").valid)
-        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/aNode/anObject/anotherObject/anAttribute").valid)
+        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/").valid)
+        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/45768434/aNode").valid)
+        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/45768434/aNode/anObject").valid)
+        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/45768434/aNode/anObject/anAttribute").valid)
+        assert(!ModelIdentifier("@execOutput/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/45768434/aNode/anObject/anotherObject/anAttribute").valid)
     }
 
     @Test
