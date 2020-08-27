@@ -1560,4 +1560,13 @@ class ModelIdentifierTests {
         assert(ModelIdentifier("@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node1/object1").resolve(model).isEmpty)
         assert(ModelIdentifier("@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node1/object1/attr1").resolve(model).isEmpty)
     }
+
+    @Test
+    fun equalsTest() {
+        val m1 = ModelIdentifier("@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+        assert(ModelIdentifier(m1.toString('.')) == m1)
+        assert(ModelIdentifier("@online.c7bfaa1c-857f-438a-b5f0-447e3cd34f67") != m1)
+        assert(ModelIdentifier("@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66") != m1)
+        assert(ModelIdentifier("@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.toto") != m1)
+    }
 }
