@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+
+  "title": "Job execute output message",
+  "description": "Job execute output message send from endpoint to cloud to the topic @execOutput/<Endpoint UUID>/<Correlation ID>",
+
+  "$ref": "types.json#/definitions/JobExecOutput"
+}

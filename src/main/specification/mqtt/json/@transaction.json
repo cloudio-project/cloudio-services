@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+
+  "title": "Transaction message",
+  "description": "Transaction message send from endpoint to cloud to the topic @transaction/<Endpoint UUID>",
+
+  "$ref": "types.json#/definitions/Transaction"
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+
+  "title": "Log level message",
+  "description": "Log level message send from cloud to endpoint to the topic @logsLevel/<Endpoint UUID>",
+
+  "type": "object",
+  "properties": {
+    "level": {
+      "$ref": "types.json#/definitions/LogLevel"
+    }
+  },
+  "required": [
+    "level"
+  ],
+  "additionalProperties": false
+}
