@@ -13,5 +13,5 @@ data class JobExecOutput(
         /**
          * Job's output.
          */
-        var data: String = ""
+        var output: String = ""
 )

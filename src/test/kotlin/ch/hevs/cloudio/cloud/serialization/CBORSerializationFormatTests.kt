@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.AttributeType
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -18,8 +19,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoNodesDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA3,                                      // map(3)
                 0x67,                                   // text(7)
                 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                    // "version"
@@ -43,8 +43,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelThreeNodesDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA3,                                     // map(3)
                 0x67,                                  // text(7)
                 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
@@ -62,13 +61,31 @@ class CBORSerializationFormatTests {
                 0xA3,                                  // map(3)
                 0x63,                               // text(3)
                 0x6F, 0x6E, 0x65,                        // "one"
-                0xA0,                               // map(0)
+                0xA2,                               // map(2)
+                0x6A,                            // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
+                0x80,                            // array(0)
+                0x67,                            // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
+                0xA0,                            // map(0)
                 0x63,                               // text(3)
                 0x74, 0x77, 0x6F,                        // "two"
-                0xA0,                               // map(0)
+                0xA2,                               // map(2)
+                0x6A,                            // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
+                0x80,                            // array(0)
+                0x67,                            // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
+                0xA0,                            // map(0)
                 0x65,                               // text(5)
                 0x74, 0x68, 0x72, 0x65, 0x65,                    // "three"
-                0xA0                               // map(0)
+                0xA2,                               // map(2)
+                0x6A,                            // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
+                0x80,                            // array(0)
+                0x67,                            // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
+                0xA0                            // map(0)
         ).map(Int::toByte).toByteArray())
         assert(endpointDataModel.version == "v0.2")
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
@@ -77,8 +94,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoVersionDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA2,                                     // map(2)
                 0x70,                                  // text(0x16,)
                 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
@@ -98,8 +114,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoVersionNoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA1,               // map(1)
                 0x65,            // text(5)
                 0x6E, 0x6F, 0x64, 0x65, 0x73, // "nodes"
@@ -112,30 +127,28 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoNodesPropertyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
-                0xA2,                                     // map(2)
-                0x67,                                  // text(7)
-                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
-                0x64,                                  // text(4)
-                0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
-                0x70,                                  // text(0x16,)
-                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
-                0x82,                                  // array(2)
-                0x64,                               // text(4)
-                0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
-                0x64,                               // text(4)
-                0x43, 0x42, 0x4F, 0x52                      // "0xCB,OR"
-        ).map(Int::toByte).toByteArray())
-        assert(endpointDataModel.version == "v0.2")
-        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
-        assert(endpointDataModel.nodes.isEmpty())
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
+                    0xA2,                                     // map(2)
+                    0x67,                                  // text(7)
+                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
+                    0x64,                                  // text(4)
+                    0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
+                    0x70,                                  // text(0x16,)
+                    0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
+                    0x82,                                  // array(2)
+                    0x64,                               // text(4)
+                    0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
+                    0x64,                               // text(4)
+                    0x43, 0x42, 0x4F, 0x52                      // "0xCB,OR"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
     }
 
     @Test
     fun endpointDataModelV1NoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA2,                   // map(2)
                 0x67,                // text(7)
                 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
@@ -152,18 +165,16 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelEmptyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(0x0A).map(Int::toByte).toByteArray())
-        assert(endpointDataModel.version == "v0.1")
-        assert(endpointDataModel.supportedFormats == setOf("JSON"))
-        assert(endpointDataModel.nodes.isEmpty())
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(0x0A).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
     }
 
     @Test
     fun endpointDataModelV2NoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+            CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                     0xA2,                   // map(2)
                     0x67,                // text(7)
                     0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
@@ -179,9 +190,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun endpointDataModelAdditionalPropertyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+            CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                     0xA4,                                     // map(4)
                     0x67,                                  // text(7)
                     0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
@@ -211,8 +221,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun nodeNoObjectsDeserialize() {
-        val node = Node()
-        CBORSerializationFormat().deserializeNode(node, arrayOf(
+        val node = CBORSerializationFormat().deserializeNode(arrayOf(
                 0xA2,                            // map(2)
                 0x6A,                         // text(0x10,)
                 0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
@@ -225,75 +234,89 @@ class CBORSerializationFormatTests {
                 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,          // "objects"
                 0xA0                         // map(0)
         ).map(Int::toByte).toByteArray())
-        assert(node.online == null)
+        assert(!node.online)
         assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
         assert(node.objects.count() == 0)
     }
 
     @Test
     fun nodeTwoObjectsDeserialize() {
-        val node = Node()
-        CBORSerializationFormat().deserializeNode(node, arrayOf(
-                0xA2,                            // map(2)
+        val node = CBORSerializationFormat().deserializeNode(arrayOf(
+                0xA2,                               // map(2)
+                0x6A,                            // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
+                0x82,                            // array(2)
                 0x6A,                         // text(0x10,)
-                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
-                0x82,                         // array(2)
-                0x6A,                      // text(0x10,)
-                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
-                0x6A,                      // text(0x10,)
-                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42, // "InterfaceB"
-                0x67,                         // text(7)
-                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,          // "objects"
-                0xA2,                         // map(2)
-                0x64,                      // text(4)
-                0x6F, 0x62, 0x6A, 0x31,             // "obj1"
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41,    // "InterfaceA"
+                0x6A,                         // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42,    // "InterfaceB"
+                0x67,                            // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
+                0xA2,                            // map(2)
+                0x64,                         // text(4)
+                0x6F, 0x62, 0x6A, 0x31,                // "obj1"
+                0xA3,                         // map(3)
+                0x68,                      // text(8)
+                0x63, 0x6F, 0x6E, 0x66, 0x6F, 0x72, 0x6D, 0x73,     // "conforms"
+                0xF6,                      // primitive(0x22,)
+                0x67,                      // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,       // "objects"
                 0xA0,                      // map(0)
-                0x64,                      // text(4)
-                0x6F, 0x62, 0x6A, 0x32,             // "obj2"
+                0x6A,                      // text(0x10,)
+                0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, // "attributes"
+                0xA0,                      // map(0)
+                0x64,                         // text(4)
+                0x6F, 0x62, 0x6A, 0x32,                // "obj2"
+                0xA3,                         // map(3)
+                0x68,                      // text(8)
+                0x63, 0x6F, 0x6E, 0x66, 0x6F, 0x72, 0x6D, 0x73,     // "conforms"
+                0xF6,                      // primitive(0x22,)
+                0x67,                      // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,       // "objects"
+                0xA0,                      // map(0)
+                0x6A,                      // text(0x10,)
+                0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73, // "attributes"
                 0xA0                      // map(0)
         ).map(Int::toByte).toByteArray())
-        assert(node.online == null)
+        assert(!node.online)
         assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
         assert(node.objects.count() == 2)
     }
 
     @Test
     fun nodeNoImplementsDeserialize() {
-        val node = Node()
-        CBORSerializationFormat().deserializeNode(node, arrayOf(
-                0xA1,                   // map(1)
-                0x67,                // text(7)
-                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73, // "objects"
-                0xA0                // map(0)
-        ).map(Int::toByte).toByteArray())
-        assert(node.online == null)
-        assert(node.implements.count() == 0)
-        assert(node.objects.count() == 0)
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeNode(arrayOf(
+                    0xA1,                   // map(1)
+                    0x67,                // text(7)
+                    0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73, // "objects"
+                    0xA0                // map(0)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing node.")
     }
 
     @Test
     fun nodeNoObjectsPropertyDeserialize() {
-        val node = Node()
-        CBORSerializationFormat().deserializeNode(node, arrayOf(
-                0xA1,                            // map(1)
-                0x6A,                         // text(0x10,)
-                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
-                0x82,                         // array(2)
-                0x6A,                      // text(0x10,)
-                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
-                0x6A,                      // text(0x10,)
-                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42 // "InterfaceB"
-        ).map(Int::toByte).toByteArray())
-        assert(node.online == null)
-        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
-        assert(node.objects.count() == 0)
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeNode(arrayOf(
+                    0xA1,                            // map(1)
+                    0x6A,                         // text(0x10,)
+                    0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
+                    0x82,                         // array(2)
+                    0x6A,                      // text(0x10,)
+                    0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
+                    0x6A,                      // text(0x10,)
+                    0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42 // "InterfaceB"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing node.")
     }
 
     @Test
     fun nodeUnknownPropertyDeserialize() {
-        val node = Node()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeNode(node, arrayOf(
+            CBORSerializationFormat().deserializeNode(arrayOf(
                     0xA3,                            // map(3)
                     0x65,                         // text(5)
                     0x6C, 0x65, 0x76, 0x65, 0x6C,              // "level"
@@ -326,8 +349,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun staticBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,   // map(4)
                 0x6A,   // text(10)
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74, // "constraint"
@@ -352,8 +374,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun staticIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,   // map(4)
                 0x6A,   // text(10)
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74, // "constraint"
@@ -378,8 +399,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun staticNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,   // map(4)
                 0x6A,   // text(10)
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74, //"constraint"
@@ -404,8 +424,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun staticStringAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -431,8 +450,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun parameterBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -457,8 +475,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun parameterIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -483,8 +500,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun parameterNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -509,8 +525,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun parameterStringAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                            // map(4)
                 0x6A,                         // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,    // "constraint"
@@ -536,8 +551,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun setPointBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -562,8 +576,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun setPointIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -588,8 +601,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun setPointNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -614,8 +626,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun setPointStringAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -641,8 +652,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun statusBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -667,8 +677,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun statusIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -693,8 +702,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun statusNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -719,8 +727,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun statusStringAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -746,8 +753,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun measureBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -772,8 +778,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun measureIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -798,8 +803,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun measureNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                          // map(4)
                 0x6A,                       // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -824,8 +828,7 @@ class CBORSerializationFormatTests {
 
     @Test
     fun measureStringAttributeDeserialize() {
-        val attribute = Attribute()
-        CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+        val attribute = CBORSerializationFormat().deserializeAttribute(arrayOf(
                 0xA4,                            // map(4)
                 0x6A,                         // text(0x10, )
                 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,    // "constraint"
@@ -851,9 +854,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun nullValueAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -876,9 +878,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun invalidConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                            // map(4)
                     0x6A,                         // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,    // "constraint"
@@ -902,9 +903,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun nonExistingConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -927,9 +927,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun invalidTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -952,9 +951,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun nonExistingTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                                  // map(4)
                     0x6A,                               // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,          // "constraint"
@@ -978,9 +976,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun booleanTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1003,9 +1000,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun stringTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1029,9 +1025,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun negativeTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                          // map(4)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1054,9 +1049,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun nonMatchingTypesAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA4,                                       // map(4)
                     0x6A,                                    // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,               // "constraint"
@@ -1080,9 +1074,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun missingConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA3,                        // map(3)
                     0x64,                     // text(4)
                     0x74, 0x79, 0x70, 0x65,            // "type"
@@ -1101,9 +1094,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun missingTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA3,                          // map(3)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1122,9 +1114,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun missingTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA3,                          // map(3)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1144,9 +1135,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun missingValueAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA3,                          // map(3)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
@@ -1166,9 +1156,8 @@ class CBORSerializationFormatTests {
 
     @Test
     fun additionalFieldAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
+            CBORSerializationFormat().deserializeAttribute(arrayOf(
                     0xA5,                          // map(5)
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"

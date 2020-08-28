@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud.serialization
 
+import ch.hevs.cloudio.cloud.serialization.jackson.AbstractJacksonSerializationFormat
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.stereotype.Component
 

@@ -35,8 +35,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val endpoint = EndpointDataModel(version = "v0.1")
-                messageFormat.deserializeEndpointDataModel(endpoint, data)
+                val endpoint = messageFormat.deserializeEndpointDataModel(data)
                 endpointIsOnline(endpointId, endpoint)
             } else {
                 log.error("Unrecognized message format in @online message from $endpointId")
@@ -84,8 +83,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val node = Node()
-                messageFormat.deserializeNode(node, data)
+                val node = messageFormat.deserializeNode(data)
                 nodeAdded(endpointId, nodeName, node)
             } else {
                 log.error("Unrecognized message format in @nodeAdded message from $endpointId")

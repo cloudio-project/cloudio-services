@@ -2,7 +2,6 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.jobs
 
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.model.JobExecCommand
-import ch.hevs.cloudio.cloud.model.JobExecOutput
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
@@ -63,16 +62,15 @@ class EndpointJobsController(
                     val tag = basicConsume(it.queue, true,
                             DeliverCallback { _, message ->
                                 serializationFormats.detect(message.body)?.run {
-                                    val output = JobExecOutput()
-                                    deserializeJobsLineOutput(output, message.body)
-                                    emitter.send(SseEmitter.event().data(output.data).build())
+                                    val output = deserializeJobExecOutput(message.body)
+                                    emitter.send(SseEmitter.event().data(output.output).build())
                                 }
                             },
                             CancelCallback {
                                 emitter.complete()
                             }
                     )
-                    rabbitTemplate.convertAndSend("amq.topic", "@exec.$uuid", serializationFormat.serializeJobParameter(jobParameter))
+                    rabbitTemplate.convertAndSend("amq.topic", "@exec.$uuid", serializationFormat.serializeJobExecCommand(jobParameter))
                     taskScheduler.schedule({
                         try {
                             basicCancel(tag)
@@ -84,7 +82,7 @@ class EndpointJobsController(
 
             return emitter
         } else {
-            rabbitTemplate.convertAndSend("amq.topic", "@exec.$uuid", serializationFormat.serializeJobParameter(jobParameter))
+            rabbitTemplate.convertAndSend("amq.topic", "@exec.$uuid", serializationFormat.serializeJobExecCommand(jobParameter))
             return null
         }
     }

@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.*
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.AttributeType
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -12,8 +13,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoNodesDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
                 "supportedFormats": [ "JSON", "CBOR" ],
@@ -27,15 +27,23 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelThreeNodesDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
                 "supportedFormats": [ "JSON", "CBOR" ],
                 "nodes": {
-                    "one": {},
-                    "two": {},
-                    "three": {}
+                    "one": {
+                        "implements": [],
+                        "objects": {}
+                    },
+                    "two": {
+                        "implements": [],
+                        "objects": {}
+                    },
+                    "three": {
+                        "implements": [],
+                        "objects": {}
+                    }
                 }
             }
         """.trimIndent().toByteArray())
@@ -46,8 +54,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoVersionDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "supportedFormats": [ "JSON", "CBOR" ],
                 "nodes": {}
@@ -60,8 +67,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoVersionNoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "nodes": {}
             }
@@ -73,22 +79,20 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelNoNodesPropertyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
                 "supportedFormats": [ "JSON", "CBOR" ]
             }
         """.trimIndent().toByteArray())
-        assert(endpointDataModel.version == "v0.2")
-        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
-        assert(endpointDataModel.nodes.isEmpty())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
     }
 
     @Test
     fun endpointDataModelV1NoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.1",
                 "nodes": {}
@@ -101,21 +105,19 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelEmptyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
-        JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeEndpointDataModel("""
             {
             }
         """.trimIndent().toByteArray())
-        assert(endpointDataModel.version == "v0.1")
-        assert(endpointDataModel.supportedFormats == setOf("JSON"))
-        assert(endpointDataModel.nodes.isEmpty())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
     }
 
     @Test
     fun endpointDataModelV2NoSupportedFormatsDeserialize() {
-        val endpointDataModel = EndpointDataModel()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+            JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
                 "nodes": {}
@@ -127,9 +129,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun endpointDataModelAdditionalPropertyDeserialize() {
-        val endpointDataModel = EndpointDataModel()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeEndpointDataModel(endpointDataModel, """
+            JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
                 "supportedFormats": [ "JSON", "CBOR" ],
@@ -147,66 +148,69 @@ class JSONSerializationFormatTests {
 
     @Test
     fun nodeNoObjectsDeserialize() {
-        val node = Node()
-        JSONSerializationFormat().deserializeNode(node, """
+        val node = JSONSerializationFormat().deserializeNode("""
             {
                 "implements": ["InterfaceA", "InterfaceB"],
                 "objects": {}
             }
         """.trimIndent().toByteArray())
-        assert(node.online == null)
+        assert(!node.online)
         assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
         assert(node.objects.count() == 0)
     }
 
     @Test
     fun nodeTwoObjectsDeserialize() {
-        val node = Node()
-        JSONSerializationFormat().deserializeNode(node, """
+        val node = JSONSerializationFormat().deserializeNode("""
             {
                 "implements": ["InterfaceA", "InterfaceB"],
                 "objects": {
-                    "obj1": {},
-                    "obj2": {}
+                    "obj1": {
+                        "conforms": null,
+                        "objects": {},
+                        "attributes": {}
+                    },
+                    "obj2": {
+                        "conforms": null,
+                        "objects": {},
+                        "attributes": {}
+                    }
                 }
             }
         """.trimIndent().toByteArray())
-        assert(node.online == null)
+        assert(!node.online)
         assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
         assert(node.objects.count() == 2)
     }
 
     @Test
     fun nodeNoImplementsDeserialize() {
-        val node = Node()
-        JSONSerializationFormat().deserializeNode(node, """
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeNode("""
             {
                 "objects": {}
             }
         """.trimIndent().toByteArray())
-        assert(node.online == null)
-        assert(node.implements.count() == 0)
-        assert(node.objects.count() == 0)
+        }
+        assert(exception.message == "Error deserializing node.")
     }
 
     @Test
     fun nodeNoObjectsPropertyDeserialize() {
-        val node = Node()
-        JSONSerializationFormat().deserializeNode(node, """
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeNode("""
             {
                 "implements": ["InterfaceA", "InterfaceB"]
             }
         """.trimIndent().toByteArray())
-        assert(node.online == null)
-        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
-        assert(node.objects.count() == 0)
+        }
+        assert(exception.message == "Error deserializing node.")
     }
 
     @Test
     fun nodeUnknownPropertyDeserialize() {
-        val node = Node()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeNode(node, """
+            JSONSerializationFormat().deserializeNode("""
             {
                 "level": "44",
                 "implements": ["InterfaceA", "InterfaceB"],
@@ -226,8 +230,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun staticBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Boolean",
@@ -243,8 +246,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun staticIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -260,8 +262,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun staticNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Number",
@@ -277,8 +278,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun staticStringAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "String",
@@ -294,8 +294,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun parameterBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Parameter",
                 "type": "Boolean",
@@ -311,8 +310,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun parameterIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Parameter",
                 "type": "Integer",
@@ -328,8 +326,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun parameterNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Parameter",
                 "type": "Number",
@@ -345,8 +342,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun parameterStringAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Parameter",
                 "type": "String",
@@ -362,8 +358,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun setPointBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "SetPoint",
                 "type": "Boolean",
@@ -379,8 +374,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun setPointIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "SetPoint",
                 "type": "Integer",
@@ -396,8 +390,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun setPointNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "SetPoint",
                 "type": "Number",
@@ -413,8 +406,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun setPointStringAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "SetPoint",
                 "type": "String",
@@ -430,8 +422,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun statusBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Status",
                 "type": "Boolean",
@@ -447,8 +438,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun statusIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Status",
                 "type": "Integer",
@@ -464,8 +454,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun statusNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Status",
                 "type": "Number",
@@ -481,8 +470,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun statusStringAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Status",
                 "type": "String",
@@ -498,8 +486,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun measureBooleanAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Measure",
                 "type": "Boolean",
@@ -515,8 +502,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun measureIntegerAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Measure",
                 "type": "Integer",
@@ -532,8 +518,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun measureNumberAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Measure",
                 "type": "Number",
@@ -549,8 +534,7 @@ class JSONSerializationFormatTests {
 
     @Test
     fun measureStringAttributeDeserialize() {
-        val attribute = Attribute()
-        JSONSerializationFormat().deserializeAttribute(attribute, """
+        val attribute = JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Measure",
                 "type": "String",
@@ -566,9 +550,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun nullValueAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Invalid",
                 "type": "String",
@@ -582,9 +565,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun invalidConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Invalid",
                 "type": "String",
@@ -598,9 +580,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun nonExistingConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Hot Dog",
                 "type": "Integer",
@@ -614,9 +595,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun invalidTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Invalid",
@@ -630,9 +610,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun nonExistingTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Spaceship",
@@ -646,9 +625,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun booleanTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -662,9 +640,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun stringTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -678,9 +655,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun negativeTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -694,9 +670,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun nonMatchingTypesAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -710,9 +685,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun missingConstraintAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "type": "Integer",
                 "timestamp": 12345678,
@@ -725,9 +699,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun missingTypeAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "timestamp": 12345678,
@@ -740,9 +713,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun missingTimestampAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -755,9 +727,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun missingValueAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",
@@ -770,9 +741,8 @@ class JSONSerializationFormatTests {
 
     @Test
     fun additionalFieldAttributeDeserialize() {
-        val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute(attribute, """
+            JSONSerializationFormat().deserializeAttribute("""
             {
                 "constraint": "Static",
                 "type": "Integer",

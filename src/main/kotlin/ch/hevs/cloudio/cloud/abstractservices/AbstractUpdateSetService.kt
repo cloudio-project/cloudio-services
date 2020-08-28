@@ -37,8 +37,7 @@ abstract class AbstractUpdateSetService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val attribute = Attribute()
-                messageFormat.deserializeAttribute(attribute, data)
+                val attribute = messageFormat.deserializeAttribute(data)
                 if (attribute.timestamp != -1.0 && attribute.value != null) {
 
                     if (prefix.equals("@update") && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) ||

@@ -5,18 +5,17 @@ import ch.hevs.cloudio.cloud.model.*
 interface SerializationFormat {
     fun detect(data: ByteArray): Boolean
     fun identifier(): String
-    fun deserializeEndpointDataModel(endpoint: EndpointDataModel, data: ByteArray)
-    fun deserializeNode(node: Node, data: ByteArray)
-    fun deserializeObject(obj: CloudioObject, data: ByteArray)
+    fun deserializeEndpointDataModel(data: ByteArray): EndpointDataModel
+    fun deserializeNode(data: ByteArray): Node
     fun serializeAttribute(attribute: Attribute): ByteArray
-    fun deserializeAttribute(attribute: Attribute, data: ByteArray)
-    fun deserializeTransaction(transaction: Transaction, data: ByteArray)
-    fun deserializeDelayed(delayedMessages: DelayedMessages, data: ByteArray)
-    fun deserializeCloudioLog(logMessage: LogMessage, data: ByteArray)
+    fun deserializeAttribute(data: ByteArray): Attribute
+    fun deserializeTransaction(data: ByteArray): Transaction
+    fun deserializeDelayedMessages(data: ByteArray): DelayedMessages
+    fun deserializeLogMessage(data: ByteArray): LogMessage
     fun serializeLogLevel(logLevel: LogLevel): ByteArray
     fun deserializeLogLevel(data: ByteArray): LogLevel
-    fun serializeJobParameter(jobExecCommand: JobExecCommand): ByteArray
-    fun deserializeJobsLineOutput(jobExecOutput: JobExecOutput, data: ByteArray)
+    fun serializeJobExecCommand(jobExecCommand: JobExecCommand): ByteArray
+    fun deserializeJobExecOutput(data: ByteArray): JobExecOutput
 }
 
 fun Collection<SerializationFormat>.detect(data: ByteArray) = this.firstOrNull { it.detect(data) }

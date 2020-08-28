@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.model.Transaction
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
@@ -39,8 +38,7 @@ class EndpointTransactionService(
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val transaction = Transaction()
-                messageFormat.deserializeTransaction(transaction, data)
+                val transaction = messageFormat.deserializeTransaction(data)
                 transaction.attributes.forEach { (topic, attribute) ->
                     rabbitTemplate.convertAndSend("amq.topic",
                             "@update.${topic.replace("/", ".")}",
