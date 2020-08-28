@@ -35,7 +35,14 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
     }
 
     override fun deserializeNode(node: Node, data: ByteArray) {
-        return mapper.readerForUpdating(node).readValue(data)
+        try {
+            mapper.readerForUpdating(node).readValue<Node>(data)
+        } catch (_: Exception) {
+            throw SerializationException("Error deserializing node.")
+        }
+        if (node.online != null) {
+            throw SerializationException("Error deserializing node.")
+        }
     }
 
     override fun deserializeObject(obj: CloudioObject, data: ByteArray) {

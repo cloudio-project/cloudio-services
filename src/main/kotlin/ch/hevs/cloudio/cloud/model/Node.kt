@@ -11,7 +11,7 @@ data class Node(
         /**
          * If true, the node is actually present and working, if false the node was once reported to be present by the endpoint, but is actually not available.
          */
-        var online: Boolean = false,
+        var online: Boolean? = null,
 
         /**
          * A list of interfaces the node implements.

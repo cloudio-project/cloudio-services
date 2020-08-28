@@ -1,19 +1,21 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.model.AttributeType
-import ch.hevs.cloudio.cloud.model.EndpointDataModel
+import ch.hevs.cloudio.cloud.model.*
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /*
  * JSON converted to CBOR using http://cbor.me.
- * Then replaced "#" by "//" and "([0-9,A-F]{2})" by "0x$1, ".
+ * Then replaced "//" by "//" and "([0-9,A-F]{2})" by "0x$1, ".
  * Removed last coma.
  */
 
 class CBORSerializationFormatTests {
+
+    /*
+     * Endpoint data model deserialization.
+     */
+
     @Test
     fun endpointDataModelNoNodesDeserialize() {
         val endpointDataModel = EndpointDataModel()
@@ -202,6 +204,125 @@ class CBORSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing endpoint data model.")
     }
+
+    /*
+     * Node deserialization.
+     */
+
+    @Test
+    fun nodeNoObjectsDeserialize() {
+        val node = Node()
+        CBORSerializationFormat().deserializeNode(node, arrayOf(
+                0xA2,                            // map(2)
+                0x6A,                         // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
+                0x82,                         // array(2)
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42, // "InterfaceB"
+                0x67,                         // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,          // "objects"
+                0xA0                         // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeTwoObjectsDeserialize() {
+        val node = Node()
+        CBORSerializationFormat().deserializeNode(node, arrayOf(
+                0xA2,                            // map(2)
+                0x6A,                         // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
+                0x82,                         // array(2)
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42, // "InterfaceB"
+                0x67,                         // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,          // "objects"
+                0xA2,                         // map(2)
+                0x64,                      // text(4)
+                0x6F, 0x62, 0x6A, 0x31,             // "obj1"
+                0xA0,                      // map(0)
+                0x64,                      // text(4)
+                0x6F, 0x62, 0x6A, 0x32,             // "obj2"
+                0xA0                      // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 2)
+    }
+
+    @Test
+    fun nodeNoImplementsDeserialize() {
+        val node = Node()
+        CBORSerializationFormat().deserializeNode(node, arrayOf(
+                0xA1,                   // map(1)
+                0x67,                // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73, // "objects"
+                0xA0                // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 0)
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeNoObjectsPropertyDeserialize() {
+        val node = Node()
+        CBORSerializationFormat().deserializeNode(node, arrayOf(
+                0xA1,                            // map(1)
+                0x6A,                         // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
+                0x82,                         // array(2)
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
+                0x6A,                      // text(0x10,)
+                0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42 // "InterfaceB"
+        ).map(Int::toByte).toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeUnknownPropertyDeserialize() {
+        val node = Node()
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeNode(node, arrayOf(
+                    0xA3,                            // map(3)
+                    0x65,                         // text(5)
+                    0x6C, 0x65, 0x76, 0x65, 0x6C,              // "level"
+                    0x62,                         // text(2)
+                    0x34, 0x34,                    // "0x44,"
+                    0x6A,                         // text(0x10,)
+                    0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,    // "implements"
+                    0x82,                         // array(2)
+                    0x6A,                      // text(0x10,)
+                    0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x41, // "InterfaceA"
+                    0x6A,                      // text(0x10,)
+                    0x49, 0x6E, 0x74, 0x65, 0x72, 0x66, 0x61, 0x63, 0x65, 0x42, // "InterfaceB"
+                    0x67,                         // text(7)
+                    0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,          // "objects"
+                    0xA2,                         // map(2)
+                    0x64,                      // text(4)
+                    0x6F, 0x62, 0x6A, 0x31,             // "obj1"
+                    0xA0,                      // map(0)
+                    0x64,                      // text(4)
+                    0x6F, 0x62, 0x6A, 0x32,             // "obj2"
+                    0xA0                      // map(0)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing node.")
+    }
+
+    /*
+     * Attribute deserialization.
+     */
 
     @Test
     fun staticBooleanAttributeDeserialize() {

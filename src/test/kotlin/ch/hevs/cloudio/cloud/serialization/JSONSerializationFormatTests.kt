@@ -1,13 +1,15 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.model.AttributeType
-import ch.hevs.cloudio.cloud.model.EndpointDataModel
+import ch.hevs.cloudio.cloud.model.*
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class JSONSerializationFormatTests {
+
+    /*
+     * Endpoint data model deserialization.
+     */
+
     @Test
     fun endpointDataModelNoNodesDeserialize() {
         val endpointDataModel = EndpointDataModel()
@@ -138,6 +140,89 @@ class JSONSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing endpoint data model.")
     }
+
+    /*
+     * Node deserialization.
+     */
+
+    @Test
+    fun nodeNoObjectsDeserialize() {
+        val node = Node()
+        JSONSerializationFormat().deserializeNode(node, """
+            {
+                "implements": ["InterfaceA", "InterfaceB"],
+                "objects": {}
+            }
+        """.trimIndent().toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeTwoObjectsDeserialize() {
+        val node = Node()
+        JSONSerializationFormat().deserializeNode(node, """
+            {
+                "implements": ["InterfaceA", "InterfaceB"],
+                "objects": {
+                    "obj1": {},
+                    "obj2": {}
+                }
+            }
+        """.trimIndent().toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 2)
+    }
+
+    @Test
+    fun nodeNoImplementsDeserialize() {
+        val node = Node()
+        JSONSerializationFormat().deserializeNode(node, """
+            {
+                "objects": {}
+            }
+        """.trimIndent().toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 0)
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeNoObjectsPropertyDeserialize() {
+        val node = Node()
+        JSONSerializationFormat().deserializeNode(node, """
+            {
+                "implements": ["InterfaceA", "InterfaceB"]
+            }
+        """.trimIndent().toByteArray())
+        assert(node.online == null)
+        assert(node.implements.count() == 2 && node.implements == setOf("InterfaceA", "InterfaceB"))
+        assert(node.objects.count() == 0)
+    }
+
+    @Test
+    fun nodeUnknownPropertyDeserialize() {
+        val node = Node()
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeNode(node, """
+            {
+                "level": "44",
+                "implements": ["InterfaceA", "InterfaceB"],
+                "objects": {
+                    "obj1": {},
+                    "obj2": {}
+                }
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing node.")
+    }
+
+    /*
+     * Attribute deserialization.
+     */
 
     @Test
     fun staticBooleanAttributeDeserialize() {
