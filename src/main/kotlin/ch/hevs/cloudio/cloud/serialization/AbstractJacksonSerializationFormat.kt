@@ -6,11 +6,32 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapper) : SerializationFormat {
     init {
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        mapper.apply {
+            configure(DeserializationFeature.USE_LONG_FOR_INTS, true)
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+            configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, true)
+            configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, true)
+            configure(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY, true)
+            configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, true)
+        }
     }
 
-    override fun deserializeEndpoint(endpoint: EndpointDataModel, data: ByteArray) {
-        return mapper.readerForUpdating(endpoint).readValue(data)
+    override fun deserializeEndpointDataModel(endpoint: EndpointDataModel, data: ByteArray) {
+        try {
+            mapper.readerForUpdating(endpoint).readValue<EndpointDataModel>(data)
+        } catch (_: Exception) {
+            throw SerializationException("Error deserializing endpoint data model.")
+        }
+        if (endpoint.version == null) {
+            endpoint.version = "v0.1"
+        }
+        if (endpoint.version == "v0.1" && endpoint.supportedFormats.isEmpty()) {
+            endpoint.supportedFormats = setOf("JSON")
+        }
+        if (endpoint.supportedFormats.isEmpty() ||
+                (endpoint.version != "v0.1" && endpoint.version != "v0.2")) {
+            throw SerializationException("Error deserializing endpoint data model.")
+        }
     }
 
     override fun deserializeNode(node: Node, data: ByteArray) {

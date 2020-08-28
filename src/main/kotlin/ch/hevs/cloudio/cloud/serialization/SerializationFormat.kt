@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.model.*
 interface SerializationFormat {
     fun detect(data: ByteArray): Boolean
     fun identifier(): String
-    fun deserializeEndpoint(endpoint: EndpointDataModel, data: ByteArray)
+    fun deserializeEndpointDataModel(endpoint: EndpointDataModel, data: ByteArray)
     fun deserializeNode(node: Node, data: ByteArray)
     fun deserializeObject(obj: CloudioObject, data: ByteArray)
     fun serializeAttribute(attribute: Attribute): ByteArray

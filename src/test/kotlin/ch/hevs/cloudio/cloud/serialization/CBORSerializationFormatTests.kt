@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.serialization
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.AttributeType
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -14,7 +15,196 @@ import org.junit.Test
 
 class CBORSerializationFormatTests {
     @Test
-    fun staticBooleanAttribute() {
+    fun endpointDataModelNoNodesDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA3,                                      // map(3)
+                0x67,                                   // text(7)
+                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                    // "version"
+                0x64,                                   // text(4)
+                0x76, 0x30, 0x2E, 0x32,                          // "v0.2"
+                0x70,                                   // text(0x16, )
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73,  // "supportedFormats"
+                0x82,                                   // array(2)
+                0x64,                                // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                       // "JSON"
+                0x64,                                // text(4)
+                0x43, 0x42, 0x4F, 0x52,                       // "0xCB, OR"
+                0x65,                                   // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                0xA0                                // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelThreeNodesDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA3,                                     // map(3)
+                0x67,                                  // text(7)
+                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
+                0x64,                                  // text(4)
+                0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
+                0x70,                                  // text(0x16,)
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
+                0x82,                                  // array(2)
+                0x64,                               // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
+                0x64,                               // text(4)
+                0x43, 0x42, 0x4F, 0x52,                      // "0xCB,OR"
+                0x65,                                  // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
+                0xA3,                                  // map(3)
+                0x63,                               // text(3)
+                0x6F, 0x6E, 0x65,                        // "one"
+                0xA0,                               // map(0)
+                0x63,                               // text(3)
+                0x74, 0x77, 0x6F,                        // "two"
+                0xA0,                               // map(0)
+                0x65,                               // text(5)
+                0x74, 0x68, 0x72, 0x65, 0x65,                    // "three"
+                0xA0                               // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.count() == 3)
+    }
+
+    @Test
+    fun endpointDataModelNoVersionDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA2,                                     // map(2)
+                0x70,                                  // text(0x16,)
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
+                0x82,                                  // array(2)
+                0x64,                               // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
+                0x64,                               // text(4)
+                0x43, 0x42, 0x4F, 0x52,                      // "0xCB,OR"
+                0x65,                                  // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
+                0xA0                                  // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelNoVersionNoSupportedFormatsDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73, // "nodes"
+                0xA0            // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.supportedFormats == setOf("JSON"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelNoNodesPropertyDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA2,                                     // map(2)
+                0x67,                                  // text(7)
+                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
+                0x64,                                  // text(4)
+                0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
+                0x70,                                  // text(0x16,)
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
+                0x82,                                  // array(2)
+                0x64,                               // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
+                0x64,                               // text(4)
+                0x43, 0x42, 0x4F, 0x52                      // "0xCB,OR"
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelV1NoSupportedFormatsDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                0xA2,                   // map(2)
+                0x67,                // text(7)
+                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
+                0x64,                // text(4)
+                0x76, 0x30, 0x2E, 0x31,       // "v0.1"
+                0x65,                // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,     // "nodes"
+                0xA0                // map(0)
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.supportedFormats == setOf("JSON"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelEmptyDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(0x0A).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.supportedFormats == setOf("JSON"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelV2NoSupportedFormatsDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                    0xA2,                   // map(2)
+                    0x67,                // text(7)
+                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
+                    0x64,                // text(4)
+                    0x76, 0x30, 0x2E, 0x32,       // "v0.2"
+                    0x65,                // text(5)
+                    0x6E, 0x6F, 0x64, 0x65, 0x73,     // "nodes"
+                    0xA0                // map(0)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
+    }
+
+    @Test
+    fun endpointDataModelAdditionalPropertyDeserialize() {
+        val endpointDataModel = EndpointDataModel()
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeEndpointDataModel(endpointDataModel, arrayOf(
+                    0xA4,                                     // map(4)
+                    0x67,                                  // text(7)
+                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
+                    0x64,                                  // text(4)
+                    0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
+                    0x70,                                  // text(0x16,)
+                    0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
+                    0x82,                                  // array(2)
+                    0x64,                               // text(4)
+                    0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
+                    0x64,                               // text(4)
+                    0x43, 0x42, 0x4F, 0x52,                      // "0xCB,OR"
+                    0x65,                                  // text(5)
+                    0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
+                    0xA0,                                  // map(0)
+                    0x66,                                  // text(6)
+                    0x69, 0x73, 0x5F, 0x66, 0x75, 0x6E,                     // "is_fun"
+                    0xF5                                  // primitive(0x21,)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing endpoint data model.")
+    }
+
+    @Test
+    fun staticBooleanAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,   // map(4)
@@ -40,7 +230,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun staticIntegerAttribute() {
+    fun staticIntegerAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,   // map(4)
@@ -62,11 +252,11 @@ class CBORSerializationFormatTests {
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Integer)
         assert(attribute.timestamp == 1.2346)
-        assert(attribute.value == 42)
+        assert(attribute.value == 42.toLong())
     }
 
     @Test
-    fun staticNumberAttribute() {
+    fun staticNumberAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,   // map(4)
@@ -92,7 +282,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun staticStringAttribute() {
+    fun staticStringAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -119,7 +309,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun parameterBooleanAttribute() {
+    fun parameterBooleanAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -145,7 +335,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun parameterIntegerAttribute() {
+    fun parameterIntegerAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -167,11 +357,11 @@ class CBORSerializationFormatTests {
         assert(attribute.constraint == AttributeConstraint.Parameter)
         assert(attribute.type == AttributeType.Integer)
         assert(attribute.timestamp == 1.5533)
-        assert(attribute.value == 666)
+        assert(attribute.value == 666.toLong())
     }
 
     @Test
-    fun parameterNumberAttribute() {
+    fun parameterNumberAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -197,7 +387,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun parameterStringAttribute() {
+    fun parameterStringAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                            // map(4)
@@ -224,7 +414,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun setPointBooleanAttribute() {
+    fun setPointBooleanAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -250,7 +440,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun setPointIntegerAttribute() {
+    fun setPointIntegerAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -272,11 +462,11 @@ class CBORSerializationFormatTests {
         assert(attribute.constraint == AttributeConstraint.SetPoint)
         assert(attribute.type == AttributeType.Integer)
         assert(attribute.timestamp == 7777.4444)
-        assert(attribute.value == 1977)
+        assert(attribute.value == 1977.toLong())
     }
 
     @Test
-    fun setPointNumberAttribute() {
+    fun setPointNumberAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -302,7 +492,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun setPointStringAttribute() {
+    fun setPointStringAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -329,7 +519,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun statusBooleanAttribute() {
+    fun statusBooleanAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -355,7 +545,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun statusIntegerAttribute() {
+    fun statusIntegerAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -377,11 +567,11 @@ class CBORSerializationFormatTests {
         assert(attribute.constraint == AttributeConstraint.Status)
         assert(attribute.type == AttributeType.Integer)
         assert(attribute.timestamp == 12345678.33)
-        assert(attribute.value == -69)
+        assert(attribute.value == (-69).toLong())
     }
 
     @Test
-    fun statusNumberAttribute() {
+    fun statusNumberAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -407,7 +597,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun statusStringAttribute() {
+    fun statusStringAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -434,7 +624,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun measureBooleanAttribute() {
+    fun measureBooleanAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -460,7 +650,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun measureIntegerAttribute() {
+    fun measureIntegerAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -482,11 +672,11 @@ class CBORSerializationFormatTests {
         assert(attribute.constraint == AttributeConstraint.Measure)
         assert(attribute.type == AttributeType.Integer)
         assert(attribute.timestamp == 11223344.34)
-        assert(attribute.value == 80486)
+        assert(attribute.value == 80486.toLong())
     }
 
     @Test
-    fun measureNumberAttribute() {
+    fun measureNumberAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                          // map(4)
@@ -512,7 +702,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun measureStringAttribute() {
+    fun measureStringAttributeDeserialize() {
         val attribute = Attribute()
         CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
                 0xA4,                            // map(4)
@@ -539,7 +729,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun nullValueAttribute() {
+    fun nullValueAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -564,7 +754,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun invalidConstraintAttribute() {
+    fun invalidConstraintAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -590,7 +780,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun nonExistingConstraintAttribute() {
+    fun nonExistingConstraintAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -615,7 +805,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun invalidTypeAttribute() {
+    fun invalidTypeAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -640,7 +830,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun nonExistingTypeAttribute() {
+    fun nonExistingTypeAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -666,7 +856,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun booleanTimestampAttribute() {
+    fun booleanTimestampAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -691,7 +881,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun stringTimestampAttribute() {
+    fun stringTimestampAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -717,7 +907,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun negativeTimestampAttribute() {
+    fun negativeTimestampAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -742,7 +932,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun nonMatchingTypesAttribute() {
+    fun nonMatchingTypesAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -768,7 +958,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun missingConstraintAttribute() {
+    fun missingConstraintAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -789,7 +979,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun missingTypeAttribute() {
+    fun missingTypeAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -810,7 +1000,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun missingTimestampAttribute() {
+    fun missingTimestampAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -832,7 +1022,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun missingValueAttribute() {
+    fun missingValueAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
@@ -854,7 +1044,7 @@ class CBORSerializationFormatTests {
     }
 
     @Test
-    fun additionalFieldAttribute() {
+    fun additionalFieldAttributeDeserialize() {
         val attribute = Attribute()
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeAttribute(attribute, arrayOf(
