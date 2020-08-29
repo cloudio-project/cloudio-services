@@ -1,9 +1,14 @@
 package ch.hevs.cloudio.cloud.serialization
 
+import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.AttributeType
+import co.nstant.`in`.cbor.CborDecoder
+import co.nstant.`in`.cbor.model.*
+import co.nstant.`in`.cbor.model.Map
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.io.ByteArrayInputStream
 
 /*
  * JSON converted to CBOR using http://cbor.me.
@@ -341,6 +346,699 @@ class CBORSerializationFormatTests {
             ).map(Int::toByte).toByteArray())
         }
         assert(exception.message == "Error deserializing node.")
+    }
+
+    /*
+     * Attribute serialization.
+     */
+
+    @Test
+    fun staticBooleanAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Boolean,
+                timestamp = 1.2345,
+                value = false
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Static")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Boolean")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.2345)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue) == SimpleValue.FALSE)
+            }
+        }
+    }
+
+    @Test
+    fun staticIntegerAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Integer,
+                timestamp = 1.2346,
+                value = 42
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Static")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Integer")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.2346)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNSIGNED_INTEGER)
+                assert((this as UnsignedInteger).value.toInt() == 42)
+            }
+        }
+    }
+
+    @Test
+    fun staticNumberAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Number,
+                timestamp = 1.2347,
+                value = 42.24
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Static")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Number")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.2347)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 42.24)
+            }
+        }
+    }
+
+    @Test
+    fun staticStringAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.String,
+                timestamp = 1.2348,
+                value = "TEST123"
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Static")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "String")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.2348)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "TEST123")
+            }
+        }
+    }
+
+    @Test
+    fun parameterBooleanAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Boolean,
+                timestamp = 1.5533,
+                value = true
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Parameter")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Boolean")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.5533)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue) == SimpleValue.TRUE)
+            }
+        }
+    }
+
+    @Test
+    fun parameterIntegerAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Integer,
+                timestamp = 1.5544,
+                value = 666
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Parameter")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Integer")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.5544)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNSIGNED_INTEGER)
+                assert((this as UnsignedInteger).value.toInt() == 666)
+            }
+        }
+    }
+
+    @Test
+    fun parameterNumberAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Number,
+                timestamp = 1.5533,
+                value = 123.456
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Parameter")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Number")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.5533)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 123.456)
+            }
+        }
+    }
+
+    @Test
+    fun parameterStringAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.String,
+                timestamp = 1.5522,
+                value = "test_string"
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Parameter")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "String")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 1.5522)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "test_string")
+            }
+        }
+    }
+
+    @Test
+    fun setPointBooleanAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Boolean,
+                timestamp = 8888.5555,
+                value = false
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "SetPoint")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Boolean")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 8888.5555)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue) == SimpleValue.FALSE)
+            }
+        }
+    }
+
+    @Test
+    fun setPointIntegerAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Integer,
+                timestamp = 7777.4444,
+                value = 1977
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "SetPoint")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Integer")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 7777.4444)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNSIGNED_INTEGER)
+                assert((this as UnsignedInteger).value.toInt() == 1977)
+            }
+        }
+    }
+
+    @Test
+    fun setPointNumberAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Number,
+                timestamp = 6666.3333,
+                value = 3.1415
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "SetPoint")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Number")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 6666.3333)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 3.1415)
+            }
+        }
+    }
+
+    @Test
+    fun setPointStringAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.String,
+                timestamp = 5555.2222,
+                value = "aSetPoint"
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "SetPoint")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "String")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 5555.2222)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "aSetPoint")
+            }
+        }
+    }
+
+    @Test
+    fun statusBooleanAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Boolean,
+                timestamp = 12345678.22,
+                value = true
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Status")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Boolean")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 12345678.22)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue) == SimpleValue.TRUE)
+            }
+        }
+    }
+
+    @Test
+    fun statusIntegerAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Integer,
+                timestamp = 12345678.33,
+                value = -69
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Status")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Integer")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 12345678.33)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.NEGATIVE_INTEGER)
+                assert((this as NegativeInteger).value.toInt() == -69)
+            }
+        }
+    }
+
+    @Test
+    fun statusNumberAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Number,
+                timestamp = 12345678.44,
+                value = 2.7182
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Status")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Number")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 12345678.44)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 2.7182)
+            }
+        }
+    }
+
+    @Test
+    fun statusStringAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.String,
+                timestamp = 12345678.55,
+                value = "My Status"
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Status")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "String")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 12345678.55)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "My Status")
+            }
+        }
+    }
+
+    @Test
+    fun measureBooleanAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Boolean,
+                timestamp = 11223344.22,
+                value = false
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Measure")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Boolean")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 11223344.22)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue) == SimpleValue.FALSE)
+            }
+        }
+    }
+
+    @Test
+    fun measureIntegerAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Integer,
+                timestamp = 11223344.33,
+                value = 80486
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Measure")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Integer")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 11223344.33)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNSIGNED_INTEGER)
+                assert((this as UnsignedInteger).value.toInt() == 80486)
+            }
+        }
+    }
+
+    @Test
+    fun measureNumberAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Number,
+                timestamp = 11223344.44,
+                value = -22.5
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Measure")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Number")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 11223344.44)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == -22.5)
+            }
+        }
+    }
+
+    @Test
+    fun measureStringAttributeSerialize() {
+        val cbor = CBORSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.String,
+                timestamp = 11223344.55,
+                value = "lorem ipsum"
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("constraint")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "Measure")
+            }
+            root[UnicodeString("type")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "String")
+            }
+            root[UnicodeString("timestamp")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.IEEE_754_DOUBLE_PRECISION_FLOAT)
+                assert((this as DoublePrecisionFloat).value == 11223344.55)
+            }
+            root[UnicodeString("value")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "lorem ipsum")
+            }
+        }
+    }
+
+    @Test
+    fun invalidConstraintAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Invalid,
+                    type = AttributeType.String,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
+    }
+
+    @Test
+    fun invalidTypeAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Measure,
+                    type = AttributeType.Invalid,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
+    }
+
+    @Test
+    fun typeAndValueDoNotMatchAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Measure,
+                    type = AttributeType.Integer,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
     }
 
     /*
@@ -1179,5 +1877,176 @@ class CBORSerializationFormatTests {
             ).map(Int::toByte).toByteArray())
         }
         assert(exception.message == "Error deserializing attribute.")
+    }
+
+    /*
+     * Transaction deserialization.
+     */
+
+    @Test
+    fun validTransaction() {
+        val transaction = CBORSerializationFormat().deserializeTransaction(arrayOf(
+                0xA1,                                      // map(1)
+                0x6A,                                   // text(0x10,)
+                0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73,              // "attributes"
+                0xA2,                                   // map(2)
+                0x78, 0x1A,                             // text(0x26,)
+                0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anAttribute"
+                0xA4,                                // map(4)
+                0x6A,                             // text(0x10,)
+                0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                0x67,                             // text(7)
+                0x4D, 0x65, 0x61, 0x73, 0x75, 0x72, 0x65,              // "Measure"
+                0x64,                             // text(4)
+                0x74, 0x79, 0x70, 0x65,                    // "type"
+                0x66,                             // text(6)
+                0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72,                // "Number"
+                0x69,                             // text(9)
+                0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x13, 0x33, 0x33,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x48,0x11,0x44,3)
+                0x65,                             // text(5)
+                0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                0xFB, 0x40, 0x42, 0x9C, 0x28, 0xF5, 0xC2, 0x8F, 0x5C,            // primitive(0x46,0x30,0x43,0x50,0x66,0x62,0x60,0x84,0x70,0)
+                0x78, 0x1F,                             // text(0x31,)
+                0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x6F, 0x74, 0x68, 0x65, 0x72, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anotherAttribute"
+                0xA4,                                // map(4)
+                0x6A,                             // text(0x10,)
+                0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                0x66,                             // text(6)
+                0x53, 0x74, 0x61, 0x74, 0x75, 0x73,                // "Status"
+                0x64,                             // text(4)
+                0x74, 0x79, 0x70, 0x65,                    // "type"
+                0x66,                             // text(6)
+                0x53, 0x74, 0x72, 0x69, 0x6E, 0x67,                // "String"
+                0x69,                             // text(9)
+                0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x20, 0x00, 0x00,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x56,0x50,0x30,4)
+                0x65,                             // text(5)
+                0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                0x67,                             // text(7)
+                0x52, 0x75, 0x6E, 0x6E, 0x69, 0x6E, 0x67              // "Running"
+        ).map(Int::toByte).toByteArray())
+        assert(transaction.attributes.count() == 2)
+        transaction.attributes["aNode/anObject/anAttribute"]!!.apply {
+            assert(constraint == AttributeConstraint.Measure)
+            assert(type == AttributeType.Number)
+            assert(timestamp == 1598719840.3)
+            assert(value == 37.22)
+        }
+        transaction.attributes["aNode/anObject/anotherAttribute"]!!.apply {
+            assert(constraint == AttributeConstraint.Status)
+            assert(type == AttributeType.String)
+            assert(timestamp == 1598719840.5)
+            assert(value == "Running")
+        }
+    }
+
+    @Test
+    fun additionalPropertyTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeTransaction(arrayOf(
+                    0xA2,                                      // map(2)
+                    0x6A,                                   // text(0x10,)
+                    0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73,              // "attributes"
+                    0xA2,                                   // map(2)
+                    0x78, 0x1A,                             // text(0x26,)
+                    0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anAttribute"
+                    0xA4,                                // map(4)
+                    0x6A,                             // text(0x10,)
+                    0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                    0x67,                             // text(7)
+                    0x4D, 0x65, 0x61, 0x73, 0x75, 0x72, 0x65,              // "Measure"
+                    0x64,                             // text(4)
+                    0x74, 0x79, 0x70, 0x65,                    // "type"
+                    0x66,                             // text(6)
+                    0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72,                // "Number"
+                    0x69,                             // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                    0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x13, 0x33, 0x33,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x48,0x11,0x44,3)
+                    0x65,                             // text(5)
+                    0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                    0xFB, 0x40, 0x42, 0x9C, 0x28, 0xF5, 0xC2, 0x8F, 0x5C,            // primitive(0x46,0x30,0x43,0x50,0x66,0x62,0x60,0x84,0x70,0)
+                    0x78, 0x1F,                             // text(0x31,)
+                    0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x6F, 0x74, 0x68, 0x65, 0x72, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anotherAttribute"
+                    0xA4,                                // map(4)
+                    0x6A,                             // text(0x10,)
+                    0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                    0x66,                             // text(6)
+                    0x53, 0x74, 0x61, 0x74, 0x75, 0x73,                // "Status"
+                    0x64,                             // text(4)
+                    0x74, 0x79, 0x70, 0x65,                    // "type"
+                    0x66,                             // text(6)
+                    0x53, 0x74, 0x72, 0x69, 0x6E, 0x67,                // "String"
+                    0x69,                             // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                    0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x20, 0x00, 0x00,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x56,0x50,0x30,4)
+                    0x65,                             // text(5)
+                    0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                    0x67,                             // text(7)
+                    0x52, 0x75, 0x6E, 0x6E, 0x69, 0x6E, 0x67,              // "Running"
+                    0x64,                                   // text(4)
+                    0x6D, 0x6F, 0x6F, 0x64,                          // "mood"
+                    0x64,                                   // text(4)
+                    0x67, 0x6F, 0x6F, 0x64                          // "good"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
+    }
+
+    @Test
+    fun invalidAttributeTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeTransaction(arrayOf(
+                    0xA1,                                      // map(1)
+                    0x6A,                                   // text(0x10,)
+                    0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x73,              // "attributes"
+                    0xA2,                                   // map(2)
+                    0x78, 0x1A,                             // text(0x26,)
+                    0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anAttribute"
+                    0xA4,                                // map(4)
+                    0x6A,                             // text(0x10,)
+                    0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                    0x67,                             // text(7)
+                    0x4D, 0x65, 0x61, 0x73, 0x75, 0x72, 0x65,              // "Measure"
+                    0x64,                             // text(4)
+                    0x74, 0x79, 0x70, 0x65,                    // "type"
+                    0x66,                             // text(6)
+                    0x4E, 0x75, 0x6D, 0x62, 0x65, 0x72,                // "Number"
+                    0x69,                             // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                    0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x13, 0x33, 0x33,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x48,0x11,0x44,3)
+                    0x65,                             // text(5)
+                    0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                    0x65,                             // text(5)
+                    0x33, 0x37, 0x2E, 0x32, 0x32,                  // "0x37,.0x22,"
+                    0x78, 0x1F,                             // text(0x31,)
+                    0x61, 0x4E, 0x6F, 0x64, 0x65, 0x2F, 0x61, 0x6E, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x2F, 0x61, 0x6E, 0x6F, 0x74, 0x68, 0x65, 0x72, 0x41, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, // "aNode/anObject/anotherAttribute"
+                    0xA4,                                // map(4)
+                    0x6A,                             // text(0x10,)
+                    0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,        // "constraint"
+                    0x66,                             // text(6)
+                    0x53, 0x74, 0x61, 0x74, 0x75, 0x73,                // "Status"
+                    0x64,                             // text(4)
+                    0x74, 0x79, 0x70, 0x65,                    // "type"
+                    0x66,                             // text(6)
+                    0x53, 0x74, 0x72, 0x69, 0x6E, 0x67,                // "String"
+                    0x69,                             // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,          // "timestamp"
+                    0xFB, 0x41, 0xD7, 0xD2, 0xA1, 0xD8, 0x20, 0x00, 0x00,            // primitive(0x47,0x44,0x49,0x23,0x25,0x01,0x56,0x50,0x30,4)
+                    0x65,                             // text(5)
+                    0x76, 0x61, 0x6C, 0x75, 0x65,                  // "value"
+                    0x67,                             // text(7)
+                    0x52, 0x75, 0x6E, 0x6E, 0x69, 0x6E, 0x67              // "Running"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
+    }
+
+    @Test
+    fun emptyTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeTransaction(arrayOf(0xA0).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
     }
 }

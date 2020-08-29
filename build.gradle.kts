@@ -43,7 +43,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.72")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
-}
+    testImplementation("org.skyscreamer:jsonassert:1.5.0")
+    testImplementation("co.nstant.in:cbor:0.9")}
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {

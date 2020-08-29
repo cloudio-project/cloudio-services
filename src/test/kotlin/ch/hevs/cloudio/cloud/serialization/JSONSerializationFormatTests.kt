@@ -1,9 +1,12 @@
 package ch.hevs.cloudio.cloud.serialization
 
+import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.AttributeType
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.skyscreamer.jsonassert.JSONAssert
+import java.nio.charset.StandardCharsets
 
 class JSONSerializationFormatTests {
 
@@ -224,6 +227,409 @@ class JSONSerializationFormatTests {
         assert(exception.message == "Error deserializing node.")
     }
 
+    /*
+     * Attribute serialization.
+     */
+
+    @Test
+    fun staticBooleanAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Boolean,
+                timestamp = 1.2345,
+                value = false
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Static",
+                "type": "Boolean",
+                "timestamp": 1.2345,
+                "value": false
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun staticIntegerAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Integer,
+                timestamp = 1.2346,
+                value = 42
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Static",
+                "type": "Integer",
+                "timestamp": 1.2346,
+                "value": 42
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun staticNumberAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.Number,
+                timestamp = 1.2347,
+                value = 42.24
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Static",
+                "type": "Number",
+                "timestamp": 1.2347,
+                "value": 42.24
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun staticStringAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Static,
+                type = AttributeType.String,
+                timestamp = 1.2348,
+                value = "TEST123"
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Static",
+                "type": "String",
+                "timestamp": 1.2348,
+                "value": "TEST123"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun parameterBooleanAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Boolean,
+                timestamp = 1.5533,
+                value = true
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Parameter",
+                "type": "Boolean",
+                "timestamp": 1.5533,
+                "value": true
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun parameterIntegerAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Integer,
+                timestamp = 1.5544,
+                value = 666
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Parameter",
+                "type": "Integer",
+                "timestamp": 1.5544,
+                "value": 666
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun parameterNumberAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.Number,
+                timestamp = 1.5533,
+                value = 123.456
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Parameter",
+                "type": "Number",
+                "timestamp": 1.5533,
+                "value": 123.456
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun parameterStringAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Parameter,
+                type = AttributeType.String,
+                timestamp = 1.5522,
+                value = "test_string"
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Parameter",
+                "type": "String",
+                "timestamp": 1.5522,
+                "value": "test_string"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun setPointBooleanAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Boolean,
+                timestamp = 8888.5555,
+                value = false
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "SetPoint",
+                "type": "Boolean",
+                "timestamp": 8888.5555,
+                "value": false
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun setPointIntegerAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Integer,
+                timestamp = 7777.4444,
+                value = 1977
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "SetPoint",
+                "type": "Integer",
+                "timestamp": 7777.4444,
+                "value": 1977
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun setPointNumberAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.Number,
+                timestamp = 6666.3333,
+                value = 3.1415
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "SetPoint",
+                "type": "Number",
+                "timestamp": 6666.3333,
+                "value": 3.1415
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun setPointStringAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.SetPoint,
+                type = AttributeType.String,
+                timestamp = 5555.2222,
+                value = "aSetPoint"
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "SetPoint",
+                "type": "String",
+                "timestamp": 5555.2222,
+                "value": "aSetPoint"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun statusBooleanAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Boolean,
+                timestamp = 12345678.22,
+                value = true
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Status",
+                "type": "Boolean",
+                "timestamp": 12345678.22,
+                "value": true
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun statusIntegerAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Integer,
+                timestamp = 12345678.33,
+                value = -69
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Status",
+                "type": "Integer",
+                "timestamp": 12345678.33,
+                "value": -69
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun statusNumberAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.Number,
+                timestamp = 12345678.44,
+                value = 2.7182
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Status",
+                "type": "Number",
+                "timestamp": 12345678.44,
+                "value": 2.7182
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun statusStringAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Status,
+                type = AttributeType.String,
+                timestamp = 12345678.55,
+                value = "My Status"
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Status",
+                "type": "String",
+                "timestamp": 12345678.55,
+                "value": "My Status"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun measureBooleanAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Boolean,
+                timestamp = 11223344.22,
+                value = false
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Measure",
+                "type": "Boolean",
+                "timestamp": 11223344.22,
+                "value": false
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun measureIntegerAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Integer,
+                timestamp = 11223344.33,
+                value = 80486
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Measure",
+                "type": "Integer",
+                "timestamp": 11223344.33,
+                "value": 80486
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun measureNumberAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.Number,
+                timestamp = 11223344.44,
+                value = -22.5
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Measure",
+                "type": "Number",
+                "timestamp": 11223344.44,
+                "value": -22.5
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+
+    @Test
+    fun measureStringAttributeSerialize() {
+        val json = JSONSerializationFormat().serializeAttribute(Attribute(
+                constraint = AttributeConstraint.Measure,
+                type = AttributeType.String,
+                timestamp = 11223344.55,
+                value = "lorem ipsum"
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "constraint": "Measure",
+                "type": "String",
+                "timestamp": 11223344.55,
+                "value": "lorem ipsum"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
+    }
+    
+    @Test
+    fun invalidConstraintAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Invalid,
+                    type = AttributeType.String,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
+    }
+
+    @Test
+    fun invalidTypeAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Measure,
+                    type = AttributeType.Invalid,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
+    }
+
+    @Test
+    fun typeAndValueDoNotMatchAttributeSerialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().serializeAttribute(Attribute(
+                    constraint = AttributeConstraint.Measure,
+                    type = AttributeType.Integer,
+                    timestamp = 1.0,
+                    value = "should not work"
+            ))
+        }
+        assert(exception.message == "Error serializing attribute.")
+    }
+    
     /*
      * Attribute deserialization.
      */
@@ -753,5 +1159,106 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         }
         assert(exception.message == "Error deserializing attribute.")
+    }
+
+    /*
+     * Transaction deserialization.
+     */
+
+    @Test
+    fun validTransaction() {
+        val transaction = JSONSerializationFormat().deserializeTransaction("""
+            {
+                "attributes": {
+                    "aNode/anObject/anAttribute": {
+                        "constraint": "Measure",
+                        "type": "Number",
+                        "timestamp": 1598719840.3,
+                        "value": 37.22
+                    },
+                    "aNode/anObject/anotherAttribute": {
+                        "constraint": "Status",
+                        "type": "String",
+                        "timestamp": 1598719840.5,
+                        "value": "Running"
+                    }
+                }
+            }
+        """.trimIndent().toByteArray())
+        assert(transaction.attributes.count() == 2)
+        transaction.attributes["aNode/anObject/anAttribute"]!!.apply {
+            assert(constraint == AttributeConstraint.Measure)
+            assert(type == AttributeType.Number)
+            assert(timestamp == 1598719840.3)
+            assert(value == 37.22)
+        }
+        transaction.attributes["aNode/anObject/anotherAttribute"]!!.apply {
+            assert(constraint == AttributeConstraint.Status)
+            assert(type == AttributeType.String)
+            assert(timestamp == 1598719840.5)
+            assert(value == "Running")
+        }
+    }
+
+    @Test
+    fun additionalPropertyTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeTransaction("""
+            {
+                "attributes": {
+                    "aNode/anObject/anAttribute": {
+                        "constraint": "Measure",
+                        "type": "Number",
+                        "timestamp": 1598719840.3,
+                        "value": 37.22
+                    },
+                    "aNode/anObject/anotherAttribute": {
+                        "constraint": "Status",
+                        "type": "String",
+                        "timestamp": 1598719840.5,
+                        "value": "Running"
+                    }
+                },
+                "mood": "good"
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
+    }
+
+    @Test
+    fun invalidAttributeTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeTransaction("""
+            {
+                "attributes": {
+                    "aNode/anObject/anAttribute": {
+                        "constraint": "Measure",
+                        "type": "Number",
+                        "timestamp": 1598719840.3,
+                        "value": "37.22"
+                    },
+                    "aNode/anObject/anotherAttribute": {
+                        "constraint": "Status",
+                        "type": "String",
+                        "timestamp": 1598719840.5,
+                        "value": "Running"
+                    }
+                }
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
+    }
+
+    @Test
+    fun emptyTransaction() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeTransaction("""
+            {
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing transaction.")
     }
 }
