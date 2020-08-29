@@ -30,11 +30,17 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
         throw SerializationException("Error deserializing node.")
     }
 
-    override fun serializeAttribute(attribute: Attribute): ByteArray = try {
+    override fun serializeAttribute(attribute: Attribute): ByteArray = if (
+            attribute.constraint == AttributeConstraint.Invalid ||
+            attribute.type == AttributeType.Invalid ||
+            !attribute.type.checkType(attribute.value))
+        throw SerializationException("Error serializing attribute.")
+    else try {
         mapper.writeValueAsBytes(attribute)
     } catch (_: Exception) {
         throw SerializationException("Error serializing attribute.")
     }
+
 
     override fun deserializeAttribute(data: ByteArray) = try {
         mapper.readerForUpdating(JacksonAttribute()).readValue<JacksonAttribute>(data).toAttribute()
