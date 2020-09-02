@@ -13,5 +13,5 @@ data class DelayedMessages(
         /**
          * Late messages.
          */
-        var messages: Set<DelayedMessage> = mutableSetOf()
+        var messages: List<DelayedMessage> = mutableListOf()
 )

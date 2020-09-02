@@ -1,8 +1,6 @@
 package ch.hevs.cloudio.cloud.serialization
 
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.model.AttributeType
+import ch.hevs.cloudio.cloud.model.*
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.skyscreamer.jsonassert.JSONAssert
@@ -590,7 +588,7 @@ class JSONSerializationFormatTests {
             }
         """.trimIndent(), String(json, StandardCharsets.UTF_8), false)
     }
-    
+
     @Test
     fun invalidConstraintAttributeSerialize() {
         val exception = assertThrows(SerializationException::class.java) {
@@ -629,7 +627,7 @@ class JSONSerializationFormatTests {
         }
         assert(exception.message == "Error serializing attribute.")
     }
-    
+
     /*
      * Attribute deserialization.
      */
@@ -1166,7 +1164,7 @@ class JSONSerializationFormatTests {
      */
 
     @Test
-    fun validTransaction() {
+    fun validTransactionDeserialize() {
         val transaction = JSONSerializationFormat().deserializeTransaction("""
             {
                 "attributes": {
@@ -1201,7 +1199,7 @@ class JSONSerializationFormatTests {
     }
 
     @Test
-    fun additionalPropertyTransaction() {
+    fun additionalPropertyTransactionDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeTransaction("""
             {
@@ -1227,7 +1225,7 @@ class JSONSerializationFormatTests {
     }
 
     @Test
-    fun invalidAttributeTransaction() {
+    fun invalidAttributeTransactionDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeTransaction("""
             {
@@ -1252,7 +1250,7 @@ class JSONSerializationFormatTests {
     }
 
     @Test
-    fun emptyTransaction() {
+    fun emptyTransactionDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeTransaction("""
             {
@@ -1260,5 +1258,306 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         }
         assert(exception.message == "Error deserializing transaction.")
+    }
+
+    /*
+     * Delayed messages deserialization.
+     */
+
+    @Test
+    fun validDelayedMessagesDeserialize() {
+        val delayedMessages = JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+                "timestamp": 12345678.55,
+                "messages": [
+                    {
+                        "topic": "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }, {
+                        "topic": "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "attributes": {
+                                "aNode/anObject/anAttribute": {
+                                    "constraint": "Measure",
+                                    "type": "Number",
+                                    "timestamp": 1598719840.3,
+                                    "value": 37.22
+                                },
+                                "aNode/anObject/anotherAttribute": {
+                                    "constraint": "Status",
+                                    "type": "String",
+                                    "timestamp": 1598719840.5,
+                                    "value": "Running"
+                                }
+                            }
+                        }
+                    }, {
+                        "topic": "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "level": "DEBUG",
+                            "timestamp": 81637463.39,
+                            "message": "Test message",
+                            "loggerName": "main logger",
+                            "logSource": "endpoint"
+                        }
+                    }, {
+                        "topic": "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }
+                ]
+            }
+        """.trimIndent().toByteArray())
+        assert(delayedMessages.timestamp == 12345678.55)
+        assert(delayedMessages.messages.count() == 4)
+
+        delayedMessages.messages[0].apply {
+            assert(topic == "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute")
+            assert(data is Attribute)
+            (data as Attribute).apply {
+                assert(constraint == AttributeConstraint.SetPoint)
+                assert(type == AttributeType.String)
+                assert(timestamp == 1598719840.3)
+                assert(value == "TEST")
+            }
+        }
+        delayedMessages.messages[1].apply {
+            assert(topic == "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+            assert(data is Transaction)
+            (data as Transaction).apply {
+                // TODO...
+            }
+        }
+        delayedMessages.messages[2].apply {
+            assert(topic == "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
+            assert(data is LogMessage)
+            (data as LogMessage).apply {
+                // TODO...
+            }
+        }
+        delayedMessages.messages[3].apply {
+            assert(topic == "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute")
+            assert(data is Attribute)
+            (data as Attribute).apply {
+                assert(constraint == AttributeConstraint.SetPoint)
+                assert(type == AttributeType.String)
+                assert(timestamp == 1598719840.3)
+                assert(value == "TEST")
+            }
+        }
+    }
+
+    @Test
+    fun notAllowedDelayedMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+                "timestamp": 12345678.55,
+                "messages": [
+                    {
+                        "topic": "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }, {
+                        "topic": "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "attributes": {
+                                "aNode/anObject/anAttribute": {
+                                    "constraint": "Measure",
+                                    "type": "Number",
+                                    "timestamp": 1598719840.3,
+                                    "value": 37.22
+                                },
+                                "aNode/anObject/anotherAttribute": {
+                                    "constraint": "Status",
+                                    "type": "String",
+                                    "timestamp": 1598719840.5,
+                                    "value": "Running"
+                                }
+                            }
+                        }
+                    }, {
+                        "topic": "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "level": "DEBUG",
+                            "timestamp": 81637463.39,
+                            "message": "Test message",
+                            "loggerName": "main logger",
+                            "logSource": "endpoint"
+                        }
+                    }, {
+                        "topic": "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }, {
+                        "topic": "@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }
+                ]
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing delayed messages.")
+    }
+
+    @Test
+    fun missingTimestampDelayedMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+                "messages": [
+                    {
+                        "topic": "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }, {
+                        "topic": "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "attributes": {
+                                "aNode/anObject/anAttribute": {
+                                    "constraint": "Measure",
+                                    "type": "Number",
+                                    "timestamp": 1598719840.3,
+                                    "value": 37.22
+                                },
+                                "aNode/anObject/anotherAttribute": {
+                                    "constraint": "Status",
+                                    "type": "String",
+                                    "timestamp": 1598719840.5,
+                                    "value": "Running"
+                                }
+                            }
+                        }
+                    }, {
+                        "topic": "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "level": "DEBUG",
+                            "timestamp": 81637463.39,
+                            "message": "Test message",
+                            "loggerName": "main logger",
+                            "logSource": "endpoint"
+                        }
+                    }, {
+                        "topic": "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }
+                ]
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing delayed messages.")
+    }
+
+    @Test
+    fun missingMessagesDelayedMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+                "timestamp": 12345678.55
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing delayed messages.")
+    }
+
+    @Test
+    fun additionalPropertyDelayedMessagesDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+                "weather": "clear",
+                "timestamp": 12345678.55,
+                "messages": [
+                    {
+                        "topic": "@update.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }, {
+                        "topic": "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "attributes": {
+                                "aNode/anObject/anAttribute": {
+                                    "constraint": "Measure",
+                                    "type": "Number",
+                                    "timestamp": 1598719840.3,
+                                    "value": 37.22
+                                },
+                                "aNode/anObject/anotherAttribute": {
+                                    "constraint": "Status",
+                                    "type": "String",
+                                    "timestamp": 1598719840.5,
+                                    "value": "Running"
+                                }
+                            }
+                        }
+                    }, {
+                        "topic": "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66",
+                        "data": {
+                            "level": "DEBUG",
+                            "timestamp": 81637463.39,
+                            "message": "Test message",
+                            "loggerName": "main logger",
+                            "logSource": "endpoint"
+                        }
+                    }, {
+                        "topic": "@didSet.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.node.object.attribute",
+                        "data": {
+                            "constraint": "SetPoint",
+                            "type": "String",
+                            "timestamp": 1598719840.3,
+                            "value": "TEST"
+                        }
+                    }
+                ]
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing delayed messages.")
+    }
+
+    @Test
+    fun emptyDelayedMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeDelayedMessages("""
+            {
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing delayed messages.")
     }
 }

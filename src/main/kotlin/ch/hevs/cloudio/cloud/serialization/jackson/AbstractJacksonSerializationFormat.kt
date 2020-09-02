@@ -55,7 +55,7 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
     }
 
     override fun deserializeDelayedMessages(data: ByteArray) = try {
-        mapper.readerForUpdating(JacksonDelayedMessages()).readValue<JacksonDelayedMessages>(data).toDelayedMessages()
+        mapper.readerForUpdating(JacksonDelayedMessages()).readValue<JacksonDelayedMessages>(data).toDelayedMessages(mapper)
     } catch (_: Exception) {
         throw SerializationException("Error deserializing delayed messages.")
     }
