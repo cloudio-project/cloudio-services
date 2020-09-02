@@ -154,9 +154,9 @@
               },
               "data": {
                 "type": [
-                  { "$ref": "#/definitions/EndpointDataModel" },
                   { "$ref": "#/definitions/Attribute" },
-                  { "$ref": "#/definitions/Transaction" }
+                  { "$ref": "#/definitions/Transaction" },
+                  { "$ref": "#/definitions/LogMessage" }
                 ]
               }
             },
