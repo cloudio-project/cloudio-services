@@ -1560,4 +1560,73 @@ class JSONSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing delayed messages.")
     }
+
+    /*
+    * Log message deserialization.
+    */
+
+    @Test
+    fun minimalLogMessageDeserialize() {
+        val logMessage = JSONSerializationFormat().deserializeLogMessage("""
+            {
+                "level": "INFO",
+                "timestamp": "1599064648.8",
+                "message": "Minimal log message"
+            }
+            """.trimIndent().toByteArray())
+        assert(logMessage.level == LogLevel.INFO)
+        assert(logMessage.timestamp == 1599064648.8)
+        assert(logMessage.message == "Minimal log message")
+    }
+
+    @Test
+    fun completeLogMessageDeserialize() {
+        val logMessage = JSONSerializationFormat().deserializeLogMessage("""
+            {
+                "level": "INFO",
+                "timestamp": "1599064648.8",
+                "message": "Minimal log message",
+                "loggerName": "Main logger",
+                "logSource": "Thread 22"
+            }
+            """.trimIndent().toByteArray())
+        assert(logMessage.level == LogLevel.INFO)
+        assert(logMessage.timestamp == 1599064648.8)
+        assert(logMessage.message == "Minimal log message")
+        assert(logMessage.loggerName == "Main logger")
+        assert(logMessage.logSource == "Thread 22")
+    }
+
+    @Test
+    fun invalidLevelLogMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeLogMessage("""
+            {
+                "level": "WHISPER",
+                "timestamp": "1599064648.8",
+                "message": "Minimal log message",
+                "loggerName": "Main logger",
+                "logSource": "Thread 22"
+            }
+            """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing log message.")
+    }
+
+    @Test
+    fun additionalPropertyLogMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeLogMessage("""
+            {
+                "level": "DEBUG",
+                "timestamp": "1599064648.8",
+                "message": "Minimal log message",
+                "loggerName": "Main logger",
+                "logSource": "Thread 22",
+                "toto": false
+            }
+            """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing log message.")
+    }
 }

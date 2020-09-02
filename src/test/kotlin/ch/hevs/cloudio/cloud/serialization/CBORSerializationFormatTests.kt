@@ -2670,4 +2670,125 @@ class CBORSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing delayed messages.")
     }
+
+    /*
+    * Log message deserialization.
+    */
+
+    @Test
+    fun minimalLogMessageDeserialize() {
+        val logMessage = CBORSerializationFormat().deserializeLogMessage(arrayOf(
+                0xA3,                                      // map(3)
+                0x65,                                   // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C,                        // "level"
+                0x64,                                   // text(4)
+                0x49, 0x4E, 0x46, 0x4F,                          // "INFO"
+                0x69,                                   // text(9)
+                0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,                // "timestamp"
+                0x6C,                                   // text(0x12,)
+                0x31, 0x35, 0x39, 0x39, 0x30, 0x36, 0x34, 0x36, 0x34, 0x38, 0x2E, 0x38,          // "0x15,0x99,0x06,0x46,0x48,.8"
+                0x67,                                   // text(7)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,                    // "message"
+                0x73,                                   // text(0x19,)
+                0x4D, 0x69, 0x6E, 0x69, 0x6D, 0x61, 0x6C, 0x20, 0x6C, 0x6F, 0x67, 0x20, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65 // "Minimal log message"
+        ).map(Int::toByte).toByteArray())
+        assert(logMessage.level == LogLevel.INFO)
+        assert(logMessage.timestamp == 1599064648.8)
+        assert(logMessage.message == "Minimal log message")
+    }
+
+    @Test
+    fun completeLogMessageDeserialize() {
+        val logMessage = CBORSerializationFormat().deserializeLogMessage(arrayOf(
+                0xA5,                                      // map(5)
+                0x65,                                   // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C,                        // "level"
+                0x64,                                   // text(4)
+                0x49, 0x4E, 0x46, 0x4F,                          // "INFO"
+                0x69,                                   // text(9)
+                0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,                // "timestamp"
+                0x6C,                                   // text(0x12,)
+                0x31, 0x35, 0x39, 0x39, 0x30, 0x36, 0x34, 0x36, 0x34, 0x38, 0x2E, 0x38,          // "0x15,0x99,0x06,0x46,0x48,.8"
+                0x67,                                   // text(7)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,                    // "message"
+                0x73,                                   // text(0x19,)
+                0x4D, 0x69, 0x6E, 0x69, 0x6D, 0x61, 0x6C, 0x20, 0x6C, 0x6F, 0x67, 0x20, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, // "Minimal log message"
+                0x6A,                                   // text(0x10,)
+                0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72, 0x4E, 0x61, 0x6D, 0x65,              // "loggerName"
+                0x6B,                                   // text(0x11,)
+                0x4D, 0x61, 0x69, 0x6E, 0x20, 0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72,            // "Main logger"
+                0x69,                                   // text(9)
+                0x6C, 0x6F, 0x67, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65,                // "logSource"
+                0x69,                                   // text(9)
+                0x54, 0x68, 0x72, 0x65, 0x61, 0x64, 0x20, 0x32, 0x32                // "Thread 0x22,"
+        ).map(Int::toByte).toByteArray())
+        assert(logMessage.level == LogLevel.INFO)
+        assert(logMessage.timestamp == 1599064648.8)
+        assert(logMessage.message == "Minimal log message")
+        assert(logMessage.loggerName == "Main logger")
+        assert(logMessage.logSource == "Thread 22")
+    }
+
+    @Test
+    fun invalidLevelLogMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeLogMessage(arrayOf(
+                    0xA5,                                      // map(5)
+                    0x65,                                   // text(5)
+                    0x6C, 0x65, 0x76, 0x65, 0x6C,                        // "level"
+                    0x67,                                   // text(7)
+                    0x57, 0x48, 0x49, 0x53, 0x50, 0x45, 0x52,                    // "WHISPER"
+                    0x69,                                   // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,                // "timestamp"
+                    0x6C,                                   // text(0x12,)
+                    0x31, 0x35, 0x39, 0x39, 0x30, 0x36, 0x34, 0x36, 0x34, 0x38, 0x2E, 0x38,          // "0x15,0x99,0x06,0x46,0x48,.8"
+                    0x67,                                   // text(7)
+                    0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,                    // "message"
+                    0x73,                                   // text(0x19,)
+                    0x4D, 0x69, 0x6E, 0x69, 0x6D, 0x61, 0x6C, 0x20, 0x6C, 0x6F, 0x67, 0x20, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, // "Minimal log message"
+                    0x6A,                                   // text(0x10,)
+                    0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72, 0x4E, 0x61, 0x6D, 0x65,              // "loggerName"
+                    0x6B,                                   // text(0x11,)
+                    0x4D, 0x61, 0x69, 0x6E, 0x20, 0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72,            // "Main logger"
+                    0x69,                                   // text(9)
+                    0x6C, 0x6F, 0x67, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65,                // "logSource"
+                    0x69,                                   // text(9)
+                    0x54, 0x68, 0x72, 0x65, 0x61, 0x64, 0x20, 0x32, 0x32                // "Thread 0x22,"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing log message.")
+    }
+
+    @Test
+    fun additionalPropertyLogMessageDeserialize() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeLogMessage(arrayOf(
+                    0xA6,                                      // map(6)
+                    0x65,                                   // text(5)
+                    0x6C, 0x65, 0x76, 0x65, 0x6C,                        // "level"
+                    0x65,                                   // text(5)
+                    0x44, 0x45, 0x42, 0x55, 0x47,                        // "0xDE,BUG"
+                    0x69,                                   // text(9)
+                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,                // "timestamp"
+                    0x6C,                                   // text(0x12,)
+                    0x31, 0x35, 0x39, 0x39, 0x30, 0x36, 0x34, 0x36, 0x34, 0x38, 0x2E, 0x38,          // "0x15,0x99,0x06,0x46,0x48,.8"
+                    0x67,                                   // text(7)
+                    0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,                    // "message"
+                    0x73,                                   // text(0x19,)
+                    0x4D, 0x69, 0x6E, 0x69, 0x6D, 0x61, 0x6C, 0x20, 0x6C, 0x6F, 0x67, 0x20, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, // "Minimal log message"
+                    0x6A,                                   // text(0x10,)
+                    0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72, 0x4E, 0x61, 0x6D, 0x65,              // "loggerName"
+                    0x6B,                                   // text(0x11,)
+                    0x4D, 0x61, 0x69, 0x6E, 0x20, 0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72,            // "Main logger"
+                    0x69,                                   // text(9)
+                    0x6C, 0x6F, 0x67, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65,                // "logSource"
+                    0x69,                                   // text(9)
+                    0x54, 0x68, 0x72, 0x65, 0x61, 0x64, 0x20, 0x32, 0x32,                // "Thread 0x22,"
+                    0x64,                                   // text(4)
+                    0x74, 0x6F, 0x74, 0x6F,                          // "toto"
+                    0xF4                                   // primitive(0x20,)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing log message.")
+    }
 }
