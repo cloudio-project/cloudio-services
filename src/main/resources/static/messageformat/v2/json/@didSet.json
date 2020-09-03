@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
 
   "title": "Set confirmation message",
   "description": "Set confirmation message send from endpoint to cloud to the topic @didSet/<Endpoint UUID>/<Node>/<Object/...>/<Attribute>",
