@@ -76,7 +76,7 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
     override fun deserializeLogLevel(data: ByteArray) = try {
         LogLevel.valueOf(mapper.readValue(data, Map::class.java)["level"] as String)
     } catch (_: Exception) {
-        throw SerializationException("Error deserializing log message.")
+        throw SerializationException("Error deserializing log level.")
     }
 
     override fun serializeJobExecCommand(jobExecCommand: JobExecCommand): ByteArray = try {

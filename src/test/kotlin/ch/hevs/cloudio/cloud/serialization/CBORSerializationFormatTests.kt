@@ -2791,4 +2791,234 @@ class CBORSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing log message.")
     }
+
+    /*
+    * Log message serialization.
+    */
+
+    @Test
+    fun offLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.OFF)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "OFF")
+            }
+        }
+    }
+
+    @Test
+    fun fatalLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.FATAL)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "FATAL")
+            }
+        }
+    }
+
+    @Test
+    fun errorLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.ERROR)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "ERROR")
+            }
+        }
+    }
+
+    @Test
+    fun warnLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.WARN)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "WARN")
+            }
+        }
+    }
+
+    @Test
+    fun infoLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.INFO)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "INFO")
+            }
+        }
+    }
+
+    @Test
+    fun debugLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.DEBUG)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "DEBUG")
+            }
+        }
+    }
+
+    @Test
+    fun traceLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.TRACE)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "TRACE")
+            }
+        }
+    }
+
+    @Test
+    fun allLogLevelSerialization() {
+        val cbor = CBORSerializationFormat().serializeLogLevel(LogLevel.ALL)
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("level")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "ALL")
+            }
+        }
+    }
+
+    /*
+    * Log level deserialization.
+    */
+
+    @Test
+    fun offLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x63,            // text(3)
+                0x4F, 0x46, 0x46     // "O0xFF,"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.OFF)
+    }
+
+    @Test
+    fun fatalLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x65,            // text(5)
+                0x46, 0x41, 0x54, 0x41, 0x4C // "0xFA,TAL"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.FATAL)
+    }
+
+    @Test
+    fun errorLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x65,            // text(5)
+                0x45, 0x52, 0x52, 0x4F, 0x52 // "ERROR"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.ERROR)
+    }
+
+    @Test
+    fun warnLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x64,            // text(4)
+                0x57, 0x41, 0x52, 0x4E   // "WARN"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.WARN)
+    }
+
+    @Test
+    fun infoLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x64,            // text(4)
+                0x49, 0x4E, 0x46, 0x4F   // "INFO"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.INFO)
+    }
+
+    @Test
+    fun debugLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x65,            // text(5)
+                0x44, 0x45, 0x42, 0x55, 0x47 // "0xDE,BUG"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.DEBUG)
+    }
+
+    @Test
+    fun traceLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x65,            // text(5)
+                0x54, 0x52, 0x41, 0x43, 0x45 // "TR0xAC,E"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.TRACE)
+    }
+
+    @Test
+    fun allLogLevelDeserialization() {
+        val logLevel = CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                0xA1,               // map(1)
+                0x65,            // text(5)
+                0x6C, 0x65, 0x76, 0x65, 0x6C, // "level"
+                0x63,            // text(3)
+                0x41, 0x4C, 0x4C     // "ALL"
+        ).map(Int::toByte).toByteArray())
+        assert(logLevel == LogLevel.ALL)
+    }
+
+    @Test
+    fun invalidLogLevelDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeLogLevel(arrayOf(
+                    0xA1,                   // map(1)
+                    0x65,                // text(5)
+                    0x6C, 0x65, 0x76, 0x65, 0x6C,     // "level"
+                    0x67,                // text(7)
+                    0x4E, 0x4F, 0x54, 0x48, 0x49, 0x4E, 0x47 // "NOTHING"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing log level.")
+    }
 }

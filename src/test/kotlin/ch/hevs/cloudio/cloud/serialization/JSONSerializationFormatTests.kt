@@ -1629,4 +1629,184 @@ class JSONSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing log message.")
     }
+
+    /*
+    * Log level serialization.
+    */
+
+    @Test
+    fun offLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.OFF)
+        JSONAssert.assertEquals("""
+            {
+                "level": "OFF"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun fatalLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.FATAL)
+        JSONAssert.assertEquals("""
+            {
+                "level": "FATAL"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun errorLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.ERROR)
+        JSONAssert.assertEquals("""
+            {
+                "level": "ERROR"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun warnLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.WARN)
+        JSONAssert.assertEquals("""
+            {
+                "level": "WARN"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun infoLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.INFO)
+        JSONAssert.assertEquals("""
+            {
+                "level": "INFO"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun debugLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.DEBUG)
+        JSONAssert.assertEquals("""
+            {
+                "level": "DEBUG"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun traceLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.TRACE)
+        JSONAssert.assertEquals("""
+            {
+                "level": "TRACE"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    @Test
+    fun allLogLevelSerialization() {
+        val json = JSONSerializationFormat().serializeLogLevel(LogLevel.ALL)
+        JSONAssert.assertEquals("""
+            {
+                "level": "ALL"
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    /*
+    * Log level deserialization.
+    */
+
+    @Test
+    fun offLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "OFF"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.OFF)
+    }
+
+    @Test
+    fun fatalLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "FATAL"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.FATAL)
+    }
+
+    @Test
+    fun errorLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "ERROR"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.ERROR)
+    }
+
+    @Test
+    fun warnLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "WARN"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.WARN)
+    }
+
+    @Test
+    fun infoLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "INFO"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.INFO)
+    }
+
+    @Test
+    fun debugLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "DEBUG"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.DEBUG)
+    }
+
+    @Test
+    fun traceLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "TRACE"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.TRACE)
+    }
+
+    @Test
+    fun allLogLevelDeserialization() {
+        val logLevel = JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "ALL"
+            }
+        """.trimIndent().toByteArray())
+        assert(logLevel == LogLevel.ALL)
+    }
+
+    @Test
+    fun invalidLogLevelDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeLogLevel("""
+            {
+                "level": "NOTHING"
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing log level.")
+    }
 }
