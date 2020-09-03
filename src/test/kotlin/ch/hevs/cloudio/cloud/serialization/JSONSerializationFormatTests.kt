@@ -1809,4 +1809,91 @@ class JSONSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing log level.")
     }
+
+    /*
+     * Job exec command serialization.
+     */
+
+    @Test
+    fun jobExecCommandSerialization() {
+        val json = JSONSerializationFormat().serializeJobExecCommand(JobExecCommand(
+                correlationID = "666888123",
+                jobURI = "cmd://listJobs",
+                data = "",
+                sendOutput = true
+        ))
+        JSONAssert.assertEquals("""
+            {
+                "correlationID": "666888123",
+                "jobURI": "cmd://listJobs",
+                "data": "",
+                "sendOutput": true
+            }
+        """.trimIndent(), String(json, StandardCharsets.UTF_8), true)
+    }
+
+    /*
+     * Job exec output deserialization.
+     */
+
+    @Test
+    fun validJobExecOutputDeserialization() {
+        val jobExecOutput = JSONSerializationFormat().deserializeJobExecOutput("""
+            {
+                "correlationID": "1234567890",
+                "data": "test"
+            }
+        """.trimIndent().toByteArray())
+        assert(jobExecOutput.correlationID == "1234567890")
+        assert(jobExecOutput.output == "test")
+    }
+
+    @Test
+    fun missingCorrelationIDJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeJobExecOutput("""
+            {
+                "data": "test"
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun missingDataJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeJobExecOutput("""
+            {
+                "correlationID": "1234567890"
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun emptyJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeJobExecOutput("""
+            {
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun additionalPropertyJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            JSONSerializationFormat().deserializeJobExecOutput("""
+            {
+                "correlationID": "1234567890",
+                "data": "test",
+                "baudrate": 555
+            }
+        """.trimIndent().toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
 }

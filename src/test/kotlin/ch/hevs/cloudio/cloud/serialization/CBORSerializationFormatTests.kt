@@ -3021,4 +3021,118 @@ class CBORSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing log level.")
     }
+
+    /*
+     * Job exec command serialization.
+     */
+
+    @Test
+    fun jobExecCommandSerialization() {
+        val cbor = CBORSerializationFormat().serializeJobExecCommand(JobExecCommand(
+                correlationID = "666888123",
+                jobURI = "cmd://listJobs",
+                data = "",
+                sendOutput = true
+        ))
+        val decoded = CborDecoder(ByteArrayInputStream(cbor)).decode()
+        assert(decoded.count() == 1)
+        assert(decoded.first().majorType == MajorType.MAP)
+        decoded.first().let { it as Map }.let { root ->
+            root[UnicodeString("correlationID")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "666888123")
+            }
+            root[UnicodeString("jobURI")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "cmd://listJobs")
+            }
+            root[UnicodeString("data")].run {
+                assert(majorType == MajorType.UNICODE_STRING)
+                assert((this as UnicodeString).string == "")
+            }
+            root[UnicodeString("sendOutput")].run {
+                assert(majorType == MajorType.SPECIAL)
+                assert((this as Special).specialType == SpecialType.SIMPLE_VALUE)
+                assert((this as SimpleValue).simpleValueType == SimpleValueType.TRUE)
+            }
+        }
+    }
+
+    /*
+     * Job exec output deserialization.
+     */
+
+    @Test
+    fun validJobExecOutputDeserialization() {
+        val jobExecOutput = CBORSerializationFormat().deserializeJobExecOutput(arrayOf(
+                0xA2,                               // map(2)
+                0x6D,                            // text(0x13,)
+                0x63, 0x6F, 0x72, 0x72, 0x65, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x44, // "correlationID"
+                0x6A,                            // text(0x10,)
+                0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,       // "0x12,0x34,0x56,0x78,0x90,"
+                0x64,                            // text(4)
+                0x64, 0x61, 0x74, 0x61,                   // "data"
+                0x64,                            // text(4)
+                0x74, 0x65, 0x73, 0x74                   // "test"
+        ).map(Int::toByte).toByteArray())
+        assert(jobExecOutput.correlationID == "1234567890")
+        assert(jobExecOutput.output == "test")
+    }
+
+    @Test
+    fun missingCorrelationIDJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeJobExecOutput(arrayOf(
+                    0xA1,             // map(1)
+                    0x64,          // text(4)
+                    0x64, 0x61, 0x74, 0x61, // "data"
+                    0x64,          // text(4)
+                    0x74, 0x65, 0x73, 0x74 // "test"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun missingDataJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeJobExecOutput(arrayOf(
+                    0xA1,                               // map(1)
+                    0x6D,                            // text(0x13,)
+                    0x63, 0x6F, 0x72, 0x72, 0x65, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x44, // "correlationID"
+                    0x6A,                            // text(0x10,)
+                    0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30       // "0x12,0x34,0x56,0x78,0x90,"
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun emptyJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeJobExecOutput(arrayOf(0x0A).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
+
+    @Test
+    fun additionalPropertyJobExecOutputDeserialization() {
+        val exception = assertThrows(SerializationException::class.java) {
+            CBORSerializationFormat().deserializeJobExecOutput(arrayOf(
+                    0xA3,                               // map(3)
+                    0x6D,                            // text(0x13,)
+                    0x63, 0x6F, 0x72, 0x72, 0x65, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x44, // "correlationID"
+                    0x6A,                            // text(0x10,)
+                    0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,       // "0x12,0x34,0x56,0x78,0x90,"
+                    0x64,                            // text(4)
+                    0x64, 0x61, 0x74, 0x61,                   // "data"
+                    0x64,                            // text(4)
+                    0x74, 0x65, 0x73, 0x74,                   // "test"
+                    0x68,                            // text(8)
+                    0x62, 0x61, 0x75, 0x64, 0x72, 0x61, 0x74, 0x65,           // "baudrate"
+                    0x19, 0x02, 0x2B                       // unsigned(0x55,5)
+            ).map(Int::toByte).toByteArray())
+        }
+        assert(exception.message == "Error deserializing job exec output.")
+    }
 }
