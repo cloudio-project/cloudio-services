@@ -2232,14 +2232,32 @@ class CBORSerializationFormatTests {
             assert(topic == "@transaction.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
             assert(data is Transaction)
             (data as Transaction).apply {
-                // TODO...
+                assert(attributes.count() == 2)
+                assert(attributes.contains("aNode/anObject/anAttribute"))
+                attributes["aNode/anObject/anAttribute"]!!.apply {
+                    assert(constraint == AttributeConstraint.Measure)
+                    assert(type == AttributeType.Number)
+                    assert(timestamp == 1598719840.3)
+                    assert(value == 37.22)
+                }
+                assert(attributes.contains("aNode/anObject/anotherAttribute"))
+                attributes["aNode/anObject/anotherAttribute"]!!.apply {
+                    assert(constraint == AttributeConstraint.Status)
+                    assert(type == AttributeType.String)
+                    assert(timestamp == 1598719840.5)
+                    assert(value == "Running")
+                }
             }
         }
         delayedMessages.messages[2].apply {
             assert(topic == "@logs.c7bfaa1c-857f-438a-b5f0-447e3cd34f66")
             assert(data is LogMessage)
             (data as LogMessage).apply {
-                // TODO...
+                assert(level == LogLevel.DEBUG)
+                assert(timestamp == 81637463.39)
+                assert(message == "Test message")
+                assert(loggerName == "main logger")
+                assert(logSource == "endpoint")
             }
         }
         delayedMessages.messages[3].apply {
