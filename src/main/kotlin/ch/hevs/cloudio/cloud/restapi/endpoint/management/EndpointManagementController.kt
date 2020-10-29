@@ -78,6 +78,7 @@ class EndpointManagementController(
                 online = it.online,
                 metaData = it.metaData,
                 version = it.dataModel.version,
+                messageFormatVersion = it.dataModel.messageFormatVersion,
                 supportedFormats = it.dataModel.supportedFormats
         )
     }
@@ -232,6 +233,7 @@ class EndpointManagementController(
                 online = endpoint.online,
                 metaData = endpoint.metaData,
                 version = endpoint.dataModel.version,
+                messageFormatVersion = endpoint.dataModel.messageFormatVersion,
                 supportedFormats = endpoint.dataModel.supportedFormats
         )
     }

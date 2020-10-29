@@ -110,7 +110,7 @@ class ModelIdentifier(uri: String) : Serializable {
      *
      * @return AMQP topic on v0.1 format.
      */
-    fun toAMQPTopicForVersion01Endpoints() = if (valid && action != ActionIdentifier.NONE)
+    fun toAMQPTopicForMessageFormat1Endpoints() = if (valid && action != ActionIdentifier.NONE)
         "$action.$endpoint${if (count() > 0) "." else ""}" + modelPath.mapIndexed { i, s ->
             when (i) {
                 0 -> "nodes.$s"

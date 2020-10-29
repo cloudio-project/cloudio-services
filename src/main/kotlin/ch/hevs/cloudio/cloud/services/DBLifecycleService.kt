@@ -21,6 +21,7 @@ class DBLifecycleService(
     override fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
         endpoint.online = true
         endpoint.dataModel.version = dataModel.version
+        endpoint.dataModel.messageFormatVersion = dataModel.messageFormatVersion
         endpoint.dataModel.supportedFormats = dataModel.supportedFormats
         dataModel.nodes.forEach {
             it.value.online = true

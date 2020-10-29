@@ -23,23 +23,27 @@ class CBORSerializationFormatTests {
     @Test
     fun endpointDataModelNoNodesDeserialize() {
         val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
-                0xA3,                                      // map(3)
+                0xA4,                                      // map(4)
                 0x67,                                   // text(7)
                 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                    // "version"
                 0x64,                                   // text(4)
                 0x76, 0x30, 0x2E, 0x32,                          // "v0.2"
-                0x70,                                   // text(0x16, )
+                0x74,                                   // text(0x20,)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                0x02,                                   // unsigned(2)
+                0x70,                                   // text(0x16,)
                 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73,  // "supportedFormats"
                 0x82,                                   // array(2)
                 0x64,                                // text(4)
                 0x4A, 0x53, 0x4F, 0x4E,                       // "JSON"
                 0x64,                                // text(4)
-                0x43, 0x42, 0x4F, 0x52,                       // "0xCB, OR"
+                0x43, 0x42, 0x4F, 0x52,                       // "0xCB,OR"
                 0x65,                                   // text(5)
                 0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
-                0xA0                                // map(0)
+                0xA0                                   // map(0)
         ).map(Int::toByte).toByteArray())
         assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.messageFormatVersion == 2)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -47,56 +51,84 @@ class CBORSerializationFormatTests {
     @Test
     fun endpointDataModelThreeNodesDeserialize() {
         val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
-                0xA3,                                     // map(3)
-                0x67,                                  // text(7)
-                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
-                0x64,                                  // text(4)
-                0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
-                0x70,                                  // text(0x16,)
-                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
-                0x82,                                  // array(2)
-                0x64,                               // text(4)
-                0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
-                0x64,                               // text(4)
-                0x43, 0x42, 0x4F, 0x52,                      // "0xCB,OR"
-                0x65,                                  // text(5)
-                0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
-                0xA3,                                  // map(3)
-                0x63,                               // text(3)
-                0x6F, 0x6E, 0x65,                        // "one"
-                0xA2,                               // map(2)
-                0x6A,                            // text(0x10,)
-                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
-                0x80,                            // array(0)
-                0x67,                            // text(7)
-                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
-                0xA0,                            // map(0)
-                0x63,                               // text(3)
-                0x74, 0x77, 0x6F,                        // "two"
-                0xA2,                               // map(2)
-                0x6A,                            // text(0x10,)
-                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
-                0x80,                            // array(0)
-                0x67,                            // text(7)
-                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
-                0xA0,                            // map(0)
-                0x65,                               // text(5)
-                0x74, 0x68, 0x72, 0x65, 0x65,                    // "three"
-                0xA2,                               // map(2)
-                0x6A,                            // text(0x10,)
-                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,       // "implements"
-                0x80,                            // array(0)
-                0x67,                            // text(7)
-                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,             // "objects"
-                0xA0                            // map(0)
+                0xA4,                                      // map(4)
+                0x67,                                   // text(7)
+                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                    // "version"
+                0x64,                                   // text(4)
+                0x76, 0x30, 0x2E, 0x32,                          // "v0.2"
+                0x74,                                   // text(0x20,)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                0x02,                                   // unsigned(2)
+                0x70,                                   // text(0x16,)
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73,  // "supportedFormats"
+                0x82,                                   // array(2)
+                0x64,                                // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                       // "JSON"
+                0x64,                                // text(4)
+                0x43, 0x42, 0x4F, 0x52,                       // "0xCB,OR"
+                0x65,                                   // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                0xA3,                                   // map(3)
+                0x63,                                // text(3)
+                0x6F, 0x6E, 0x65,                         // "one"
+                0xA2,                                // map(2)
+                0x6A,                             // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,        // "implements"
+                0x80,                             // array(0)
+                0x67,                             // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,              // "objects"
+                0xA0,                             // map(0)
+                0x63,                                // text(3)
+                0x74, 0x77, 0x6F,                         // "two"
+                0xA2,                                // map(2)
+                0x6A,                             // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,        // "implements"
+                0x80,                             // array(0)
+                0x67,                             // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,              // "objects"
+                0xA0,                             // map(0)
+                0x65,                                // text(5)
+                0x74, 0x68, 0x72, 0x65, 0x65,                     // "three"
+                0xA2,                                // map(2)
+                0x6A,                             // text(0x10,)
+                0x69, 0x6D, 0x70, 0x6C, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73,        // "implements"
+                0x80,                             // array(0)
+                0x67,                             // text(7)
+                0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73,              // "objects"
+                0xA0                             // map(0)
         ).map(Int::toByte).toByteArray())
         assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.messageFormatVersion == 2)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.count() == 3)
     }
 
     @Test
     fun endpointDataModelNoVersionDeserialize() {
+        val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
+                0xA3,                                      // map(3)
+                0x70,                                   // text(0x16,)
+                0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73,  // "supportedFormats"
+                0x82,                                   // array(2)
+                0x64,                                // text(4)
+                0x4A, 0x53, 0x4F, 0x4E,                       // "JSON"
+                0x64,                                // text(4)
+                0x43, 0x42, 0x4F, 0x52,                       // "0xCB,OR"
+                0x74,                                   // text(0x20,)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                0x01,                                   // unsigned(1)
+                0x65,                                   // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                0xA0
+        ).map(Int::toByte).toByteArray())
+        assert(endpointDataModel.version == "unknown")
+        assert(endpointDataModel.messageFormatVersion == 1)
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelNoVersionNoMessageFormatVersionDeserialize() {
         val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
                 0xA2,                                     // map(2)
                 0x70,                                  // text(0x16,)
@@ -110,7 +142,8 @@ class CBORSerializationFormatTests {
                 0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
                 0xA0                                  // map(0)
         ).map(Int::toByte).toByteArray())
-        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.version == "unknown")
+        assert(endpointDataModel.messageFormatVersion == 1)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -123,7 +156,7 @@ class CBORSerializationFormatTests {
                 0x6E, 0x6F, 0x64, 0x65, 0x73, // "nodes"
                 0xA0            // map(0)
         ).map(Int::toByte).toByteArray())
-        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.version == "unknown")
         assert(endpointDataModel.supportedFormats == setOf("JSON"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -152,16 +185,14 @@ class CBORSerializationFormatTests {
     @Test
     fun endpointDataModelV1NoSupportedFormatsDeserialize() {
         val endpointDataModel = CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
-                0xA2,                   // map(2)
-                0x67,                // text(7)
-                0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
-                0x64,                // text(4)
-                0x76, 0x30, 0x2E, 0x31,       // "v0.1"
-                0x65,                // text(5)
-                0x6E, 0x6F, 0x64, 0x65, 0x73,     // "nodes"
-                0xA0                // map(0)
+                0xA2,                                      // map(2)
+                0x74,                                   // text(0x20,)
+                0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                0x01,                                   // unsigned(1)
+                0x65,                                   // text(5)
+                0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                0xA0                                   // map(0)
         ).map(Int::toByte).toByteArray())
-        assert(endpointDataModel.version == "v0.1")
         assert(endpointDataModel.supportedFormats == setOf("JSON"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -178,14 +209,13 @@ class CBORSerializationFormatTests {
     fun endpointDataModelV2NoSupportedFormatsDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
-                    0xA2,                   // map(2)
-                    0x67,                // text(7)
-                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "version"
-                    0x64,                // text(4)
-                    0x76, 0x30, 0x2E, 0x32,       // "v0.2"
-                    0x65,                // text(5)
-                    0x6E, 0x6F, 0x64, 0x65, 0x73,     // "nodes"
-                    0xA0                // map(0)
+                    0xA2,                                      // map(2)
+                    0x74,                                   // text(0x20,)
+                    0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                    0x02,                                   // unsigned(2)
+                    0x65,                                   // text(5)
+                    0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                    0xA0                                   // map(0)
             ).map(Int::toByte).toByteArray())
         }
         assert(exception.message == "Error deserializing endpoint data model.")
@@ -195,24 +225,27 @@ class CBORSerializationFormatTests {
     fun endpointDataModelAdditionalPropertyDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             CBORSerializationFormat().deserializeEndpointDataModel(arrayOf(
-                    0xA4,                                     // map(4)
-                    0x67,                                  // text(7)
-                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                   // "version"
-                    0x64,                                  // text(4)
-                    0x76, 0x30, 0x2E, 0x32,                         // "v0.2"
-                    0x70,                                  // text(0x16,)
-                    0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73, // "supportedFormats"
-                    0x82,                                  // array(2)
-                    0x64,                               // text(4)
-                    0x4A, 0x53, 0x4F, 0x4E,                      // "JSON"
-                    0x64,                               // text(4)
-                    0x43, 0x42, 0x4F, 0x52,                      // "0xCB,OR"
-                    0x65,                                  // text(5)
-                    0x6E, 0x6F, 0x64, 0x65, 0x73,                       // "nodes"
-                    0xA0,                                  // map(0)
-                    0x66,                                  // text(6)
-                    0x69, 0x73, 0x5F, 0x66, 0x75, 0x6E,                     // "is_fun"
-                    0xF5                                  // primitive(0x21,)
+                    0xA5,                                      // map(5)
+                    0x67,                                   // text(7)
+                    0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E,                    // "version"
+                    0x64,                                   // text(4)
+                    0x76, 0x30, 0x2E, 0x32,                          // "v0.2"
+                    0x74,                                   // text(0x20,)
+                    0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, // "messageFormatVersion"
+                    0x02,                                   // unsigned(2)
+                    0x70,                                   // text(0x16,)
+                    0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x73,  // "supportedFormats"
+                    0x82,                                   // array(2)
+                    0x64,                                // text(4)
+                    0x4A, 0x53, 0x4F, 0x4E,                       // "JSON"
+                    0x64,                                // text(4)
+                    0x43, 0x42, 0x4F, 0x52,                       // "0xCB,OR"
+                    0x65,                                   // text(5)
+                    0x6E, 0x6F, 0x64, 0x65, 0x73,                        // "nodes"
+                    0xA0,                                   // map(0)
+                    0x66,                                   // text(6)
+                    0x69, 0x73, 0x5F, 0x66, 0x75, 0x6E,                      // "is_fun"
+                    0xF5                                   // primitive(0x21,)
             ).map(Int::toByte).toByteArray())
         }
         assert(exception.message == "Error deserializing endpoint data model.")

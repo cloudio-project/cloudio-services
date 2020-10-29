@@ -22,9 +22,12 @@ data class EndpointEntity(
         @ApiModelProperty("Metadata assigned to the endpoint - Can be set to any particular JSON object/structure.")
         val metaData: Map<String, Any>,
 
+        @ApiModelProperty("Software version actually running on the endpoint.", readOnly = true, example = "v0.2")
+        val version: String,
+
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        @ApiModelProperty("Software version actually running on the endpoint.", readOnly = true, example = "v0.2", required = false)
-        val version: String?,
+        @ApiModelProperty("Message format used by the endpoint", readOnly = true, example = "2", required = false)
+        val messageFormatVersion: Int?,
 
         @ApiModelProperty("Serialization formats supported by the endpoint.", readOnly = true, example = "[\"CBOR\", \"JSON\"]")
         val supportedFormats: Set<String>

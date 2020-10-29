@@ -37,8 +37,8 @@ class SetVersionMapperService(
             val modelIdentifier = ModelIdentifier(message.messageProperties.receivedRoutingKey)
             if (modelIdentifier.valid) {
                 endpointRepository.findById(modelIdentifier.endpoint).ifPresent {
-                    if (it.dataModel.version == "v0.1") {
-                        rabbitTemplate.convertAndSend("amq.topic", modelIdentifier.toAMQPTopicForVersion01Endpoints(), message)
+                    if (it.dataModel.messageFormatVersion == 1) {
+                        rabbitTemplate.convertAndSend("amq.topic", modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(), message)
                     }
                 }
             }

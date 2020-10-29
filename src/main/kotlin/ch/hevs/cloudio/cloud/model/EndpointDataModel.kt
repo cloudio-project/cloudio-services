@@ -9,7 +9,12 @@ data class EndpointDataModel(
          * The endpoint protocol version.
          * Valid values are `v0.1` and `v0.2`.
          */
-        var version: String? = null,
+        var version: String = "unknown",
+
+        /**
+         * The message format used by the endpoint.
+         */
+        var messageFormatVersion: Int? = null,
 
         /**
          * List of serialization formats supported by the endpoint.

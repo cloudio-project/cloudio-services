@@ -103,7 +103,7 @@
         },
         "messageFormatVersion": {
           "type": "number",
-          "default": 1
+          "default": null
         },
         "supportedFormats": {
           "type": "array",

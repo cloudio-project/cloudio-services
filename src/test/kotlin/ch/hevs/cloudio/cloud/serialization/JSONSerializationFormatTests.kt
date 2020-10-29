@@ -17,11 +17,13 @@ class JSONSerializationFormatTests {
         val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
+                "messageFormatVersion": 2,
                 "supportedFormats": [ "JSON", "CBOR" ],
                 "nodes": {}
             }
         """.trimIndent().toByteArray())
         assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.messageFormatVersion == 2)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -31,6 +33,7 @@ class JSONSerializationFormatTests {
         val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
+                "messageFormatVersion": 2,
                 "supportedFormats": [ "JSON", "CBOR" ],
                 "nodes": {
                     "one": {
@@ -49,6 +52,7 @@ class JSONSerializationFormatTests {
             }
         """.trimIndent().toByteArray())
         assert(endpointDataModel.version == "v0.2")
+        assert(endpointDataModel.messageFormatVersion == 2)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.count() == 3)
     }
@@ -58,10 +62,26 @@ class JSONSerializationFormatTests {
         val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "supportedFormats": [ "JSON", "CBOR" ],
+                "messageFormatVersion": 1,
                 "nodes": {}
             }
         """.trimIndent().toByteArray())
-        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.version == "unknown")
+        assert(endpointDataModel.messageFormatVersion == 1)
+        assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
+        assert(endpointDataModel.nodes.isEmpty())
+    }
+
+    @Test
+    fun endpointDataModelNoVersionNoMessageFormatVersionDeserialize() {
+        val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
+            {
+                "supportedFormats": [ "JSON", "CBOR" ],
+                "nodes": {}
+            }
+        """.trimIndent().toByteArray())
+        assert(endpointDataModel.version == "unknown")
+        assert(endpointDataModel.messageFormatVersion == 1)
         assert(endpointDataModel.supportedFormats == setOf("JSON", "CBOR"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -73,7 +93,7 @@ class JSONSerializationFormatTests {
                 "nodes": {}
             }
         """.trimIndent().toByteArray())
-        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.version == "unknown")
         assert(endpointDataModel.supportedFormats == setOf("JSON"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -95,11 +115,11 @@ class JSONSerializationFormatTests {
     fun endpointDataModelV1NoSupportedFormatsDeserialize() {
         val endpointDataModel = JSONSerializationFormat().deserializeEndpointDataModel("""
             {
-                "version": "v0.1",
+                "messageFormatVersion": 1,
                 "nodes": {}
             }
         """.trimIndent().toByteArray())
-        assert(endpointDataModel.version == "v0.1")
+        assert(endpointDataModel.messageFormatVersion == 1)
         assert(endpointDataModel.supportedFormats == setOf("JSON"))
         assert(endpointDataModel.nodes.isEmpty())
     }
@@ -120,7 +140,7 @@ class JSONSerializationFormatTests {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeEndpointDataModel("""
             {
-                "version": "v0.2",
+                "messageFormatVersion": 2,
                 "nodes": {}
             }
         """.trimIndent().toByteArray())
@@ -134,6 +154,7 @@ class JSONSerializationFormatTests {
             JSONSerializationFormat().deserializeEndpointDataModel("""
             {
                 "version": "v0.2",
+                "messageFormatVersion": 2,
                 "supportedFormats": [ "JSON", "CBOR" ],
                 "nodes": {},
                 "is_fun": true
