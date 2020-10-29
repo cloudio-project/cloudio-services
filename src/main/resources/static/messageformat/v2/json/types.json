@@ -98,11 +98,12 @@
       "type": "object",
       "properties": {
         "version": {
-          "enum": [
-            "v0.1",
-            "v0.2"
-          ],
-          "default": "v0.1"
+          "type": "string",
+          "default": "unknown"
+        },
+        "messageFormatVersion": {
+          "type": "number",
+          "default": 1
         },
         "supportedFormats": {
           "type": "array",
