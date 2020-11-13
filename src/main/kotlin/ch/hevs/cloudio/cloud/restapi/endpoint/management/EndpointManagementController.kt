@@ -44,16 +44,24 @@ class EndpointManagementController(
             responseContainer = "List")
 
     fun getAllAccessibleEndpoints(
-            @ApiIgnore authentication: Authentication
+            @ApiIgnore authentication: Authentication,
+            @RequestParam(required = false) @ApiParam("If given the list is filtered by the given friendly name.") friendlyName: String?,
+            @RequestParam(required = false) @ApiParam("If given the list is filtered by the given banned status.") banned: Boolean?,
+            @RequestParam(required = false) @ApiParam("If given the list is filtered by the given online status.") online: Boolean?
     ) = permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm ->
         endpointRepository.findById(perm.endpointUUID).orElse(null)?.let {
-            EndpointListEntity(
-                    uuid = perm.endpointUUID,
-                    friendlyName = it.friendlyName,
-                    banned = it.banned,
-                    online = it.online,
-                    permission = perm.permission
-            )
+            when {
+                friendlyName != null && friendlyName.isNotEmpty() && it.friendlyName != friendlyName -> null
+                banned != null && it.banned != banned -> null
+                online != null && it.online != online -> null
+                else -> EndpointListEntity(
+                        uuid = perm.endpointUUID,
+                        friendlyName = it.friendlyName,
+                        banned = it.banned,
+                        online = it.online,
+                        permission = perm.permission
+                )
+            }
         }
     }
 
