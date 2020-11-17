@@ -27,7 +27,7 @@ class InfluxUpdateSetService(
     @PostConstruct
     fun initialize() {
         // Create database if needed
-        if (influx.query(Query("SHOW DATABASES", "")).toString().indexOf(influxProperties.database) == -1)
+        if (influx.query(Query("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.firstOrNull() == influxProperties.database} != false)
             influx.query(Query("CREATE DATABASE ${influxProperties.database}", ""))
 
         influx.enableBatch(BatchOptions.DEFAULTS.actions(influxProperties.batchSize).flushDuration(influxProperties.batchIntervalMs))
