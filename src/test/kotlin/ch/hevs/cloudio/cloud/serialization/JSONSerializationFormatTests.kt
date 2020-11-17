@@ -665,7 +665,7 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Boolean)
-        assert(attribute.timestamp == 1.2345)
+        assert(attribute.timestamp == null)
         assert(attribute.value == false)
     }
 
@@ -681,7 +681,7 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Integer)
-        assert(attribute.timestamp == 1.2346)
+        assert(attribute.timestamp == null)
         assert(attribute.value == 42.toLong())
     }
 
@@ -697,7 +697,7 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Number)
-        assert(attribute.timestamp == 1.2347)
+        assert(attribute.timestamp == null)
         assert(attribute.value == 42.24)
     }
 
@@ -713,7 +713,7 @@ class JSONSerializationFormatTests {
         """.trimIndent().toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.String)
-        assert(attribute.timestamp == 1.2348)
+        assert(attribute.timestamp == null)
         assert(attribute.value == "TEST123")
     }
 
@@ -1083,7 +1083,7 @@ class JSONSerializationFormatTests {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeAttribute("""
             {
-                "constraint": "Static",
+                "constraint": "Measure",
                 "type": "Integer",
                 "timestamp": -77,
                 "value": 0
@@ -1141,7 +1141,7 @@ class JSONSerializationFormatTests {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeAttribute("""
             {
-                "constraint": "Static",
+                "constraint": "Measure",
                 "type": "Integer",
                 "value": 0
             }

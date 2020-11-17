@@ -1097,7 +1097,7 @@ class CBORSerializationFormatTests {
         ).map(Int::toByte).toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Boolean)
-        assert(attribute.timestamp == 1.2345)
+        assert(attribute.timestamp == null)
         assert(attribute.value == false)
     }
 
@@ -1122,7 +1122,7 @@ class CBORSerializationFormatTests {
         ).map(Int::toByte).toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Integer)
-        assert(attribute.timestamp == 1.2346)
+        assert(attribute.timestamp == null)
         assert(attribute.value == 42.toLong())
     }
 
@@ -1147,7 +1147,7 @@ class CBORSerializationFormatTests {
         ).map(Int::toByte).toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.Number)
-        assert(attribute.timestamp == 1.2347)
+        assert(attribute.timestamp == null)
         assert(attribute.value == 42.24)
     }
 
@@ -1173,7 +1173,7 @@ class CBORSerializationFormatTests {
         ).map(Int::toByte).toByteArray())
         assert(attribute.constraint == AttributeConstraint.Static)
         assert(attribute.type == AttributeType.String)
-        assert(attribute.timestamp == 1.2348)
+        assert(attribute.timestamp == null)
         assert(attribute.value == "TEST123")
     }
 
@@ -1760,7 +1760,7 @@ class CBORSerializationFormatTests {
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
                     0x66,                       // text(6)
-                    0x53, 0x74, 0x61, 0x74, 0x69, 0x63,          // "Static"
+                    0x4D, 0x65, 0x61, 0x73, 0x75, 0x72, 0x65,          // "Measure"
                     0x64,                       // text(4)
                     0x74, 0x79, 0x70, 0x65,              // "type"
                     0x67,                       // text(7)
@@ -1849,7 +1849,7 @@ class CBORSerializationFormatTests {
                     0x6A,                       // text(0x10, )
                     0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
                     0x66,                       // text(6)
-                    0x53, 0x74, 0x61, 0x74, 0x69, 0x63,          // "Static"
+                    0x4D, 0x65, 0x61, 0x73, 0x75, 0x72, 0x65,          // "Measure"
                     0x64,                       // text(4)
                     0x74, 0x79, 0x70, 0x65,              // "type"
                     0x67,                       // text(7)
