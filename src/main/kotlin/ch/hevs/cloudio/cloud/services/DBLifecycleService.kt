@@ -43,6 +43,7 @@ class DBLifecycleService(
 
     override fun nodeAdded(uuid: String, nodeName: String, node: Node) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->
         node.online = true
+        node.removeDynamicAttributeValues()
         endpoint.dataModel.nodes[nodeName] = node
         endpointRepository.save(endpoint)
     }
