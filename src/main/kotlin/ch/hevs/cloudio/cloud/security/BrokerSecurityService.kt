@@ -122,7 +122,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                     }
                     else -> try {
                         (userDetailsService.loadUserByUsername(id) as CloudioUserDetails).let { userDetails ->
-                            if (modelIdentifier.count() == 0) {
+                            if (modelIdentifier.count() == 0 || modelIdentifier.wildcard) {
                                 if (permissionManager.hasEndpointPermission(userDetails, modelIdentifier.endpoint, permission.toEndpointPermission())) {
                                     "allow"
                                 } else {
@@ -130,7 +130,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                                     "deny"
                                 }
                             } else {
-                                if (!modelIdentifier.wildcard && permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
+                                if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
                                     "allow"
                                 } else {
                                     log.info("Access to topic \"$modelIdentifier\" refused for user - Insufficient permission.")
