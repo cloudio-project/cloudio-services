@@ -27,11 +27,16 @@ class ModelIdentifier(uri: String) : Serializable {
      */
     val endpoint: UUID
 
+    val wildcard: Boolean
+
     private val modelPath: List<String>
 
     init {
         // Split topic using '/' for REST format and '.' for AMQP format.
         var splitURI = uri.split('.', '/').toMutableList()
+
+        // Is it a wildcard model index?
+        wildcard = splitURI.last() == "#"
 
         // Convert from v0.1 endpoint topic format to new format if required.
         val nodesIndex = splitURI.indexOf("nodes")
@@ -51,7 +56,8 @@ class ModelIdentifier(uri: String) : Serializable {
             } catch (e: Exception) {
                 null
             }
-            if (uuid != null && (uuid.leastSignificantBits != 0L || uuid.mostSignificantBits != 0L) && splitURI.none { it.isEmpty() }) {
+            if (uuid != null && (uuid.leastSignificantBits != 0L || uuid.mostSignificantBits != 0L) &&
+                    splitURI.none { it.isEmpty() } && splitURI.subList(0, splitURI.count() - 1).none { it == "#" }) {
                 valid = true
                 endpoint = uuid
                 splitURI.removeAt(0)

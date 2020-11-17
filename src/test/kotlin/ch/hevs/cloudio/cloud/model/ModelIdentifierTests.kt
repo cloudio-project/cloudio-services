@@ -1569,4 +1569,12 @@ class ModelIdentifierTests {
         assert(ModelIdentifier("@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66") != m1)
         assert(ModelIdentifier("@offline.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.toto") != m1)
     }
+
+    @Test
+    fun endpointSubscriptionTest() {
+        assert(ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.#").valid)
+        assert(ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/#").valid)
+        assert(!ModelIdentifier("@set.c7bfaa1c-857f-438a-b5f0-447e3cd34f66.#.toto").valid)
+        assert(!ModelIdentifier("@set/c7bfaa1c-857f-438a-b5f0-447e3cd34f66/#/toto").valid)
+    }
 }

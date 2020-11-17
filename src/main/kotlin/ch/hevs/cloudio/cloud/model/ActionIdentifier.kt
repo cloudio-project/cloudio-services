@@ -8,7 +8,8 @@ package ch.hevs.cloudio.cloud.model
 enum class ActionIdentifier(
         private val verb: String,
         private val minModelLevels: Int,
-        private val maxModelLevels: Int = Int.MAX_VALUE
+        private val maxModelLevels: Int = Int.MAX_VALUE,
+        private val wildcardAllowed: Boolean = false
 ) {
     /**
      * No action present.
@@ -54,19 +55,19 @@ enum class ActionIdentifier(
      * In the case of transactional changes, a cloud service sends the individual update messages in the name of the endpoint.
      * The message payload is of type [Attribute].
      */
-    ATTRIBUTE_UPDATE("@update", 4),
+    ATTRIBUTE_UPDATE("@update", 4, Int.MAX_VALUE, true),
 
     /**
      * A message to a topic starting with this action (verb) is send to an endpoint in order to set the value of an attribute in an endpoint's data model.
      * The message payload is of type [Attribute].
      */
-    ATTRIBUTE_SET("@set", 4),
+    ATTRIBUTE_SET("@set", 4, Int.MAX_VALUE, true),
 
     /**
      * A message to a topic starting with this action (verb) is send by an endpoint every time an attribute has successfully been modified by an [ActionIdentifier.ATTRIBUTE_SET] action.
      * The message payload is of type [AttributeSetStatus].
      */
-    ATTRIBUTE_DID_SET("@didSet", 4),
+    ATTRIBUTE_DID_SET("@didSet", 4, Int.MAX_VALUE, true),
 
     /**
      * A message to a topic starting with this action (verb) is send by an endpoint when a transaction is committed.
@@ -175,7 +176,11 @@ enum class ActionIdentifier(
                 NONE
             }
         }.let {
-            if (uri.count() in it.minModelLevels..it.maxModelLevels) it else INVALID
+            when {
+                uri.count() in it.minModelLevels..it.maxModelLevels -> it
+                it.wildcardAllowed && uri.isNotEmpty() && uri.last() == "#" -> it
+                else -> INVALID
+            }
         }
     }
 

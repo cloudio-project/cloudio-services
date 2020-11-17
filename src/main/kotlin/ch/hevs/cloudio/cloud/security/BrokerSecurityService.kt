@@ -109,7 +109,12 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                     }
                     modelIdentifier.endpoint.toString() == id -> {
                         if (endpointRepository.findByIdOrNull(modelIdentifier.endpoint)?.banned == false) {
-                            "allow"
+                            if (permission == BrokerPermission.READ || !modelIdentifier.wildcard) {
+                                "allow"
+                            } else {
+                                log.info("Access to topic \"$modelIdentifier\" refused for endpoint - Wildcards can only be used for READ access.")
+                                "deny"
+                            }
                         } else {
                             log.info("Access to topic \"$modelIdentifier\" refused for endpoint - Endpoint does not exist or is banned.")
                             "deny"
@@ -125,7 +130,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                                     "deny"
                                 }
                             } else {
-                                if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
+                                if (!modelIdentifier.wildcard && permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
                                     "allow"
                                 } else {
                                     log.info("Access to topic \"$modelIdentifier\" refused for user - Insufficient permission.")
