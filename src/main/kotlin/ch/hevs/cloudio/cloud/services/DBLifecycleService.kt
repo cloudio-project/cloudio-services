@@ -2,6 +2,8 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.model.AttributeConstraint
+import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
@@ -27,6 +29,7 @@ class DBLifecycleService(
             it.value.online = true
             endpoint.dataModel.nodes[it.key] = it.value
         }
+        endpoint.dataModel.nodes.removeDynamicAttributeValues();
         endpointRepository.save(endpoint)
     }
 
@@ -49,5 +52,21 @@ class DBLifecycleService(
             online = false
             endpointRepository.save(endpoint)
         }
+    }
+
+    private fun Map<String,Node>.removeDynamicAttributeValues() {
+        forEach { (_, node) -> node.removeDynamicAttributeValues() }
+    }
+
+    private fun Node.removeDynamicAttributeValues() {
+        objects.forEach { (_, obj) -> obj.removeDynamicAttributeValues() }
+    }
+
+    private fun CloudioObject.removeDynamicAttributeValues() {
+        objects.forEach { (_, obj) -> obj.removeDynamicAttributeValues() }
+        attributes.forEach { (_, attribute) -> if (attribute.constraint != AttributeConstraint.Static) {
+            attribute.value = null
+            attribute.timestamp = null
+        } }
     }
 }
