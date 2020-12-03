@@ -1861,28 +1861,7 @@ class CBORSerializationFormatTests {
         }
         assert(exception.message == "Error deserializing attribute.")
     }
-
-    @Test
-    fun missingValueAttributeDeserialize() {
-        val exception = assertThrows(SerializationException::class.java) {
-            CBORSerializationFormat().deserializeAttribute(arrayOf(
-                    0xA3,                          // map(3)
-                    0x6A,                       // text(0x10, )
-                    0x63, 0x6F, 0x6E, 0x73, 0x74, 0x72, 0x61, 0x69, 0x6E, 0x74,  // "constraint"
-                    0x66,                       // text(6)
-                    0x53, 0x74, 0x61, 0x74, 0x69, 0x63,          // "Static"
-                    0x64,                       // text(4)
-                    0x74, 0x79, 0x70, 0x65,              // "type"
-                    0x67,                       // text(7)
-                    0x49, 0x6E, 0x74, 0x65, 0x67, 0x65, 0x72,        // "Integer"
-                    0x69,                       // text(9)
-                    0x74, 0x69, 0x6D, 0x65, 0x73, 0x74, 0x61, 0x6D, 0x70,    // "timestamp"
-                    0x1A, 0x00, 0xBC, 0x61, 0x4E              // unsigned(0x12, 0x34, 0x56, 0x78, )
-            ).map(Int::toByte).toByteArray())
-        }
-        assert(exception.message == "Error deserializing attribute.")
-    }
-
+    
     @Test
     fun additionalFieldAttributeDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {

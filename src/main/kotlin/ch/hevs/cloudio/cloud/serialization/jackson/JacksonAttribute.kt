@@ -15,7 +15,7 @@ data class JacksonAttribute(
     fun toAttribute() = Attribute(
             constraint = constraint.get().also { if (it == AttributeConstraint.Invalid) throw SerializationException() },
             type = type.get().also { if (it == AttributeType.Invalid || !it.checkType(value.orElse(null))) throw SerializationException() },
-            timestamp = if (constraint.get() == AttributeConstraint.Static) null else timestamp.get().also { if (it < 0) throw SerializationException() },
-            value = value.get()
+            timestamp = if (constraint.get() == AttributeConstraint.Static) null else timestamp.orElse(null)?.also { if (it < 0) throw SerializationException() },
+            value = value.orElse(null)
     )
 }

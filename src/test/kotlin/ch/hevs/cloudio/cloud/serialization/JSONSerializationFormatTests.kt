@@ -1137,34 +1137,6 @@ class JSONSerializationFormatTests {
     }
 
     @Test
-    fun missingTimestampAttributeDeserialize() {
-        val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute("""
-            {
-                "constraint": "Measure",
-                "type": "Integer",
-                "value": 0
-            }
-        """.trimIndent().toByteArray())
-        }
-        assert(exception.message == "Error deserializing attribute.")
-    }
-
-    @Test
-    fun missingValueAttributeDeserialize() {
-        val exception = assertThrows(SerializationException::class.java) {
-            JSONSerializationFormat().deserializeAttribute("""
-            {
-                "constraint": "Static",
-                "type": "Integer",
-                "timestamp": 12345678
-            }
-        """.trimIndent().toByteArray())
-        }
-        assert(exception.message == "Error deserializing attribute.")
-    }
-
-    @Test
     fun additionalFieldAttributeDeserialize() {
         val exception = assertThrows(SerializationException::class.java) {
             JSONSerializationFormat().deserializeAttribute("""

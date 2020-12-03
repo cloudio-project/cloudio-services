@@ -37,6 +37,7 @@ enum class AttributeType {
      * @return      True if the type matches, false otherwise.
      */
     fun checkType(value: Any?) = when {
+        value == null -> true
         this == Boolean && value is kotlin.Boolean -> true
         this == Integer && (value is Int || value is Long) -> true
         this == Number && (value is Float || value  is Double) -> true
