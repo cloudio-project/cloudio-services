@@ -9,8 +9,8 @@ enum class Authority {
     BROKER_MANAGEMENT_ADMINISTRATOR,
 
     HTTP_ACCESS,
-    HTTP_ADMIN,
-    HTTP_ENDPOINT_CREATION;
+    HTTP_ENDPOINT_CREATION,
+    HTTP_ADMIN;
 
     @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
     @Retention(AnnotationRetention.RUNTIME)
@@ -24,5 +24,6 @@ enum class Authority {
 
     companion object {
         val DEFAULT_AUTHORITIES = setOf(HTTP_ACCESS)
+        val ALL_AUTHORITIES = setOf(BROKER_MANAGEMENT_ADMINISTRATOR, HTTP_ACCESS, HTTP_ADMIN)
     }
 }

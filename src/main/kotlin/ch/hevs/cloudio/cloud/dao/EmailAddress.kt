@@ -1,0 +1,27 @@
+package ch.hevs.cloudio.cloud.dao
+
+import java.util.regex.Pattern.compile
+import javax.persistence.Column
+import javax.persistence.Embeddable
+
+@Embeddable
+class EmailAddress(
+        @Column(name = "email_address", nullable = false)
+        val address: String = "") {
+
+    fun isValid() = emailRegex.matcher(address).matches()
+
+    override fun toString() = address
+
+    companion object {
+        private val emailRegex = compile(
+                "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
+                        "\\@" +
+                        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+                        "(" +
+                        "\\." +
+                        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+                        ")+"
+        )
+    }
+}

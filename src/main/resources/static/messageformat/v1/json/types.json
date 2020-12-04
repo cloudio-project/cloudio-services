@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AttributeConstraint": {
+      "enum": [
+        "Static",
+        "Parameter",
+        "SetPoint",
+        "Status",
+        "Measure"
+      ]
+    },
+    "AttributeType": {
+      "enum": [
+        "Boolean",
+        "Integer",
+        "Number",
+        "String"
+      ]
+    },
+    "Timestamp": {
+      "type": "number",
+      "minimum": 0
+    },
+    "AttributeValue": {
+      "type": ["boolean", "integer", "number", "string"]
+    },
+    "Attribute": {
+      "type": "object",
+      "properties": {
+        "constraint": {
+          "$ref": "#/definitions/AttributeConstraint"
+        },
+        "type": {
+          "$ref": "#/definitions/AttributeType"
+        },
+        "timestamp": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "value": {
+          "$ref": "#/definitions/AttributeValue"
+        }
+      },
+      "required": [
+        "constraint",
+        "type",
+        "timestamp",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "Object": {
+      "type": "object",
+      "properties": {
+        "conforms": {
+          "type": "string"
+        },
+        "objects": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Object"
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Attribute"
+          }
+        }
+      },
+      "required": [
+        "conforms",
+        "objects",
+        "attributes"
+      ],
+      "additionalProperties": false
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "implements": {
+          "type": "string"
+        },
+        "objects": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Object"
+          }
+        }
+      },
+      "required": [
+        "implements",
+        "objects"
+      ],
+      "additionalProperties": false
+    },
+    "EndpointDataModel": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Node"
+          }
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

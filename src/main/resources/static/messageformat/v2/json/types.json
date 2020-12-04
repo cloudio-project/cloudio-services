@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AttributeConstraint": {
+      "enum": [
+        "Static",
+        "Parameter",
+        "SetPoint",
+        "Status",
+        "Measure"
+      ]
+    },
+    "AttributeType": {
+      "enum": [
+        "Boolean",
+        "Integer",
+        "Number",
+        "String"
+      ]
+    },
+    "Timestamp": {
+      "type": "number",
+      "minimum": 0
+    },
+    "AttributeValue": {
+      "type": ["boolean", "integer", "number", "string"]
+    },
+    "Attribute": {
+      "type": "object",
+      "properties": {
+        "constraint": {
+          "$ref": "#/definitions/AttributeConstraint"
+        },
+        "type": {
+          "$ref": "#/definitions/AttributeType"
+        },
+        "timestamp": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "value": {
+          "$ref": "#/definitions/AttributeValue"
+        }
+      },
+      "required": [
+        "constraint",
+        "type",
+        "timestamp",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "Object": {
+      "type": "object",
+      "properties": {
+        "conforms": {
+          "type": "string"
+        },
+        "objects": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Object"
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Attribute"
+          }
+        }
+      },
+      "required": [
+        "conforms",
+        "objects",
+        "attributes"
+      ],
+      "additionalProperties": false
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "implements": {
+          "type": "string"
+        },
+        "objects": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Object"
+          }
+        }
+      },
+      "required": [
+        "implements",
+        "objects"
+      ],
+      "additionalProperties": false
+    },
+    "EndpointDataModel": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "default": "unknown"
+        },
+        "messageFormatVersion": {
+          "type": "number",
+          "default": null
+        },
+        "supportedFormats": {
+          "type": "array",
+          "items": {
+            "type":  "string"
+          },
+          "default": ["JSON"]
+        },
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Node"
+          }
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "additionalProperties": false
+    },
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Attribute"
+          }
+        }
+      },
+      "required": [
+        "attributes"
+      ],
+      "additionalProperties": false
+    },
+    "DelayedMessages": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topic": {
+                "type": "string"
+              },
+              "data": {
+                "type": [
+                  { "$ref": "#/definitions/Attribute" },
+                  { "$ref": "#/definitions/Transaction" },
+                  { "$ref": "#/definitions/LogMessage" }
+                ]
+              }
+            },
+            "required": [
+              "topic",
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "timestamp",
+        "messages"
+      ],
+      "additionalProperties": false
+    },
+    "LogLevel": {
+      "enum": [
+        "OFF",
+        "FATAL",
+        "ERROR",
+        "WARN",
+        "INFO",
+        "DEBUG",
+        "TRACE",
+        "ALL"
+      ]
+    },
+    "LogMessage": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/definitions/LogLevel"
+        },
+        "timestamp": {
+          "$ref": "#/definitions/Timestamp"
+        },
+        "message": {
+          "type": "string"
+        },
+        "loggerName": {
+          "type": "string"
+        },
+        "logSource": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "timestamp",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "JobExecCommand": {
+      "type": "object",
+      "properties": {
+        "correlationID": {
+          "type": "string"
+        },
+        "jobURI": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string"
+        },
+        "sendOutput": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "correlationID",
+        "jobURI",
+        "data",
+        "sendOutput"
+      ],
+      "additionalProperties": false
+    },
+    "JobExecOutput": {
+      "type": "object",
+      "properties": {
+        "correlationID": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "correlationID",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

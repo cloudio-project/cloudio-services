@@ -9,6 +9,5 @@ import java.util.*
 data class GenerateEndpointKeyAndCertificateRequest(
         @JsonSerialize(using = UUIDSerializer::class)
         @JsonDeserialize(using = UUIDDeserializer::class)
-        val endpointUUID: UUID? = null,
-        val password: String? = null
+        val endpointUUID: UUID? = null
 )

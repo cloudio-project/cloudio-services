@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "title": "Job execute command message",
+  "description": "Job execute command message send from cloud to endpoint to the topic @exec/<Endpoint UUID>",
+
+  "$ref": "types.json#/definitions/JobExecCommand"
+}

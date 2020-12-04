@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
-import ch.hevs.cloudio.cloud.model.Endpoint
+import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
@@ -35,8 +35,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val endpoint = Endpoint()
-                messageFormat.deserializeEndpoint(endpoint, data)
+                val endpoint = messageFormat.deserializeEndpointDataModel(data)
                 endpointIsOnline(endpointId, endpoint)
             } else {
                 log.error("Unrecognized message format in @online message from $endpointId")
@@ -84,8 +83,7 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val node = Node()
-                messageFormat.deserializeNode(node, data)
+                val node = messageFormat.deserializeNode(data)
                 nodeAdded(endpointId, nodeName, node)
             } else {
                 log.error("Unrecognized message format in @nodeAdded message from $endpointId")
@@ -116,8 +114,8 @@ abstract class AbstractLifecycleService(private val serializationFormats: Collec
         }
     }
 
-    abstract fun endpointIsOnline(endpointId: String, endpoint: Endpoint)
-    abstract fun endpointIsOffline(endpointId: String)
-    abstract fun nodeAdded(endpointId: String, nodeName: String, node: Node)
-    abstract fun nodeRemoved(endpointId: String, nodeName: String)
+    abstract fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel)
+    abstract fun endpointIsOffline(uuid: String)
+    abstract fun nodeAdded(uuid: String, nodeName: String, node: Node)
+    abstract fun nodeRemoved(uuid: String, nodeName: String)
 }

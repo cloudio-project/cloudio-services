@@ -27,43 +27,45 @@ class InfluxUpdateSetService(
     @PostConstruct
     fun initialize() {
         // Create database if needed
-        if (influx.query(Query("SHOW DATABASES", "")).toString().indexOf(influxProperties.database) == -1)
+        if (influx.query(Query("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.firstOrNull() == influxProperties.database} != false)
             influx.query(Query("CREATE DATABASE ${influxProperties.database}", ""))
 
         influx.enableBatch(BatchOptions.DEFAULTS.actions(influxProperties.batchSize).flushDuration(influxProperties.batchIntervalMs))
     }
 
     override fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String) {
-        // create the influxDB point
-        val point = Point
-                .measurement(attributeId)
-                .time((attribute.timestamp * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                .tag("constraint", attribute.constraint.toString())
-                .tag("type", attribute.type.toString())
+        if (attribute.timestamp != null) {
+            // create the influxDB point
+            val point = Point
+                    .measurement(attributeId)
+                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
+                    .tag("constraint", attribute.constraint.toString())
+                    .tag("type", attribute.type.toString())
 
-        try {
-            // complete the point depending on attribute type
-            when (attribute.type) {
-                AttributeType.Boolean -> point.addField("value", attribute.value as Boolean)
-                AttributeType.Integer -> point.addField("value", attribute.value as Int)
-                AttributeType.Number -> {
-                    if (attribute.value is Int) {
-                        attribute.value = (attribute.value as Int).toFloat()
+            try {
+                // complete the point depending on attribute type
+                when (attribute.type) {
+                    AttributeType.Boolean -> point.addField("value", attribute.value as Boolean)
+                    AttributeType.Integer -> point.addField("value", attribute.value as Int)
+                    AttributeType.Number -> {
+                        if (attribute.value is Int) {
+                            attribute.value = (attribute.value as Int).toFloat()
+                        }
+                        point.addField("value", attribute.value as Number)
                     }
-                    point.addField("value", attribute.value as Number)
+                    AttributeType.String -> point.addField("value", attribute.value as String)
+                    else -> {
+                    }
                 }
-                AttributeType.String -> point.addField("value", attribute.value as String)
-                else -> {
-                }
+                //write the actual point in influx
+                val myPoint = point.build()
+
+                //if batch enabled, save point in set, either send it
+                influx.write(influxProperties.database, "autogen", myPoint)
+
+            } catch (e: ClassCastException) {
+                log.error("The attribute $attributeId has been updated with wrong data type")
             }
-            //write the actual point in influx
-            val myPoint = point.build()
-
-            //if batch enabled, save point in set, either send it
-            influx.write(influxProperties.database, "autogen", myPoint)
-
-        } catch (e: ClassCastException) {
-            log.error("The attribute $attributeId has been updated with wrong data type")
         }
     }
 }

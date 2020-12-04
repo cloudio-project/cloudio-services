@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "title": "Node added message",
+  "description": "Node added message send from endpoint to cloud to the topic @nodeAdded/<Endpoint UUID>/<Node>",
+
+  "$ref": "types.json#/definitions/Node"
+}

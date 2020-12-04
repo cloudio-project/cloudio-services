@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.internalservice.certificatemanager
 
-import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
@@ -20,15 +19,15 @@ class CertificateManagerProxy(private val rabbitTemplate: RabbitTemplate) {
                 "CertificateManagerService::getCACertificate", "") as String
     }
 
-    fun generateEndpointKeyAndCertificate(endpointUUID: UUID, password: String? = null): Pair<String, ByteArray> {
+    fun generateEndpointKeyAndCertificate(endpointUUID: UUID): Pair<String, String> {
         val response = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
                 "CertificateManagerService::generateEndpointKeyAndCertificate",
-                GenerateEndpointKeyAndCertificateRequest(endpointUUID, password))
+                GenerateEndpointKeyAndCertificateRequest(endpointUUID))
                 as GenerateEndpointKeyAndCertificateResponse
-        if (endpointUUID != response.endpointUUID || (password != null && password != response.password)) {
-            throw RuntimeException("UUID or password do not match")
+        if (endpointUUID != response.endpointUUID) {
+            throw RuntimeException("UUID does not match")
         }
-        return Pair(response.password, response.pkcs12Data)
+        return Pair(response.certificate, response.privateKey)
     }
 
     fun generateEndpointCertificateFromPublicKey(endpointUUID: UUID, publicKeyPEM: String): String {
@@ -40,24 +39,5 @@ class CertificateManagerProxy(private val rabbitTemplate: RabbitTemplate) {
             throw RuntimeException("UUID does not match")
         }
         return response.certificatePEM
-    }
-
-    fun generateEndpointConfigurationArchive(endpointUUID: UUID, language: LibraryLanguage,
-                                             properties: Map<String, String> = emptyMap()): ByteArray {
-        val response = rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
-                "CertificateManagerService::generateEndpointConfigurationArchive",
-                GenerateEndpointConfigurationArchiveRequest(endpointUUID, language, properties))
-                as GenerateEndpointConfigurationArchiveResponse
-        if (endpointUUID != response.endpointUUID || language != response.language) {
-            throw RuntimeException("UUID or library type does not match")
-        }
-        return response.pkcs12Data
-    }
-
-    fun generateEndpointKeyAndCertificateAsPEM(endpointUUID: UUID): String {
-        return rabbitTemplate.convertSendAndReceive("cloudio.service.internal",
-                "CertificateManagerService::generateEndpointKeyAndCertificateAsPEM",
-                endpointUUID.toString())
-                as String
     }
 }

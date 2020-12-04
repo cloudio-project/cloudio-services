@@ -9,7 +9,11 @@ spring:
   influx:
     url: http://influx:8086
 
-  data:
-    mongodb:
-      host: mongo
-      database: cloudio
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cloudio
+    username: cloudio
+    password: admin
+
+  jpa:
+    hibernate:
+      ddl-auto: update

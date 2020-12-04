@@ -1,10 +1,10 @@
 package ch.hevs.cloudio.cloud
 
-import ch.hevs.cloudio.cloud.apiutils.LibraryLanguage
 import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
+import ch.hevs.cloudio.cloud.extension.toPrivateKey
+import ch.hevs.cloudio.cloud.extension.toX509Certificate
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointConfigurationArchiveRequest
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
@@ -14,16 +14,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
-import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.io.StringWriter
 import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.PrivateKey
 import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.util.*
-import java.util.zip.ZipInputStream
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
@@ -92,11 +87,9 @@ class CertificateManagerTest {
                 GenerateEndpointKeyAndCertificateRequest(uuid))!!
 
         assert(uuid == response.endpointUUID)
-        val p12KeyStore = KeyStore.getInstance("PKCS12")
-        p12KeyStore.load(ByteArrayInputStream(response.pkcs12Data), response.password.toCharArray())
-        val clientCert = p12KeyStore.getCertificate("") as X509Certificate
+        val clientCert = response.certificate.toX509Certificate()
         clientCert.checkValidity()
-        p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
+        response.privateKey.toPrivateKey()
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
     }
 
@@ -126,43 +119,5 @@ class CertificateManagerTest {
         clientCert.checkValidity()
         assert(clientCert.publicKey == keyPair.public)
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
-    }
-
-    @Test
-    fun generateEndpointKeyAndCertificatePairTestZip() {
-        val uuid = UUID.randomUUID()
-
-        val response = authority.generateEndpointConfigurationArchive(GenerateEndpointConfigurationArchiveRequest(
-                uuid,
-                LibraryLanguage.JAVA,
-                mapOf("test" to "12345", "test2" to "54321"))
-        )!!
-
-        assert(uuid == response.endpointUUID)
-        val zip = ZipInputStream(ByteArrayInputStream(response.pkcs12Data))
-        val propertiesFile = zip.nextEntry
-        assert(propertiesFile.name == "cloud.io/$uuid.properties")
-        val properties = Properties().apply {
-            load(zip)
-        }
-        val password = properties.getProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword")
-        assert(password.isNotEmpty())
-        assert(properties.getProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword") == password)
-        assert(properties.getProperty("test") == "12345")
-        assert(properties.getProperty("test2") == "54321")
-
-        val jksFile = zip.nextEntry
-        assert(jksFile.name == "cloud.io/authority.jks")
-        val jksKeystore = KeyStore.getInstance("JKS")
-        jksKeystore.load(zip, password.toCharArray())
-        val caCert = jksKeystore.getCertificate("") as X509Certificate
-        caCert.checkValidity()
-        val p12File = zip.nextEntry
-        assert(p12File.name == "cloud.io/$uuid.p12")
-        val p12KeyStore = KeyStore.getInstance("PKCS12")
-        p12KeyStore.load(zip, password.toCharArray())
-        val clientCert = p12KeyStore.getCertificate("") as X509Certificate
-        clientCert.checkValidity()
-        p12KeyStore.getKey("", "".toCharArray()) as PrivateKey
     }
 }

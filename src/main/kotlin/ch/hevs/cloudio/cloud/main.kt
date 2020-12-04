@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -20,21 +21,26 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.data.domain.AuditorAware
+import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import springfox.documentation.builders.ApiInfoBuilder
 import springfox.documentation.builders.PathSelectors
 import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
 import springfox.documentation.swagger2.annotations.EnableSwagger2
+import java.util.*
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableSwagger2
+@EnableScheduling
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
@@ -119,7 +125,11 @@ class CloudioApplication {
 
         override fun configure(http: HttpSecurity) {
             http.csrf().disable()
-                    .authorizeRequests().antMatchers("/v2/api-docs").permitAll()
+                    .authorizeRequests().antMatchers(
+                            "/v2/api-docs",
+                            "/api/v1/provision/*",
+                            "/messageformat/**"
+                    ).permitAll()
                     .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
                     .and().sessionManagement().disable()
@@ -136,6 +146,21 @@ class CloudioApplication {
             licenseUrl("https://opensource.org/licenses/MIT")
             buildProperties?.let { version(it.version) }
         }.build())
+    }
+
+    @Bean
+    fun auditorAware() = AuditorAware {
+        val authentication = SecurityContextHolder.getContext().authentication
+        if (authentication != null && authentication.isAuthenticated) {
+            val userDetails = authentication.principal as? CloudioUserDetails
+            if (userDetails != null) {
+                Optional.of(userDetails.id)
+            } else {
+                Optional.empty()
+            }
+        } else {
+            Optional.empty()
+        }
     }
 }
 

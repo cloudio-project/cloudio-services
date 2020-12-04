@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
-import ch.hevs.cloudio.cloud.model.CloudioLogMessage
-import ch.hevs.cloudio.cloud.model.LogParameter
+import ch.hevs.cloudio.cloud.model.LogLevel
+import ch.hevs.cloudio.cloud.model.LogMessage
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
@@ -36,9 +36,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val logParameter = LogParameter()
-                messageFormat.deserializeLogParameter(logParameter, data)
-                logLevelChange(endpointUuid, logParameter)
+                logLevelChanged(endpointUuid, messageFormat.deserializeLogLevel(data))
             } else {
                 log.error("Unrecognized message format in @logsLevel message from $endpointUuid")
             }
@@ -65,10 +63,9 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
-                val cloudioLog = CloudioLogMessage()
-                messageFormat.deserializeCloudioLog(cloudioLog, data)
-                if (cloudioLog.timestamp != -1.0)
-                    newLog(endpointUuid, cloudioLog)
+                val logMessage = messageFormat.deserializeLogMessage(data)
+                if (logMessage.timestamp != -1.0)
+                    newLog(endpointUuid, logMessage)
             } else {
                 log.error("Unrecognized message format in @logs message from $endpointUuid")
             }
@@ -79,8 +76,8 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
     }
 
     // Abstract method to handle log level change messages.
-    abstract fun logLevelChange(endpointUuid: String, logParameter: LogParameter)
+    abstract fun logLevelChanged(endpointUuid: String, logLevel: LogLevel)
 
     // Abstract method to handle logs messages.
-    abstract fun newLog(endpointUuid: String, cloudioLogMessage: CloudioLogMessage)
+    abstract fun newLog(endpointUuid: String, logMessage: LogMessage)
 }

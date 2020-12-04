@@ -10,8 +10,8 @@ data class GenerateEndpointKeyAndCertificateResponse(
         @JsonSerialize(using = UUIDSerializer::class)
         @JsonDeserialize(using = UUIDDeserializer::class)
         val endpointUUID: UUID? = null,
-        val password: String = "",
-        val pkcs12Data: ByteArray = ByteArray(0)
+        val certificate: String = "",
+        val privateKey: String = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -20,16 +20,16 @@ data class GenerateEndpointKeyAndCertificateResponse(
         other as GenerateEndpointKeyAndCertificateResponse
 
         if (endpointUUID != other.endpointUUID) return false
-        if (password != other.password) return false
-        if (!pkcs12Data.contentEquals(other.pkcs12Data)) return false
+        if (certificate != other.certificate) return false
+        if (privateKey != other.privateKey) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = endpointUUID.hashCode()
-        result = 31 * result + password.hashCode()
-        result = 31 * result + pkcs12Data.contentHashCode()
+        result = 31 * result + certificate.hashCode()
+        result = 31 * result + privateKey.hashCode()
         return result
     }
 }
