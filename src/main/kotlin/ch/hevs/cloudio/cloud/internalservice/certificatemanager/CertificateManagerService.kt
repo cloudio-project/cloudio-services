@@ -10,14 +10,14 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
-import org.springframework.context.annotation.Profile
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import java.security.*
 import java.security.cert.X509Certificate
 import java.util.*
 
 @Service
-@Profile("certificate-manager", "default")
+@Lazy
 class CertificateManagerService(private val properties: CloudioCertificateManagerProperties) {
     private val log = LogFactory.getLog(CertificateManagerService::class.java)
 
