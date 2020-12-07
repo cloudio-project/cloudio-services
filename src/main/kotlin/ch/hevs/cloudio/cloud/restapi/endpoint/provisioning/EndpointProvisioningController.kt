@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.dao.ProvisionToken
 import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -27,7 +27,7 @@ import java.util.zip.ZipOutputStream
 class EndpointProvisioningController(
         private val endpointRepository: EndpointRepository,
         private val provisionTokenRepository: ProvisionTokenRepository,
-        private val certificateManager: CertificateManagerProxy
+        private val certificateManager: CertificateManagerService
 ) {
     private val caCertificate by lazy {
         certificateManager.getCACertificate()

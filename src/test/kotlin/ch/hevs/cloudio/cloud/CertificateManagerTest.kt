@@ -4,8 +4,6 @@ import ch.hevs.cloudio.cloud.config.CloudioCertificateManagerProperties
 import ch.hevs.cloudio.cloud.extension.toPrivateKey
 import ch.hevs.cloudio.cloud.extension.toX509Certificate
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointCertificateFromPublicKeyRequest
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.GenerateEndpointKeyAndCertificateRequest
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.openssl.PEMParser
@@ -83,13 +81,11 @@ class CertificateManagerTest {
     fun generateEndpointKeyAndCertificatePairTest() {
         val uuid = UUID.randomUUID()
 
-        val response = authority.generateEndpointKeyAndCertificate(
-                GenerateEndpointKeyAndCertificateRequest(uuid))!!
+        val response = authority.generateEndpointKeyAndCertificate(uuid)
 
-        assert(uuid == response.endpointUUID)
-        val clientCert = response.certificate.toX509Certificate()
+        val clientCert = response.first.toX509Certificate()
         clientCert.checkValidity()
-        response.privateKey.toPrivateKey()
+        response.second.toPrivateKey()
         assert(clientCert.issuerX500Principal == caCert.subjectX500Principal)
     }
 
@@ -101,7 +97,7 @@ class CertificateManagerTest {
         val uuid = UUID.randomUUID()
 
         val response = authority.generateEndpointCertificateFromPublicKey(
-                GenerateEndpointCertificateFromPublicKeyRequest(
+
                         uuid, StringWriter().let {
                     JcaPEMWriter(it).run {
                         writeObject(keyPair.public)
@@ -109,12 +105,11 @@ class CertificateManagerTest {
                         close()
                     }
                     it
-                }.toString()))!!
+                }.toString())
 
-        assert(uuid == response.endpointUUID)
-        assert(response.certificatePEM.contains("-----BEGIN CERTIFICATE-----"))
+        assert(response.contains("-----BEGIN CERTIFICATE-----"))
         val clientCert = JcaX509CertificateConverter().getCertificate(PEMParser(
-                StringReader(response.certificatePEM)
+                StringReader(response)
         ).readObject() as X509CertificateHolder)
         clientCert.checkValidity()
         assert(clientCert.publicKey == keyPair.public)
