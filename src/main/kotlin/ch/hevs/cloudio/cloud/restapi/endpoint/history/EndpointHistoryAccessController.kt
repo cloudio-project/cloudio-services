@@ -13,6 +13,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
@@ -22,8 +23,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access time series data of endpoints.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access time series data of endpoints.")
 @RequestMapping("/api/v1/history")
 class EndpointHistoryAccessController(
         private val endpointRepository: EndpointRepository,

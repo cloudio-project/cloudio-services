@@ -1,4 +1,10 @@
 spring:
+  profiles:
+    active: ["default", "rest-api"]
+
+  main:
+    web-application-type: none
+
   rabbitmq:
     host: rabbit
     port: 5671

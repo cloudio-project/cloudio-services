@@ -5,7 +5,10 @@ import ch.hevs.cloudio.cloud.dao.UserRepository
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
-import io.swagger.annotations.*
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -13,11 +16,12 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 
+@RestController
+@Profile("rest-api")
 @Api(
         tags = ["Account"],
         description = "Allows users to access and modify their account information."
 )
-@RestController
 @RequestMapping("/api/v1/account")
 class AccountController(
         private val userRepository: UserRepository,

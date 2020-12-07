@@ -8,13 +8,15 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 
-@Api(tags = ["User Management"], description = "Allows an admin user to manage users.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["User Management"], description = "Allows an admin user to manage users.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserManagementController(
