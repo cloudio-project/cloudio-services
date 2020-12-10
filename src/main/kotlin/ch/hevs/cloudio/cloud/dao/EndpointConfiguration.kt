@@ -11,12 +11,10 @@ data class EndpointConfiguration(
         @MapKeyColumn(name="key")
         val properties: MutableMap<String, String> = mutableMapOf(),
 
-        @Lob
-        @Column(name = "pem_certificate")
+        @Column(name = "pem_certificate", columnDefinition = "TEXT")
         var clientCertificate: String = "",
 
-        @Lob
-        @Column(name = "pem_private_key")
+        @Column(name = "pem_private_key", columnDefinition = "TEXT")
         var privateKey: String = "",
 
         @Enumerated(EnumType.STRING)
