@@ -1,10 +1,11 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.provisioning
 
+import ch.hevs.cloudio.cloud.dao.Endpoint
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.dao.ProvisionToken
 import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
-import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerProxy
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -27,7 +28,7 @@ import java.util.zip.ZipOutputStream
 class EndpointProvisioningController(
         private val endpointRepository: EndpointRepository,
         private val provisionTokenRepository: ProvisionTokenRepository,
-        private val certificateManager: CertificateManagerProxy
+        private val certificateManager: CertificateManagerService
 ) {
     private val caCertificate by lazy {
         certificateManager.getCACertificate()
@@ -72,6 +73,18 @@ class EndpointProvisioningController(
         )).token
     }
 
+    @GetMapping("/endpoints/{uuid}/provision")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
+    @ApiOperation("Get endpoint configuration information for a given endpoint.")
+    fun provisionByUUID(
+        @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
+        @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
+    ): ResponseEntity<Any> = endpointRepository.findById(uuid).orElseThrow {
+        CloudioHttpExceptions.NotFound("Not found")
+    }.getProvisionEntity(endpointProvisionDataFormat, publicKey)
+
 
     @GetMapping("/provision/{token}")
     @ResponseStatus(HttpStatus.OK)
@@ -85,80 +98,93 @@ class EndpointProvisioningController(
     }.let {
         endpointRepository.findById(it.endpointUUID).orElseThrow {
             CloudioHttpExceptions.NotFound("Not found")
-        }.run {
+        }.getProvisionEntity(endpointProvisionDataFormat, publicKey, it)
+    }
 
-            if (configuration.clientCertificate.isEmpty()) {
-                if (publicKey != null) {
-                    val certificate = certificateManager.generateEndpointCertificateFromPublicKey(uuid, publicKey)
-                    configuration.clientCertificate = certificate
-                    configuration.privateKey = ""
-                } else {
-                    val certificateAndKey = certificateManager.generateEndpointKeyAndCertificate(uuid)
-                    configuration.clientCertificate = certificateAndKey.first
-                    configuration.privateKey = certificateAndKey.second
+    private fun Endpoint.getProvisionEntity(
+        endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
+        publicKey: String?,
+        token: ProvisionToken? = null
+    ): ResponseEntity<Any> = this.run {
+        if (configuration.clientCertificate.isNotEmpty() && publicKey != null) {
+            configuration.clientCertificate = ""
+            configuration.privateKey = ""
+        }
+
+        if (configuration.clientCertificate.isEmpty()) {
+            if (publicKey != null) {
+                val certificate = certificateManager.generateEndpointCertificateFromPublicKey(uuid, publicKey)
+                configuration.clientCertificate = certificate
+                configuration.privateKey = ""
+            } else {
+                val certificateAndKey = certificateManager.generateEndpointKeyAndCertificate(uuid)
+                configuration.clientCertificate = certificateAndKey.first
+                configuration.privateKey = certificateAndKey.second
+            }
+        }
+        if (configuration.clientCertificate.isEmpty()) {
+            throw CloudioHttpExceptions.InternalServerError("Unable to create client authentication certificate.")
+        }
+
+        endpointRepository.save(this)
+        if (token != null) {
+            provisionTokenRepository.delete(token)
+        }
+
+        when (endpointProvisionDataFormat ?:  EndpointProvisioningDataFormat.JSON) {
+            EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/json"))
+                .header("Endpoint", uuid.toString())
+                .body(EndpointProvisioningConfigurationEntity(
+                    endpoint = uuid,
+                    properties = configuration.properties,
+                    caCertificate = caCertificate,
+                    clientCertificate = configuration.clientCertificate,
+                    clientPrivateKey = if (configuration.privateKey.isNotEmpty()) configuration.privateKey else null
+                ))
+            EndpointProvisioningDataFormat.JAR_ARCHIVE -> {
+                if (configuration.privateKey.isEmpty()) {
+                    CloudioHttpExceptions.BadRequest("Endpoint has no private key.")
                 }
-            }
-            if (configuration.clientCertificate.isEmpty()) {
-                throw CloudioHttpExceptions.InternalServerError("Unable to create client authentication certificate.")
-            }
 
-            provisionTokenRepository.delete(it)
+                val password = String.generateRandomPassword()
+                val output = ByteArrayOutputStream()
+                val zip = ZipOutputStream(output)
 
-            when (endpointProvisionDataFormat ?:  EndpointProvisioningDataFormat.JSON) {
-                EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType("application/json"))
-                        .header("Endpoint", uuid.toString())
-                        .body(EndpointProvisioningConfigurationEntity(
-                                endpoint = uuid,
-                                properties = configuration.properties,
-                                caCertificate = caCertificate,
-                                clientCertificate = configuration.clientCertificate,
-                                clientPrivateKey = configuration.privateKey
-                        ))
-                EndpointProvisioningDataFormat.JAR_ARCHIVE -> {
-                    if (configuration.privateKey.isEmpty()) {
-                        CloudioHttpExceptions.BadRequest("Endpoint has no private key.")
+                // Write properties file.
+                zip.putNextEntry(ZipEntry("cloud.io/$uuid.properties"))
+                Properties().apply {
+                    configuration.properties.forEach { prop ->
+                        setProperty(prop.key, prop.value)
                     }
+                    setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
+                    setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
+                }.store(zip, "")
+                zip.closeEntry()
 
-                    val password = String.generateRandomPassword()
-                    val output = ByteArrayOutputStream()
-                    val zip = ZipOutputStream(output)
+                // Add certificate authority keystore.
+                val caCertificate = caCertificate.toX509Certificate()
 
-                    // Write properties file.
-                    zip.putNextEntry(ZipEntry("cloud.io/$uuid.properties"))
-                    Properties().apply {
-                        configuration.properties.forEach { prop ->
-                            setProperty(prop.key, prop.value)
-                        }
-                        setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
-                        setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
-                    }.store(zip, "")
-                    zip.closeEntry()
+                zip.putNextEntry(ZipEntry("cloud.io/authority.jks"))
+                zip.writeJKSTruststore(password, caCertificate)
+                zip.closeEntry()
 
-                    // Add certificate authority keystore.
-                    val caCertificate = caCertificate.toX509Certificate()
+                // Add client P12 file.
+                val certificate = configuration.clientCertificate.toX509Certificate()
+                val privateKey = configuration.privateKey.toPrivateKey()
 
-                    zip.putNextEntry(ZipEntry("cloud.io/authority.jks"))
-                    zip.writeJKSTruststore(password, caCertificate)
-                    zip.closeEntry()
+                zip.putNextEntry(ZipEntry("cloud.io/$uuid.p12"))
+                zip.writePKCS12Keystore(password, certificate, privateKey)
+                zip.closeEntry()
 
-                    // Add client P12 file.
-                    val certificate = configuration.clientCertificate.toX509Certificate()
-                    val privateKey = configuration.privateKey.toPrivateKey()
+                zip.flush()
+                zip.close()
 
-                    zip.putNextEntry(ZipEntry("cloud.io/$uuid.p12"))
-                    zip.writePKCS12Keystore(password, certificate, privateKey)
-                    zip.closeEntry()
-
-                    zip.flush()
-                    zip.close()
-
-                    ResponseEntity.ok()
-                            .contentType(MediaType.parseMediaType("application/java-archive"))
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${it.endpointUUID}.jar\"")
-                            .header("Endpoint", it.endpointUUID.toString())
-                            .body(output.toByteArray())
-                }
+                ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/java-archive"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${this.uuid}.jar\"")
+                    .header("Endpoint", this.uuid.toString())
+                    .body(output.toByteArray())
             }
         }
     }
