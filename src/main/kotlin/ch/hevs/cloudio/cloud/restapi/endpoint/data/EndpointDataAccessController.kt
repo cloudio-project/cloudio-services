@@ -17,6 +17,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.influxdb.InfluxDB
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
@@ -24,8 +25,9 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(
         private val endpointRepository: EndpointRepository,

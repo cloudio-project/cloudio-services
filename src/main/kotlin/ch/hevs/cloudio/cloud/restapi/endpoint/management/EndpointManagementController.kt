@@ -13,6 +13,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -21,11 +22,12 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import java.util.*
 
+@RestController
+@Profile("rest-api")
 @Api(
         tags = ["Endpoint Management"],
         description = "Allows users to manage their endpoints."
 )
-@RestController
 @RequestMapping("/api/v1/endpoints")
 class EndpointManagementController(
         private val endpointRepository: EndpointRepository,

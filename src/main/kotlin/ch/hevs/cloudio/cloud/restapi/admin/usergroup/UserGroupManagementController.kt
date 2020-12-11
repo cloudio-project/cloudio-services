@@ -7,12 +7,14 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import javax.transaction.Transactional
 
-@Api(tags = ["Group Management"], description = "Allows an admin user to manage user groups.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["Group Management"], description = "Allows an admin user to manage user groups.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserGroupManagementController(

@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
@@ -15,11 +16,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/endpoints")
+@Profile("rest-api")
 @Api(
-        tags = ["Endpoint Log Access"],
-        description = "Access endpoint logs."
+    tags = ["Endpoint Log Access"],
+    description = "Access endpoint logs."
 )
+@RequestMapping("/api/v1/endpoints")
 class EndpointLogController(
         private val influx: InfluxDB,
         private val influxProperties: CloudioInfluxProperties

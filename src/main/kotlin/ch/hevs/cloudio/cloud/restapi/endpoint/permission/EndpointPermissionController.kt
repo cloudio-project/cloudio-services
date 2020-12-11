@@ -7,6 +7,7 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.util.AntPathMatcher
@@ -15,11 +16,12 @@ import springfox.documentation.annotations.ApiIgnore
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
+@RestController
+@Profile("rest-api")
 @Api(
         tags = ["Endpoint Permissions"],
         description = "Allows users to manage permissions to their owned endpoints or endpoints they have the GRANT permission."
 )
-@RestController
 @RequestMapping("/api/v1/endpoints")
 class EndpointPermissionController(
         private val userRepository: UserRepository,

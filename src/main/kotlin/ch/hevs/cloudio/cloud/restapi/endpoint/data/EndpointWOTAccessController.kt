@@ -14,6 +14,7 @@ import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.influxdb.InfluxDB
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
@@ -24,8 +25,9 @@ import org.springframework.web.bind.annotation.RestController
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoints in a WOT compatible manner.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoints in a WOT compatible manner.")
 @RequestMapping("/api/v1/wot")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,

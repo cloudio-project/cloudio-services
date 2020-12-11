@@ -10,6 +10,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -22,8 +23,9 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")
 @RestController
+@Profile("rest-api")
+@Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")
 @RequestMapping("/api/v1")
 class EndpointProvisioningController(
         private val endpointRepository: EndpointRepository,

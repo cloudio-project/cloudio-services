@@ -12,6 +12,7 @@ import io.swagger.annotations.Api
 import org.apache.juli.logging.LogFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.security.access.prepost.PreAuthorize
@@ -22,11 +23,12 @@ import java.time.Instant
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/endpoints")
+@Profile("rest-api")
 @Api(
-        tags = ["Endpoint remote job execution"],
-        description = "Run job remotely on endpoints."
+    tags = ["Endpoint remote job execution"],
+    description = "Run job remotely on endpoints."
 )
+@RequestMapping("/api/v1/endpoints")
 class EndpointJobsController(
         private val endpointRepository: EndpointRepository,
         private val serializationFormats: Collection<SerializationFormat>,
