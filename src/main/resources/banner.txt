@@ -1,0 +1,5 @@
+${AnsiColor.BRIGHT_MAGENTA}        _                 _   _  ___
+${AnsiColor.BLUE}    ___| | ___  _   _  __| | (_)/ _ \   ${application.title}
+${AnsiColor.GREEN}   / __| |/ _ \| | | |/ _` | | | | | |  Version: ${application.version}
+${AnsiColor.YELLOW}  | (__| | (_) | |_| | (_| |_| | |_| |  Spring-Boot version: ${spring-boot.version}
+${AnsiColor.RED}   \___|_|\___/ \__,_|\__,_(_)_|\___/${AnsiColor.DEFAULT}
