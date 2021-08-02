@@ -1,6 +1,8 @@
 package ch.hevs.cloudio.cloud.security
 
+import ch.hevs.cloudio.cloud.dao.UserEndpointPermission
 import ch.hevs.cloudio.cloud.dao.UserEndpointPermissionRepository
+import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermission
 import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import org.apache.juli.logging.LogFactory
@@ -112,23 +114,59 @@ class CloudioPermissionManager(
 
     fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
         var permission = EndpointModelElementPermission.DENY
+        var allPermissionsList = mutableListOf<MutableMap<String, EndpointModelElementPermission>>()
+        var permissionsList = mutableListOf<MutableMap<String, EndpointModelElementPermission>>()
 
+        //Note: the user permissions are added to the list before the groups permissions
+        //add all user permissions related to this endpoint to the list
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, modelID.endpoint).ifPresent {
-            it.modelPermissions[modelID.toModelPath()]?.apply {
-                permission = permission.higher(this)
+            allPermissionsList.add(it.modelPermissions)
+        }
+
+        //add all group permissions related to this endpoint to the list
+        userDetails.groupMembershipIDs.forEach { groupID ->
+            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
+                allPermissionsList.add(it.modelPermissions)
             }
         }
 
-        if (!permission.fulfills(EndpointModelElementPermission.WRITE)) {
-            userDetails.groupMembershipIDs.forEach { groupID ->
-                userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
-                    it.modelPermissions[modelID.toModelPath()]?.apply {
-                        permission = permission.higher(this)
-                    }
+        //add the permissions with the most precise modelPath to the permissionsList
+        var temp = modelID.toString()
+
+        //if a @ is the first letter, delete the first element
+        if(temp.first().equals('@', true)){
+            //drop the @something and the "/"
+            temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
+            temp = temp.drop(1)
+        }
+
+        //drop the uuid and the "/"
+        temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
+        temp = temp.drop(1)
+
+        //the permission with the longer modelId is the most precise
+        for (i in 1..modelID.count()){
+            allPermissionsList.forEach(){
+                if(it.containsKey(temp) || it.containsKey(temp + "/#")){
+                    permissionsList.add(it)
                 }
             }
+            //leave if at least one element correspond
+            if (permissionsList.isNotEmpty()){
+                //Return the element 0. If there are 2 permissions for the same element
+                    // (one userPermission and one group permission), returns the userPermission
+                permissionsList[0][temp]?.apply {
+                    return this
+                }
+                permissionsList[0][temp+"/#"]?.apply {
+                    return this
+                }
+            }
+            //delete chars util the next "/"
+            temp = temp.dropLastWhile { !it.equals('/', ignoreCase = true) }
+            //delete the "/"
+            temp = temp.dropLast(1)
         }
-
         return permission
     }
 
@@ -154,5 +192,13 @@ class CloudioPermissionManager(
         }
 
         return permissions
+    }
+
+    fun getUserEndpointModelElementPermissionRepository(userId:Long, endpointUUID:UUID): Optional<UserEndpointPermission> {
+        return userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userId, endpointUUID);
+    }
+
+    fun getUserGroupEndpointModelElementPermissionRepository(groupId:Long, endpointUUID:UUID): Optional<UserGroupEndpointPermission> {
+        return userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupId, endpointUUID);
     }
 }
