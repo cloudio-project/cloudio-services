@@ -1,8 +1,6 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.dao.UserEndpointPermission
 import ch.hevs.cloudio.cloud.dao.UserEndpointPermissionRepository
-import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermission
 import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import org.apache.juli.logging.LogFactory
@@ -113,22 +111,7 @@ class CloudioPermissionManager(
     }
 
     fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
-        var permission = EndpointModelElementPermission.DENY
-        var allPermissionsList = mutableListOf<MutableMap<String, EndpointModelElementPermission>>()
-        var permissionsList = mutableListOf<MutableMap<String, EndpointModelElementPermission>>()
-
-        //Note: the user permissions are added to the list before the groups permissions
-        //add all user permissions related to this endpoint to the list
-        userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, modelID.endpoint).ifPresent {
-            allPermissionsList.add(it.modelPermissions)
-        }
-
-        //add all group permissions related to this endpoint to the list
-        userDetails.groupMembershipIDs.forEach { groupID ->
-            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, modelID.endpoint).ifPresent {
-                allPermissionsList.add(it.modelPermissions)
-            }
-        }
+        var allPermissionsList = getAllEndpointModelElementPermissions(userDetails, modelID.endpoint)
 
         //add the permissions with the most precise modelPath to the permissionsList
         var temp = modelID.toString()
@@ -147,27 +130,17 @@ class CloudioPermissionManager(
         //the permission with the longer modelId is the most precise
         for (i in 1..modelID.count()){
             allPermissionsList.forEach(){
-                if(it.containsKey(temp) || it.containsKey(temp + "/#")){
-                    permissionsList.add(it)
+                if(it.key == temp){
+                    return it.value
                 }
             }
-            //leave if at least one element correspond
-            if (permissionsList.isNotEmpty()){
-                //Return the element 0. If there are 2 permissions for the same element
-                    // (one userPermission and one group permission), returns the userPermission
-                permissionsList[0][temp]?.apply {
-                    return this
-                }
-                permissionsList[0][temp+"/#"]?.apply {
-                    return this
-                }
-            }
+
             //delete chars util the next "/"
             temp = temp.dropLastWhile { !it.equals('/', ignoreCase = true) }
             //delete the "/"
             temp = temp.dropLast(1)
         }
-        return permission
+        return EndpointModelElementPermission.DENY
     }
 
     fun resolvePermissions(userDetails: CloudioUserDetails): Collection<AbstractEndpointPermission> {
@@ -194,11 +167,51 @@ class CloudioPermissionManager(
         return permissions
     }
 
-    fun getUserEndpointModelElementPermissionRepository(userId:Long, endpointUUID:UUID): Optional<UserEndpointPermission> {
-        return userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userId, endpointUUID);
-    }
+    fun getAllEndpointModelElementPermissions(userDetails:CloudioUserDetails, endpointUUID:UUID): MutableList<Map.Entry<String, EndpointModelElementPermission>> {
+        var allPermissionsList = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
+        var addedPermissions = mutableMapOf<String, EndpointModelElementPermission>()
 
-    fun getUserGroupEndpointModelElementPermissionRepository(groupId:Long, endpointUUID:UUID): Optional<UserGroupEndpointPermission> {
-        return userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupId, endpointUUID);
+        //Note: the user permissions are added to the list before the groups permissions
+        //add all user permissions related to this endpoint to the list
+        userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, endpointUUID).ifPresent {
+            it.modelPermissions.forEach {
+                allPermissionsList.add(it)
+            }
+            addedPermissions = it.modelPermissions
+        }
+
+        //add all group permissions related to this endpoint to the list
+        userDetails.groupMembershipIDs.forEach { groupID ->
+            userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, endpointUUID).ifPresent {
+                it.modelPermissions.forEach { modelPermission ->
+                    //add the groups permissions
+                    //if a permission for an element already exists, keep the highest permissions level
+                    if(!addedPermissions.containsKey(modelPermission.key)){
+                        allPermissionsList.add(modelPermission)
+                        addedPermissions[modelPermission.key]=modelPermission.value
+                    }
+                    else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                        allPermissionsList.forEach {
+                            if(it.key.equals(modelPermission.key)){
+                                allPermissionsList.remove(it)
+                                allPermissionsList.add(modelPermission)
+                                addedPermissions[modelPermission.key]=modelPermission.value
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        allPermissionsList.forEach {
+            if(it.key.endsWith("/#")){
+                it.key.dropLast(2)
+            }
+        }
+
+        //sort by the count of '/' in the key
+        allPermissionsList.sortBy { it.key.filter { it == '/' }.count() }
+
+        return allPermissionsList
     }
 }
