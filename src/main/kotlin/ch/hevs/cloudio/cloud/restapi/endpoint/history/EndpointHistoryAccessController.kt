@@ -35,7 +35,7 @@ class EndpointHistoryAccessController(
 ) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to endpoint's data model.")
+    @ApiOperation("Read access to endpoint's historical values.")
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(

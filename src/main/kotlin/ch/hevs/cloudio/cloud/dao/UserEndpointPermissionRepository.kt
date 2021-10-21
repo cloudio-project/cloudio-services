@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud.dao
 
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Repository
@@ -13,5 +14,6 @@ interface UserEndpointPermissionRepository : CrudRepository<UserEndpointPermissi
     fun findByUserIDAndEndpointUUID(userID: Long, endpointUUID: UUID): Optional<UserEndpointPermission>
 
     fun deleteByEndpointUUID(endpointUUID: UUID)
+    @Transactional
     fun deleteByUserIDAndEndpointUUID(userID: Long, endpointUUID: UUID)
 }

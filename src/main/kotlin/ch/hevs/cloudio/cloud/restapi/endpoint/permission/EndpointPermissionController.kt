@@ -47,6 +47,7 @@ class EndpointPermissionController(
         }.id.let {userID ->
             when {
                 permission == EndpointPermission.DENY -> userEndpointPermissionRepository.deleteByUserIDAndEndpointUUID(userID, uuid)
+                //if user has a write permission or higher, the modelPermissions are useless
                 permission.fulfills(EndpointPermission.WRITE) -> {
                     val endpointPermission = userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, uuid).orElse(UserEndpointPermission(userID, uuid, permission))
                     endpointPermission.modelPermissions.clear()
@@ -54,6 +55,7 @@ class EndpointPermissionController(
                 }
                 else -> {
                     val endpointPermission = userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userID, uuid).orElse(UserEndpointPermission(userID, uuid, permission))
+                    endpointPermission.permission = permission
                     userEndpointPermissionRepository.save(endpointPermission)
                 }
             }
@@ -63,6 +65,7 @@ class EndpointPermissionController(
         }.id.let { groupID ->
             when {
                 permission == EndpointPermission.DENY -> userGroupEndpointPermissionRepository.deleteByUserGroupIDAndEndpointUUID(groupID, uuid)
+                //if the usergroup has a write permission or higher, the modelPermissons are useless
                 permission.fulfills(EndpointPermission.WRITE) -> {
                     val endpointPermission = userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, uuid).orElse(UserGroupEndpointPermission(groupID, uuid, permission))
                     endpointPermission.modelPermissions.clear()
@@ -70,6 +73,7 @@ class EndpointPermissionController(
                 }
                 else -> {
                     val endpointPermission = userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, uuid).orElse(UserGroupEndpointPermission(groupID, uuid, permission))
+                    endpointPermission.permission = permission
                     userGroupEndpointPermissionRepository.save(endpointPermission)
                 }
             }
@@ -112,6 +116,7 @@ class EndpointPermissionController(
                 }
                 else -> userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, uuid).orElse(UserGroupEndpointPermission(groupID, uuid, EndpointPermission.ACCESS)).let {
                     it.modelPermissions[antMatcher.extractPathWithinPattern("/api/v1/endpoints/$uuid/grant/**", request.requestURI)] = permission
+                    userGroupEndpointPermissionRepository.save(it)
                 }
             }
         }
