@@ -6,7 +6,6 @@ import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
-import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
@@ -15,9 +14,8 @@ import java.util.*
 @Service
 @Profile("lifecycle-db", "default")
 class DBLifecycleService(
-        private val endpointRepository: EndpointRepository,
-        serializationFormats: Collection<SerializationFormat>
-) : AbstractLifecycleService(serializationFormats) {
+        private val endpointRepository: EndpointRepository
+) : AbstractLifecycleService() {
     private val log = LogFactory.getLog(DBLifecycleService::class.java)
 
     override fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel) = endpointRepository.findById(UUID.fromString(uuid)).ifPresent { endpoint ->

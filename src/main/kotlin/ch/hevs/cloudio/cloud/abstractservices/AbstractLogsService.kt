@@ -5,31 +5,46 @@ import ch.hevs.cloudio.cloud.model.LogMessage
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
-import org.springframework.amqp.core.ExchangeTypes
-import org.springframework.amqp.core.Message
-import org.springframework.amqp.rabbit.annotation.Exchange
-import org.springframework.amqp.rabbit.annotation.Queue
-import org.springframework.amqp.rabbit.annotation.QueueBinding
-import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.amqp.core.*
+import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar
+import org.springframework.beans.factory.annotation.Autowired
 
-abstract class AbstractLogsService(private val serializationFormats: Collection<SerializationFormat>) {
+abstract class AbstractLogsService: RabbitListenerConfigurer {
+
+    @Autowired private lateinit var amqpAdmin: AmqpAdmin
+    @Autowired private lateinit var serializationFormats: Collection<SerializationFormat>
 
     companion object {
         private val log = LogFactory.getLog(AbstractLogsService::class.java)
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(),
-                exchange = Exchange(
-                        value = "amq.topic",
-                        type = ExchangeTypes.TOPIC,
-                        ignoreDeclarationExceptions = "true"
-                ),
-                key = ["@logsLevel.#"]
-        )
-    ])
-    fun handleLogLevelMessage(message: Message) {
+    override fun configureRabbitListeners(registrar: RabbitListenerEndpointRegistrar) {
+        val exchange = TopicExchange("amq.topic")
+
+        // Log level message handling.
+        val logLevelQueue = Queue("${javaClass.canonicalName}-log-level")
+        amqpAdmin.declareQueue(logLevelQueue)
+        amqpAdmin.declareBinding(BindingBuilder.bind(logLevelQueue).to(exchange).with("@logsLevel.#"))
+        val logLevelEndpoint = SimpleRabbitListenerEndpoint()
+        logLevelEndpoint.id = "${javaClass.canonicalName}-log-level"
+        logLevelEndpoint.setQueues(logLevelQueue)
+        logLevelEndpoint.messageListener = MessageListener { message -> handleLogLevelMessage(message) }
+        registrar.registerEndpoint(logLevelEndpoint)
+
+        // Log message handling.
+        val logQueue = Queue("${javaClass.canonicalName}-log")
+        amqpAdmin.declareQueue(logQueue)
+        amqpAdmin.declareBinding(BindingBuilder.bind(logQueue).to(exchange).with("@logs.#"))
+        val logEndpoint = SimpleRabbitListenerEndpoint()
+        logEndpoint.id = "${javaClass.canonicalName}-log"
+        logEndpoint.setQueues(logQueue)
+        logEndpoint.messageListener = MessageListener { message -> handleLogsMessage(message) }
+        registrar.registerEndpoint(logEndpoint)
+    }
+
+    private fun handleLogLevelMessage(message: Message) {
         try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logsLevel.")
 
@@ -45,18 +60,7 @@ abstract class AbstractLogsService(private val serializationFormats: Collection<
         }
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(),
-                exchange = Exchange(
-                        value = "amq.topic",
-                        type = ExchangeTypes.TOPIC,
-                        ignoreDeclarationExceptions = "true"
-                ),
-                key = ["@logs.#"]
-        )
-    ])
-    fun handleLogsMessage(message: Message) {
+    private fun handleLogsMessage(message: Message) {
         try {
             val endpointUuid = message.messageProperties.receivedRoutingKey.removePrefix("@logs.")
 

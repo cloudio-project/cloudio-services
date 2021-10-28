@@ -3,7 +3,6 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
@@ -15,8 +14,7 @@ import java.util.concurrent.TimeUnit
 @Profile("lifecycle-influx", "default")
 class InfluxLifecycleService(
         private val influx: InfluxDB,
-        serializationFormats: Collection<SerializationFormat>,
-        private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService(serializationFormats) {
+        private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService() {
     private val log = LogFactory.getLog(InfluxLifecycleService::class.java)
 
     override fun endpointIsOffline(uuid: String) {

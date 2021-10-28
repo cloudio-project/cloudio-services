@@ -5,31 +5,46 @@ import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
-import org.springframework.amqp.core.ExchangeTypes
-import org.springframework.amqp.core.Message
-import org.springframework.amqp.rabbit.annotation.Exchange
-import org.springframework.amqp.rabbit.annotation.Queue
-import org.springframework.amqp.rabbit.annotation.QueueBinding
-import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.amqp.core.*
+import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar
+import org.springframework.beans.factory.annotation.Autowired
 
-abstract class AbstractUpdateSetService(private val serializationFormats: Collection<SerializationFormat>) {
+abstract class AbstractUpdateSetService: RabbitListenerConfigurer {
+
+    @Autowired private lateinit var amqpAdmin: AmqpAdmin
+    @Autowired private lateinit var serializationFormats: Collection<SerializationFormat>
 
     companion object {
         private val log = LogFactory.getLog(AbstractUpdateSetService::class.java)
     }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(),
-                exchange = Exchange(
-                        value = "amq.topic",
-                        type = ExchangeTypes.TOPIC,
-                        ignoreDeclarationExceptions = "true"
-                ),
-                key = ["@update.#", "@set.#"]
-        )
-    ])
-    fun handleUpdateMessage(message: Message) {
+    override fun configureRabbitListeners(registrar: RabbitListenerEndpointRegistrar) {
+        val exchange = TopicExchange("amq.topic")
+
+        // Update message handling.
+        val updateQueue = Queue("${javaClass.canonicalName}-update")
+        amqpAdmin.declareQueue(updateQueue)
+        amqpAdmin.declareBinding(BindingBuilder.bind(updateQueue).to(exchange).with("@update.#"))
+        val updateEndpoint = SimpleRabbitListenerEndpoint()
+        updateEndpoint.id = "${javaClass.canonicalName}-update"
+        updateEndpoint.setQueues(updateQueue)
+        updateEndpoint.messageListener = MessageListener { message -> handleUpdateOrSetMessage(message) }
+        registrar.registerEndpoint(updateEndpoint)
+
+        // Set message handling.
+        val setQueue = Queue("${javaClass.canonicalName}-set")
+        amqpAdmin.declareQueue(setQueue)
+        amqpAdmin.declareBinding(BindingBuilder.bind(setQueue).to(exchange).with("@set.#"))
+        val setEndpoint = SimpleRabbitListenerEndpoint()
+        setEndpoint.id = "${javaClass.canonicalName}-set"
+        setEndpoint.setQueues(setQueue)
+        setEndpoint.messageListener = MessageListener { message -> handleUpdateOrSetMessage(message) }
+        registrar.registerEndpoint(setEndpoint)
+    }
+
+    private fun handleUpdateOrSetMessage(message: Message) {
         val prefix = message.messageProperties.receivedRoutingKey.split(".")[0]
         try {
             val attributeTopic = message.messageProperties.receivedRoutingKey.removePrefix("$prefix.")

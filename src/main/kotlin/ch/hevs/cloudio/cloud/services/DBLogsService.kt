@@ -2,9 +2,8 @@ package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLogsService
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
-import ch.hevs.cloudio.cloud.model.LogMessage
 import ch.hevs.cloudio.cloud.model.LogLevel
-import ch.hevs.cloudio.cloud.serialization.SerializationFormat
+import ch.hevs.cloudio.cloud.model.LogMessage
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
@@ -12,9 +11,8 @@ import java.util.*
 @Service
 @Profile("logs-db", "default")
 class DBLogsService(
-        private val endpointRepository: EndpointRepository,
-        serializationFormats: Collection<SerializationFormat>
-) : AbstractLogsService(serializationFormats) {
+        private val endpointRepository: EndpointRepository
+) : AbstractLogsService() {
     override fun logLevelChanged(endpointUuid: String, logLevel: LogLevel) {
         endpointRepository.findById(UUID.fromString(endpointUuid)).ifPresent {
             it.configuration.logLevel = logLevel

@@ -1,48 +1,32 @@
 package ch.hevs.cloudio.cloud.services
 
+import ch.hevs.cloudio.cloud.abstractservices.AbstractSimpleTopicService
+import ch.hevs.cloudio.cloud.abstractservices.annotation.TopicListener
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
-import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
-import org.springframework.amqp.rabbit.annotation.Exchange
-import org.springframework.amqp.rabbit.annotation.Queue
-import org.springframework.amqp.rabbit.annotation.QueueBinding
-import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("delayed", "default")
+@TopicListener(topics = ["@delayed.*"])
 class DelayedService(
         private val influx: InfluxDB,
         private val serializationFormats: Collection<SerializationFormat>,
         private val influxProperties: CloudioInfluxProperties,
         private val rabbitTemplate: RabbitTemplate
-) {
+): AbstractSimpleTopicService() {
     private val log = LogFactory.getLog(DelayedService::class.java)
-    private val mapper by lazy { Jackson2ObjectMapperBuilder.json().build<ObjectMapper>() }
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(),
-                exchange = Exchange(
-                        value = "amq.topic",
-                        type = ExchangeTypes.TOPIC,
-                        ignoreDeclarationExceptions = "true"
-                ),
-                key = ["@delayed.*"]
-        )
-    ])
-    fun handleDelayedMessage(message: Message) {
+    override fun handleMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body
