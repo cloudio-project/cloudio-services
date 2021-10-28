@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
@@ -33,14 +32,14 @@ import javax.servlet.http.HttpServletRequest
 @Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(
-        private val endpointRepository: EndpointRepository,
-        private val permissionManager: CloudioPermissionManager,
-        private val influxDB: InfluxDB,
-        private val influxProperties: CloudioInfluxProperties,
-        private val serializationFormats: Collection<SerializationFormat>,
-        private val rabbitTemplate: RabbitTemplate,
-        private val amqpAdmin: AmqpAdmin,
-        private val connectionFactory: ConnectionFactory
+    private val endpointRepository: EndpointRepository,
+    private val permissionManager: CloudioPermissionManager,
+    private val influxDB: InfluxDB,
+    private val influxProperties: CloudioInfluxProperties,
+    private val serializationFormats: Collection<SerializationFormat>,
+    private val rabbitTemplate: RabbitTemplate,
+    private val amqpAdmin: AmqpAdmin,
+    private val connectionFactory: ConnectionFactory
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -48,8 +47,9 @@ class EndpointDataAccessController(
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
-            @ApiIgnore authentication: Authentication,
-            @ApiIgnore request: HttpServletRequest): Any {
+        @ApiIgnore authentication: Authentication,
+        @ApiIgnore request: HttpServletRequest
+    ): Any {
 
         // Extract model identifier and check it for validity.
         val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
@@ -99,9 +99,10 @@ class EndpointDataAccessController(
     @PutMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putAttribute(
-            @RequestParam @ApiParam("Value to set.") value: String,
-            @ApiIgnore authentication: Authentication,
-            @ApiIgnore request: HttpServletRequest) {
+        @RequestParam @ApiParam("Value to set.") value: String,
+        @ApiIgnore authentication: Authentication,
+        @ApiIgnore request: HttpServletRequest
+    ) {
 
         // Extract model identifier and check it for validity.
         val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
@@ -142,39 +143,41 @@ class EndpointDataAccessController(
 
                 // Serialize and send the message.
                 val serializationFormat = serializationFormats.fromIdentifiers(endpoint.dataModel.supportedFormats)
-                        ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
-                rabbitTemplate.convertAndSend("amq.topic",
-                        if (endpoint.dataModel.messageFormatVersion != 1) modelIdentifier.toAMQPTopic() else modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(),
-                        serializationFormat.serializeAttribute(Attribute(
-                                data.constraint,
-                                data.type,
-                                System.currentTimeMillis().toDouble() / 1000,
-                                typedValue)))
+                    ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+                rabbitTemplate.convertAndSend(
+                    "amq.topic",
+                    if (endpoint.dataModel.messageFormatVersion != 1) modelIdentifier.toAMQPTopic() else modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(),
+                    serializationFormat.serializeAttribute(
+                        Attribute(
+                            data.constraint,
+                            data.type,
+                            System.currentTimeMillis().toDouble() / 1000,
+                            typedValue
+                        )
+                    )
+                )
             }
             else -> throw CloudioHttpExceptions.BadRequest("Only Attributes can be modified.")
         }
     }
 
-    @ApiOperation("Subscribe to changes of multiple attributes.")
     @PostMapping("/subscribe")
     @ResponseStatus(HttpStatus.OK)
-    fun subscribe(
+    @ApiOperation("Subscribe to changes of multiple attributes.")
+    fun postAttributeChangeSubscription(
         @ApiIgnore authentication: Authentication,
         @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
         @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
-    ): SseEmitter {
-        return AttributeUpdateSubscription(ids.map {
-            val id = ModelIdentifier(it)
-            if (!id.valid) {
-                throw CloudioHttpExceptions.BadRequest("Invalid id")
-            }
-            id.action = ActionIdentifier.ATTRIBUTE_UPDATE
+    ) = AttributeUpdateSubscription(ids.map {
+        val id = ModelIdentifier(it)
+        if (!id.valid || id.action != ActionIdentifier.NONE) {
+            throw CloudioHttpExceptions.BadRequest("Invalid attribute id")
+        }
 
-            if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), id, EndpointModelElementPermission.READ)) {
-                throw CloudioHttpExceptions.Forbidden("Forbidden.")
-            }
+        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), id, EndpointModelElementPermission.READ)) {
+            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        }
 
-            id
-        }, timeout, serializationFormats, amqpAdmin, connectionFactory)
-    }
+        id
+    }, timeout, serializationFormats, amqpAdmin, connectionFactory)
 }
