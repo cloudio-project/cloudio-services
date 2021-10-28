@@ -159,6 +159,7 @@ class EndpointDataAccessController(
     @PostMapping("/subscribe")
     @ResponseStatus(HttpStatus.OK)
     fun subscribe(
+        @ApiIgnore authentication: Authentication,
         @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
         @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
     ): SseEmitter {
@@ -168,7 +169,11 @@ class EndpointDataAccessController(
                 throw CloudioHttpExceptions.BadRequest("Invalid id")
             }
             id.action = ActionIdentifier.ATTRIBUTE_UPDATE
-            // TODO: Check access rights.
+
+            if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), id, EndpointModelElementPermission.READ)) {
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            }
+
             id
         }, timeout, serializationFormats, amqpAdmin, connectionFactory)
     }
