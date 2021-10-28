@@ -16,12 +16,15 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.influxdb.InfluxDB
+import org.springframework.amqp.core.AmqpAdmin
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
@@ -35,7 +38,9 @@ class EndpointDataAccessController(
         private val influxDB: InfluxDB,
         private val influxProperties: CloudioInfluxProperties,
         private val serializationFormats: Collection<SerializationFormat>,
-        private val rabbitTemplate: RabbitTemplate
+        private val rabbitTemplate: RabbitTemplate,
+        private val amqpAdmin: AmqpAdmin,
+        private val connectionFactory: ConnectionFactory
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -150,67 +155,21 @@ class EndpointDataAccessController(
         }
     }
 
-    // TODO: Event based subscription, maybe based on SSE or web sockets.
-
-    /* Existing code:
-    @RequestMapping("/notifyAttributeChange", method = [RequestMethod.POST])
-    fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return notifyAttributeChange(userName, attributeRequestLongpoll)
-    }
-
-    @RequestMapping("/notifyAttributeChange/{attributeTopic}/{timeout}", method = [RequestMethod.GET])
-    fun notifyAttributeChange(@PathVariable attributeTopic: String, @PathVariable timeout: Long): DeferredResult<Attribute> {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return notifyAttributeChange(userName, AttributeRequestLongpoll(attributeTopic.replace(".", "/"), timeout))
-    }
-
-    fun notifyAttributeChange(userName: String, attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
-        val permissionMap = PermissionUtils
-                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-
-        val splitTopic = attributeRequestLongpoll.attributeTopic.split("/")
-        if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
-
-        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
-            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
-        else {
-            try {
-                val attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest(attributeRequestLongpoll.attributeTopic))
-                if (attribute != null) {
-
-                    val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
-                            CloudioHttpExceptions.Timeout("No attribute change after " + attributeRequestLongpoll.timeout + "ms on topic: " + attributeRequestLongpoll.attributeTopic))
-
-                    if (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) {
-                        CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@update." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
-                                override fun notifyAttributeChange(attribute: Attribute) {
-                                    result.setResult(attribute)
-                                }
-                            }
-                        }
-                    } else if (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint) {
-                        CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@set." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
-                                override fun notifyAttributeChange(attribute: Attribute) {
-                                    result.setResult(attribute)
-                                }
-                            }
-                        }
-                    } else
-                        throw CloudioHttpExceptions.BadRequest("Attribute with constraint ${attribute.constraint} can't send notification")
-
-                    return result
-                } else
-                    throw CloudioHttpExceptions.BadRequest("Attribute doesn't exist")
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't get Attribute: " + e.message)
+    @ApiOperation("Subscribe to changes of multiple attributes.")
+    @PostMapping("/subscribe")
+    @ResponseStatus(HttpStatus.OK)
+    fun subscribe(
+        @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
+        @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
+    ): SseEmitter {
+        return Subscription(ids.map {
+            val id = ModelIdentifier(it)
+            if (!id.valid) {
+                throw CloudioHttpExceptions.BadRequest("Invalid id")
             }
-        }
+            id.action = ActionIdentifier.ATTRIBUTE_UPDATE
+            // TODO: Check access rights.
+            id
+        }, timeout, serializationFormats, amqpAdmin, connectionFactory)
     }
-    */
 }
