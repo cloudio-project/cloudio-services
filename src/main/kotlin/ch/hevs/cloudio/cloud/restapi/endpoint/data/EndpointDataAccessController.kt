@@ -163,7 +163,7 @@ class EndpointDataAccessController(
         @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
         @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
     ): SseEmitter {
-        return Subscription(ids.map {
+        return AttributeUpdateSubscription(ids.map {
             val id = ModelIdentifier(it)
             if (!id.valid) {
                 throw CloudioHttpExceptions.BadRequest("Invalid id")

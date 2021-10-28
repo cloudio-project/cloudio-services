@@ -9,8 +9,8 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
-class Subscription(ids: List<ModelIdentifier>, timeout: Long, private val serializationFormats: Collection<SerializationFormat>,
-                   amqp: AmqpAdmin, connectionFactory: ConnectionFactory): MessageListener, SseEmitter(timeout) {
+class AttributeUpdateSubscription(ids: List<ModelIdentifier>, timeout: Long, private val serializationFormats: Collection<SerializationFormat>,
+                                  amqp: AmqpAdmin, connectionFactory: ConnectionFactory): MessageListener, SseEmitter(timeout) {
     private val container = SimpleMessageListenerContainer()
     init {
         val queue = amqp.declareQueue()
