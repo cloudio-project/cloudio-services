@@ -16,6 +16,8 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.influxdb.InfluxDB
+import org.springframework.amqp.core.AmqpAdmin
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -30,12 +32,14 @@ import javax.servlet.http.HttpServletRequest
 @Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(
-        private val endpointRepository: EndpointRepository,
-        private val permissionManager: CloudioPermissionManager,
-        private val influxDB: InfluxDB,
-        private val influxProperties: CloudioInfluxProperties,
-        private val serializationFormats: Collection<SerializationFormat>,
-        private val rabbitTemplate: RabbitTemplate
+    private val endpointRepository: EndpointRepository,
+    private val permissionManager: CloudioPermissionManager,
+    private val influxDB: InfluxDB,
+    private val influxProperties: CloudioInfluxProperties,
+    private val serializationFormats: Collection<SerializationFormat>,
+    private val rabbitTemplate: RabbitTemplate,
+    private val amqpAdmin: AmqpAdmin,
+    private val connectionFactory: ConnectionFactory
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -43,8 +47,9 @@ class EndpointDataAccessController(
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
-            @ApiIgnore authentication: Authentication,
-            @ApiIgnore request: HttpServletRequest): Any {
+        @ApiIgnore authentication: Authentication,
+        @ApiIgnore request: HttpServletRequest
+    ): Any {
 
         // Extract model identifier and check it for validity.
         val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
@@ -94,9 +99,10 @@ class EndpointDataAccessController(
     @PutMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putAttribute(
-            @RequestParam @ApiParam("Value to set.") value: String,
-            @ApiIgnore authentication: Authentication,
-            @ApiIgnore request: HttpServletRequest) {
+        @RequestParam @ApiParam("Value to set.") value: String,
+        @ApiIgnore authentication: Authentication,
+        @ApiIgnore request: HttpServletRequest
+    ) {
 
         // Extract model identifier and check it for validity.
         val modelIdentifier = ModelIdentifier(antMatcher.extractPathWithinPattern("/api/v1/data/**", request.requestURI))
@@ -137,80 +143,41 @@ class EndpointDataAccessController(
 
                 // Serialize and send the message.
                 val serializationFormat = serializationFormats.fromIdentifiers(endpoint.dataModel.supportedFormats)
-                        ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
-                rabbitTemplate.convertAndSend("amq.topic",
-                        if (endpoint.dataModel.messageFormatVersion != 1) modelIdentifier.toAMQPTopic() else modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(),
-                        serializationFormat.serializeAttribute(Attribute(
-                                data.constraint,
-                                data.type,
-                                System.currentTimeMillis().toDouble() / 1000,
-                                typedValue)))
+                    ?: throw CloudioHttpExceptions.InternalServerError("Endpoint does not support any serialization format.")
+                rabbitTemplate.convertAndSend(
+                    "amq.topic",
+                    if (endpoint.dataModel.messageFormatVersion != 1) modelIdentifier.toAMQPTopic() else modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(),
+                    serializationFormat.serializeAttribute(
+                        Attribute(
+                            data.constraint,
+                            data.type,
+                            System.currentTimeMillis().toDouble() / 1000,
+                            typedValue
+                        )
+                    )
+                )
             }
             else -> throw CloudioHttpExceptions.BadRequest("Only Attributes can be modified.")
         }
     }
 
-    // TODO: Event based subscription, maybe based on SSE or web sockets.
-
-    /* Existing code:
-    @RequestMapping("/notifyAttributeChange", method = [RequestMethod.POST])
-    fun notifyAttributeChange(@RequestBody attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return notifyAttributeChange(userName, attributeRequestLongpoll)
-    }
-
-    @RequestMapping("/notifyAttributeChange/{attributeTopic}/{timeout}", method = [RequestMethod.GET])
-    fun notifyAttributeChange(@PathVariable attributeTopic: String, @PathVariable timeout: Long): DeferredResult<Attribute> {
-        val userName = SecurityContextHolder.getContext().authentication.name
-
-        return notifyAttributeChange(userName, AttributeRequestLongpoll(attributeTopic.replace(".", "/"), timeout))
-    }
-
-    fun notifyAttributeChange(userName: String, attributeRequestLongpoll: AttributeRequestLongpoll): DeferredResult<Attribute> {
-        val permissionMap = PermissionUtils
-                .permissionFromUserAndGroup(userName, userRepository, userGroupRepository)
-
-        val splitTopic = attributeRequestLongpoll.attributeTopic.split("/")
-        if (PermissionUtils.getHigherPriorityPermission(permissionMap, splitTopic) == Permission.DENY)
-            throw CloudioHttpExceptions.BadRequest("You don't have permission to  access this attribute")
-
-        if (endpointEntityRepository.findByIdOrNull(UUID.fromString(splitTopic[0]))!!.blocked)
-            throw CloudioHttpExceptions.BadRequest(CloudioHttpExceptions.CLOUDIO_BLOCKED_ENDPOINT)
-        else {
-            try {
-                val attribute = EndpointManagementUtil.getAttribute(endpointEntityRepository, AttributeRequest(attributeRequestLongpoll.attributeTopic))
-                if (attribute != null) {
-
-                    val result = DeferredResult<Attribute>(attributeRequestLongpoll.timeout,
-                            CloudioHttpExceptions.Timeout("No attribute change after " + attributeRequestLongpoll.timeout + "ms on topic: " + attributeRequestLongpoll.attributeTopic))
-
-                    if (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) {
-                        CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@update." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
-                                override fun notifyAttributeChange(attribute: Attribute) {
-                                    result.setResult(attribute)
-                                }
-                            }
-                        }
-                    } else if (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint) {
-                        CompletableFuture.runAsync {
-                            object : AttributeChangeNotifier(connectionFactory, "@set." + attributeRequestLongpoll.attributeTopic.replace("/", ".")) {
-                                override fun notifyAttributeChange(attribute: Attribute) {
-                                    result.setResult(attribute)
-                                }
-                            }
-                        }
-                    } else
-                        throw CloudioHttpExceptions.BadRequest("Attribute with constraint ${attribute.constraint} can't send notification")
-
-                    return result
-                } else
-                    throw CloudioHttpExceptions.BadRequest("Attribute doesn't exist")
-            } catch (e: CloudioApiException) {
-                throw CloudioHttpExceptions.BadRequest("Couldn't get Attribute: " + e.message)
-            }
+    @PostMapping("/subscribe")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiOperation("Subscribe to changes of multiple attributes.")
+    fun postAttributeChangeSubscription(
+        @ApiIgnore authentication: Authentication,
+        @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
+        @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
+    ) = AttributeUpdateSubscription(ids.map {
+        val id = ModelIdentifier(it)
+        if (!id.valid || id.action != ActionIdentifier.NONE) {
+            throw CloudioHttpExceptions.BadRequest("Invalid attribute id")
         }
-    }
-    */
+
+        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), id, EndpointModelElementPermission.READ)) {
+            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        }
+
+        id
+    }, timeout, serializationFormats, amqpAdmin, connectionFactory)
 }
