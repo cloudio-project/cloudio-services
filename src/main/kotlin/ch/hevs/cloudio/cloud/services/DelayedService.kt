@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.abstractservices.AbstractSimpleTopicService
-import ch.hevs.cloudio.cloud.abstractservices.annotation.TopicListener
+import ch.hevs.cloudio.cloud.abstractservices.messaging.AbstractTopicService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
@@ -17,13 +16,12 @@ import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("delayed", "default")
-@TopicListener(topics = ["@delayed.*"])
 class DelayedService(
         private val influx: InfluxDB,
         private val serializationFormats: Collection<SerializationFormat>,
         private val influxProperties: CloudioInfluxProperties,
         private val rabbitTemplate: RabbitTemplate
-): AbstractSimpleTopicService() {
+): AbstractTopicService("${ActionIdentifier.DELAYED_MESSAGES}.*") {
     private val log = LogFactory.getLog(DelayedService::class.java)
 
     override fun handleMessage(message: Message) {

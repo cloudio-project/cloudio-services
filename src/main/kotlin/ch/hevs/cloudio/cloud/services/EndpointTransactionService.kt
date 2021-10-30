@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.abstractservices.AbstractSimpleTopicService
-import ch.hevs.cloudio.cloud.abstractservices.annotation.TopicListener
+import ch.hevs.cloudio.cloud.abstractservices.messaging.AbstractTopicService
+import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
@@ -12,11 +12,10 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("transaction", "default")
-@TopicListener(topics = ["@transaction.*"])
 class EndpointTransactionService(
         private val serializationFormats: Collection<SerializationFormat>,
         private val rabbitTemplate: RabbitTemplate
-): AbstractSimpleTopicService() {
+): AbstractTopicService("${ActionIdentifier.TRANSACTION}.*") {
     private val log = LogFactory.getLog(EndpointTransactionService::class.java)
 
     override fun handleMessage(message: Message) {

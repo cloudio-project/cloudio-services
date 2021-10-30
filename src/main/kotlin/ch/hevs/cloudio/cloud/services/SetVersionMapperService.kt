@@ -1,8 +1,8 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.abstractservices.AbstractSimpleTopicService
-import ch.hevs.cloudio.cloud.abstractservices.annotation.TopicListener
+import ch.hevs.cloudio.cloud.abstractservices.messaging.AbstractTopicService
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import org.apache.commons.logging.LogFactory
 import org.springframework.amqp.core.Message
@@ -12,11 +12,10 @@ import org.springframework.stereotype.Service
 
 @Service
 @Profile("set-version-mapper", "default")
-@TopicListener(topics = ["@set.#"])
 class SetVersionMapperService(
         private val endpointRepository: EndpointRepository,
         private val rabbitTemplate: RabbitTemplate
-): AbstractSimpleTopicService() {
+): AbstractTopicService("${ActionIdentifier.ATTRIBUTE_SET}.#") {
     private val log = LogFactory.getLog(SetVersionMapperService::class.java)
 
     override fun handleMessage(message: Message) {
