@@ -35,6 +35,7 @@ import springfox.documentation.builders.PathSelectors
 import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
 import springfox.documentation.swagger2.annotations.EnableSwagger2
+import java.net.InetAddress
 import java.util.*
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
@@ -135,6 +136,7 @@ class CloudioApplication {
                 connection.mode?.let { cacheMode = it }
                 connection.size?.let { connectionCacheSize = it }
             }
+            setConnectionNameStrategy { InetAddress.getLocalHost().getHostName() }
         }
 
     @Bean
