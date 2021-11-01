@@ -8,8 +8,21 @@ plugins {
     id("com.google.cloud.tools.jib") version "2.5.0"
 }
 
+open class GitTools(p: String) {
+    val tag: String? by lazy {
+        Runtime.getRuntime().exec("git describe --exact-match --tags HEAD").let {
+            it.waitFor()
+            if (it.exitValue() == 0) String(it.inputStream.readAllBytes()).trim() else null
+        }
+    }
+    val hash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse HEAD").inputStream.readAllBytes()).trim() }
+    val shortHash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --short HEAD").inputStream.readAllBytes()).trim() }
+}
+val git: GitTools by project
+project.extensions.create("git", GitTools::class.java, "")
+
 group = "ch.hevs.cloudio"
-version = "0.2.0-SNAPSHOT"
+version = git.tag ?: "SNAPSHOT-${git.shortHash}"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 springBoot {
