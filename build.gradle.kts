@@ -78,10 +78,7 @@ tasks.bootRun {
 
             // RabbitMQ (AMQPs).
             environment("spring.rabbitmq.host", "localhost")
-            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.ssl.verify-hostname", "false")
-            environment("spring.rabbitmq.ssl.trust-store", "file:./cloudio-dev-environment/certificates/ca.jks")
-            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
@@ -110,10 +107,7 @@ tasks.test {
 
             // RabbitMQ (AMQPs).
             environment("spring.rabbitmq.host", "localhost")
-            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.ssl.verify-hostname", "false")
-            environment("spring.rabbitmq.ssl.trust-store", "file:./cloudio-dev-environment/certificates/ca.jks")
-            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")

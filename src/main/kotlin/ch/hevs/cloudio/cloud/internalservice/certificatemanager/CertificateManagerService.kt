@@ -12,6 +12,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
+import java.math.BigInteger
 import java.security.*
 import java.security.cert.X509Certificate
 import java.util.*
@@ -59,14 +60,27 @@ class CertificateManagerService(private val properties: CloudioCertificateManage
         return certificate.toPEMString()
     }
 
+    fun clientKeyStore(name: String, type: String): KeyStore = KeyStore.getInstance(type).apply {
+        val keyPair = keyPairGenerator.generateKeyPair()
+        val clientCertificate = signCertificate(name, BigInteger.TWO, keyPair.public)
+        load(null, "".toCharArray())
+        setEntry(name, KeyStore.PrivateKeyEntry(keyPair.private, arrayOf(clientCertificate)), KeyStore.PasswordProtection("".toCharArray()))
+    }
+
+    fun trustKeyStore(type: String): KeyStore = KeyStore.getInstance(type).apply {
+        load(null, "".toCharArray())
+        setCertificateEntry("authority", certificate)
+    }
+
     private fun createAndSignEndpointCertificate(uuid: UUID): Pair<X509Certificate, KeyPair> {
         val keyPair = keyPairGenerator.generateKeyPair()
         return Pair(signCertificate(uuid, keyPair.public), keyPair)
     }
 
-    private fun signCertificate(uuid: UUID, publicKey: PublicKey): X509Certificate {
-        val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, uuid.toString()).build()
-        val serial = uuid.toBigInteger()
+    private fun signCertificate(uuid: UUID, publicKey: PublicKey) = signCertificate(uuid.toString(), uuid.toBigInteger(), publicKey)
+
+    private fun signCertificate(name: String, serial: BigInteger, publicKey: PublicKey): X509Certificate {
+        val subject = X500NameBuilder(BCStyle.INSTANCE).addRDN(BCStyle.CN, name).addRDN(BCStyle.O, "client").build()
         val now = Date(System.currentTimeMillis())
         val expires = Calendar.getInstance().run {
             time = now
