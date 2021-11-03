@@ -1,10 +1,9 @@
 package ch.hevs.cloudio.cloud.services
 
-import ch.hevs.cloudio.cloud.abstractservices.AbstractUpdateSetService
+import ch.hevs.cloudio.cloud.abstractservices.AbstractAttributeService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
-import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.influxdb.BatchOptions
 import org.influxdb.InfluxDB
@@ -17,12 +16,11 @@ import javax.annotation.PostConstruct
 
 @Service
 @Profile("update-influx", "default")
-class InfluxUpdateSetService(
+class InfluxAttributeService(
         private val influx: InfluxDB,
-        serializationFormats: Collection<SerializationFormat>,
         private val influxProperties: CloudioInfluxProperties
-) : AbstractUpdateSetService(serializationFormats) {
-    private val log = LogFactory.getLog(InfluxUpdateSetService::class.java)
+) : AbstractAttributeService() {
+    private val log = LogFactory.getLog(InfluxAttributeService::class.java)
 
     @PostConstruct
     fun initialize() {
@@ -33,7 +31,7 @@ class InfluxUpdateSetService(
         influx.enableBatch(BatchOptions.DEFAULTS.actions(influxProperties.batchSize).flushDuration(influxProperties.batchIntervalMs))
     }
 
-    override fun attributeUpdatedSet(attributeId: String, attribute: Attribute, prefix: String) {
+    override fun attributeUpdated(attributeId: String, attribute: Attribute) {
         if (attribute.timestamp != null) {
             // create the influxDB point
             val point = Point
@@ -67,5 +65,9 @@ class InfluxUpdateSetService(
                 log.error("The attribute $attributeId has been updated with wrong data type")
             }
         }
+    }
+
+    override fun attributeSet(attributeId: String, attribute: Attribute) {
+        attributeUpdated(attributeId, attribute)
     }
 }

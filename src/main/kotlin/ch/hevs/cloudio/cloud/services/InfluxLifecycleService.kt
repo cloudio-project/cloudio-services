@@ -3,55 +3,63 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
-import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import org.apache.commons.logging.LogFactory
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("lifecycle-influx", "default")
 class InfluxLifecycleService(
-        private val influx: InfluxDB,
-        serializationFormats: Collection<SerializationFormat>,
-        private val influxProperties: CloudioInfluxProperties) : AbstractLifecycleService(serializationFormats) {
+    private val influx: InfluxDB,
+    private val influxProperties: CloudioInfluxProperties
+) : AbstractLifecycleService() {
     private val log = LogFactory.getLog(InfluxLifecycleService::class.java)
 
-    override fun endpointIsOffline(uuid: String) {
-        influx.write(influxProperties.database, "autogen", Point
-                .measurement(uuid)
-                .addField("event", "offline")
-                .build())
-    }
-
-    override fun endpointIsOnline(uuid: String, dataModel: EndpointDataModel) {
-        influx.write(influxProperties.database, "autogen", Point
-                .measurement(uuid)
+    override fun endpointIsOnline(endpointUUID: UUID, dataModel: EndpointDataModel) {
+        influx.write(
+            influxProperties.database, "autogen", Point
+                .measurement(endpointUUID.toString())
                 .addField("event", "online")
-                .build())
-        dataModel.nodes.writeAttributeValues(uuid)
+                .build()
+        )
+        dataModel.nodes.writeAttributeValues(endpointUUID.toString())
     }
 
-    override fun nodeAdded(uuid: String, nodeName: String, node: Node) {
-        influx.write(influxProperties.database, "autogen", Point
-                .measurement(uuid)
+    override fun endpointIsOffline(endpointUUID: UUID) {
+        influx.write(
+            influxProperties.database, "autogen", Point
+                .measurement(endpointUUID.toString())
+                .addField("event", "offline")
+                .build()
+        )
+    }
+
+    override fun nodeAdded(endpointUUID: UUID, nodeName: String, node: Node) {
+        influx.write(
+            influxProperties.database, "autogen", Point
+                .measurement(endpointUUID.toString())
                 .tag("node", nodeName)
                 .addField("event", "added")
-                .build())
-        node.writeAttributeValues("$uuid.$nodeName")
+                .build()
+        )
+        node.writeAttributeValues("$endpointUUID.$nodeName")
     }
 
-    override fun nodeRemoved(uuid: String, nodeName: String) {
-        influx.write(influxProperties.database, "autogen", Point
-                .measurement(uuid)
+    override fun nodeRemoved(endpointUUID: UUID, nodeName: String) {
+        influx.write(
+            influxProperties.database, "autogen", Point
+                .measurement(endpointUUID.toString())
                 .tag("node", nodeName)
                 .addField("event", "removed")
-                .build())
+                .build()
+        )
     }
 
-    private fun Map<String,Node>.writeAttributeValues(endpointId: String) {
+    private fun Map<String, Node>.writeAttributeValues(endpointId: String) {
         forEach { (name, node) -> node.writeAttributeValues("$endpointId.$name") }
     }
 
@@ -69,10 +77,10 @@ class InfluxLifecycleService(
 
             // create the influxDB point
             val point = Point
-                    .measurement(attributeId)
-                    .time((timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                    .tag("constraint", constraint.toString())
-                    .tag("type", type.toString())
+                .measurement(attributeId)
+                .time((timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
+                .tag("constraint", constraint.toString())
+                .tag("type", type.toString())
 
             try {
                 // complete the point depending on attribute type
