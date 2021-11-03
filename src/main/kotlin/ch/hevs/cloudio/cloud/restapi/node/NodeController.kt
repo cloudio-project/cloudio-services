@@ -22,15 +22,17 @@ import java.net.InetAddress
     description = "Information about the cloud.iO service node."
 )
 @RestController
-@RequestMapping("api/v1/info")
-class PublicNodeInfoController(
+@RequestMapping("api/v1/node")
+class NodeController(
     private val buildProperties: BuildProperties
 ) {
-    @GetMapping("/node")
+    @GetMapping("/info")
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation("Returns node info.")
     fun getNodeInfo(@ApiIgnore authentication: Authentication?) = mutableMapOf(
         "version" to buildProperties.version,
+        "commit" to buildProperties["shortHash"],
+        "code" to "https://github.com/cloudio-project/cloudio-services/commits/${buildProperties["hash"]}",
         "build date" to buildProperties.time
     ).apply {
         if (authentication?.authorities?.contains(SimpleGrantedAuthority(Authority.HTTP_ADMIN.toString())) == true) {

@@ -151,7 +151,7 @@ class CloudioApplication {
                             "/v2/api-docs",
                             "/api/v1/provision/*",
                             "/messageformat/**",
-                            "/api/v1/info/*"
+                            "/api/v1/node/info"
                 ).permitAll()
                 .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                 .and().httpBasic()

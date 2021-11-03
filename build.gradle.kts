@@ -5,7 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
     kotlin("jvm") version "1.3.72"
     kotlin("plugin.spring") version "1.3.72"
-    id("com.google.cloud.tools.jib") version "2.5.0"
+    id("com.google.cloud.tools.jib") version "3.1.4"
 }
 
 open class GitTools(p: String) {
@@ -17,16 +17,24 @@ open class GitTools(p: String) {
     }
     val hash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse HEAD").inputStream.readAllBytes()).trim() }
     val shortHash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --short HEAD").inputStream.readAllBytes()).trim() }
+    val branch: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --abbrev-ref HEAD").inputStream.readAllBytes()).trim() }
 }
 val git: GitTools by project
 project.extensions.create("git", GitTools::class.java, "")
 
 group = "ch.hevs.cloudio"
-version = git.tag ?: "SNAPSHOT-${git.shortHash}"
+version = git.tag ?: "${git.branch}-latest"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 springBoot {
-    buildInfo()
+    buildInfo {
+        properties {
+            additional = mapOf(
+                "hash" to git.hash,
+                "shortHash" to git.shortHash
+            )
+        }
+    }
 }
 
 repositories {
@@ -127,4 +135,21 @@ tasks.test {
     }
 }
 
-jib.to.image = "cloudio/${project.name}:${project.version}"
+jib {
+    from {
+        platforms {
+            platform {
+                architecture = "amd64"
+                os = "linux"
+            }
+            platform {
+                architecture = "arm64"
+                os = "linux"
+            }
+        }
+    }
+    to {
+        image = "cloudio/${project.name}:${project.version}"
+        tags = if (git.tag != null) setOf("latest") else setOf()
+    }
+}
