@@ -17,7 +17,7 @@ open class GitTools(p: String) {
     }
     val hash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse HEAD").inputStream.readAllBytes()).trim() }
     val shortHash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --short HEAD").inputStream.readAllBytes()).trim() }
-    val branch: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --abbrev-ref HEAD").inputStream.readAllBytes()).trim() }
+    val branch: String by lazy { String(Runtime.getRuntime().exec("git name-rev --name-only HEAD").inputStream.readAllBytes()).trim().replace("remotes/origin/", "") }
 }
 val git: GitTools by project
 project.extensions.create("git", GitTools::class.java, "")
