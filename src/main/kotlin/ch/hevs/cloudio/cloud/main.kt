@@ -128,7 +128,8 @@ class CloudioApplication {
                     .authorizeRequests().antMatchers(
                             "/v2/api-docs",
                             "/api/v1/provision/*",
-                            "/messageformat/**"
+                            "/messageformat/**",
+                            "/api/v1/info/*"
                     ).permitAll()
                     .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                     .and().httpBasic()
