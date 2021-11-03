@@ -11,6 +11,8 @@ spring:
     ssl:
       enabled: true
       algorithm: TLSv1.2
+      key-store: '@generate'
+      trust-store: '@generate'
 
   influx:
     url: http://influx:8086

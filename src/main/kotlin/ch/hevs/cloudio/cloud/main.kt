@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
@@ -34,7 +35,10 @@ import springfox.documentation.builders.PathSelectors
 import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
 import springfox.documentation.swagger2.annotations.EnableSwagger2
+import java.net.InetAddress
 import java.util.*
+import javax.net.ssl.KeyManagerFactory
+import javax.net.ssl.TrustManagerFactory
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
@@ -77,45 +81,63 @@ class CloudioApplication {
     }
 
     @Bean
-    fun connectionFactory(rabbitProperties: RabbitProperties): ConnectionFactory = CachingConnectionFactory(RabbitConnectionFactoryBean().apply {
-        rabbitProperties.host?.let { setHost(it) }
-        setPort(rabbitProperties.port)
-        rabbitProperties.username?.let { setUsername(it) }
-        rabbitProperties.password?.let { setPassword(it) }
-        rabbitProperties.virtualHost?.let { setVirtualHost(it) }
-        rabbitProperties.requestedHeartbeat?.let { setRequestedHeartbeat(it.seconds.toInt()) }
-        rabbitProperties.ssl.let { ssl ->
-            if (ssl.determineEnabled()) {
-                setUseSSL(true)
-                ssl.algorithm?.let { setSslAlgorithm(it) }
-                if (ssl.keyStore != null) {
-                    setSaslConfig(DefaultSaslConfig.EXTERNAL)
-                }
-                setKeyStoreType(ssl.keyStoreType)
-                setKeyStore(ssl.keyStore)
-                setKeyStorePassphrase(ssl.keyStorePassword ?: "")
-                setTrustStoreType(ssl.trustStoreType)
-                setTrustStore(ssl.trustStore)
-                setTrustStorePassphrase(ssl.trustStorePassword)
-                isSkipServerCertificateValidation = !ssl.isValidateServerCertificate
-                setEnableHostnameVerification(ssl.verifyHostname)
+    fun connectionFactory(rabbitProperties: RabbitProperties, certificateManagerService: CertificateManagerService): ConnectionFactory =
+        CachingConnectionFactory(object : RabbitConnectionFactoryBean() {
+            override fun configureKeyManagers() = if (keyStore != "@generate") {
+                super.configureKeyManagers()
+            } else {
+                KeyManagerFactory.getInstance("SunX509").apply {
+                    init(certificateManagerService.clientKeyStore("cloudio_services", keyStoreType), "".toCharArray())
+                }.keyManagers
             }
+
+            override fun configureTrustManagers() = if (trustStore != "@generate") {
+                super.configureTrustManagers()
+            } else {
+                TrustManagerFactory.getInstance("SunX509").apply {
+                    init(certificateManagerService.trustKeyStore(trustStoreType))
+                }.trustManagers
+            }
+        }.apply {
+            rabbitProperties.host?.let { setHost(it) }
+            setPort(rabbitProperties.port)
+            rabbitProperties.username?.let { setUsername(it) }
+            rabbitProperties.password?.let { setPassword(it) }
+            rabbitProperties.virtualHost?.let { setVirtualHost(it) }
+            rabbitProperties.requestedHeartbeat?.let { setRequestedHeartbeat(it.seconds.toInt()) }
+            rabbitProperties.ssl.let { ssl ->
+                if (ssl.determineEnabled()) {
+                    setUseSSL(true)
+                    ssl.algorithm?.let { setSslAlgorithm(it) }
+                    if (ssl.keyStore != null) {
+                        setSaslConfig(DefaultSaslConfig.EXTERNAL)
+                    }
+                    setKeyStoreType(ssl.keyStoreType)
+                    setKeyStore(ssl.keyStore ?: "")
+                    setKeyStorePassphrase(ssl.keyStorePassword ?: "")
+                    setTrustStoreType(ssl.trustStoreType)
+                    setTrustStore(ssl.trustStore ?: "")
+                    setTrustStorePassphrase(ssl.trustStorePassword)
+                    isSkipServerCertificateValidation = !ssl.isValidateServerCertificate
+                    setEnableHostnameVerification(ssl.verifyHostname)
+                }
+            }
+            rabbitProperties.connectionTimeout?.let { setConnectionTimeout(it.seconds.toInt()) }
+            afterPropertiesSet()
+        }.`object`).apply {
+            setAddresses(rabbitProperties.determineAddresses())
+            isPublisherReturns = rabbitProperties.isPublisherReturns
+            rabbitProperties.publisherConfirmType?.let { setPublisherConfirmType(it) }
+            rabbitProperties.cache.channel.let { channel ->
+                channel.size?.let { channelCacheSize = it }
+                channel.checkoutTimeout?.let { setChannelCheckoutTimeout(it.toMillis()) }
+            }
+            rabbitProperties.cache.connection.let { connection ->
+                connection.mode?.let { cacheMode = it }
+                connection.size?.let { connectionCacheSize = it }
+            }
+            setConnectionNameStrategy { InetAddress.getLocalHost().getHostName() }
         }
-        rabbitProperties.connectionTimeout?.let { setConnectionTimeout(it.seconds.toInt()) }
-        afterPropertiesSet()
-    }.`object`).apply {
-        setAddresses(rabbitProperties.determineAddresses())
-        isPublisherReturns = rabbitProperties.isPublisherReturns
-        rabbitProperties.publisherConfirmType?.let { setPublisherConfirmType(it) }
-        rabbitProperties.cache.channel.let { channel ->
-            channel.size?.let { channelCacheSize = it }
-            channel.checkoutTimeout?.let { setChannelCheckoutTimeout(it.toMillis()) }
-        }
-        rabbitProperties.cache.connection.let { connection ->
-            connection.mode?.let { cacheMode = it }
-            connection.size?.let { connectionCacheSize = it }
-        }
-    }
 
     @Bean
     fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
@@ -128,11 +150,12 @@ class CloudioApplication {
                     .authorizeRequests().antMatchers(
                             "/v2/api-docs",
                             "/api/v1/provision/*",
-                            "/messageformat/**"
-                    ).permitAll()
-                    .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
-                    .and().httpBasic()
-                    .and().sessionManagement().disable()
+                            "/messageformat/**",
+                            "/api/v1/info/*"
+                ).permitAll()
+                .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
+                .and().httpBasic()
+                .and().sessionManagement().disable()
         }
     }
 
