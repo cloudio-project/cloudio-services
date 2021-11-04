@@ -31,15 +31,20 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import springfox.documentation.builders.ApiInfoBuilder
 import springfox.documentation.builders.PathSelectors
+import springfox.documentation.builders.RequestHandlerSelectors
+import springfox.documentation.service.AuthorizationScope
+import springfox.documentation.service.BasicAuth
+import springfox.documentation.service.SecurityReference
+import springfox.documentation.service.SecurityScheme
 import springfox.documentation.spi.DocumentationType
+import springfox.documentation.spi.service.contexts.SecurityContext
 import springfox.documentation.spring.web.plugins.Docket
-import springfox.documentation.swagger2.annotations.EnableSwagger2
 import java.util.*
+import java.util.Collections.singletonList
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-@EnableSwagger2
 @EnableScheduling
 class CloudioApplication {
     @Bean
@@ -125,20 +130,24 @@ class CloudioApplication {
 
         override fun configure(http: HttpSecurity) {
             http.csrf().disable()
-                    .authorizeRequests().antMatchers(
-                            "/v2/api-docs",
-                            "/api/v1/provision/*",
-                            "/messageformat/**"
-                    ).permitAll()
-                    .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
-                    .and().httpBasic()
-                    .and().sessionManagement().disable()
+                .authorizeRequests().antMatchers(
+                    "/v2/api-docs", "/v3/api-docs",
+                    "/swagger-resources/**", "/swagger-ui/**",
+                    "/api/v1/provision/*",
+                    "/messageformat/**"
+                ).permitAll()
+                .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
+                .and().httpBasic()
+                .and().sessionManagement().disable()
         }
     }
 
     @Bean
     fun cloudioApiV1Documentation(buildProperties: BuildProperties?) = Docket(DocumentationType.SWAGGER_2).apply {
-        select().paths(PathSelectors.ant("/api/v1/**")).build()
+        select()
+            .apis(RequestHandlerSelectors.any())
+            .paths(PathSelectors.ant("/api/v1/**"))
+            .build()
         apiInfo(ApiInfoBuilder().apply {
             title("cloud.iO API")
             description("API Documentation for cloud.iO")
@@ -146,6 +155,15 @@ class CloudioApplication {
             licenseUrl("https://opensource.org/licenses/MIT")
             buildProperties?.let { version(it.version) }
         }.build())
+            .securitySchemes(singletonList<SecurityScheme>(BasicAuth("Basic Auth")))
+            .securityContexts(
+                singletonList(
+                    SecurityContext.builder()
+                        .securityReferences(listOf(SecurityReference("Basic Auth", arrayOf(AuthorizationScope("global", "accessEverything")))))
+                        .forPaths(PathSelectors.regex("/api/v1.*"))
+                        .build()
+                )
+            )
     }
 
     @Bean
