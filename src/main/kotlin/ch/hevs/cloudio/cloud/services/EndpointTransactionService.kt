@@ -1,14 +1,11 @@
 package ch.hevs.cloudio.cloud.services
 
+import ch.hevs.cloudio.cloud.abstractservices.messaging.AbstractTopicService
+import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
-import org.springframework.amqp.core.ExchangeTypes
 import org.springframework.amqp.core.Message
-import org.springframework.amqp.rabbit.annotation.Exchange
-import org.springframework.amqp.rabbit.annotation.Queue
-import org.springframework.amqp.rabbit.annotation.QueueBinding
-import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
@@ -18,21 +15,10 @@ import org.springframework.stereotype.Service
 class EndpointTransactionService(
         private val serializationFormats: Collection<SerializationFormat>,
         private val rabbitTemplate: RabbitTemplate
-) {
+): AbstractTopicService("${ActionIdentifier.TRANSACTION}.*") {
     private val log = LogFactory.getLog(EndpointTransactionService::class.java)
 
-    @RabbitListener(bindings = [
-        QueueBinding(
-                value = Queue(),
-                exchange = Exchange(
-                        value = "amq.topic",
-                        type = ExchangeTypes.TOPIC,
-                        ignoreDeclarationExceptions = "true"
-                ),
-                key = ["@transaction.*"]
-        )
-    ])
-    fun handleTransactionMessage(message: Message) {
+    override fun handleMessage(message: Message) {
         try {
             val endpointId = message.messageProperties.receivedRoutingKey.split(".")[1]
             val data = message.body

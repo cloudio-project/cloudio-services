@@ -5,15 +5,36 @@ plugins {
     id("io.spring.dependency-management") version "1.0.10.RELEASE"
     kotlin("jvm") version "1.3.72"
     kotlin("plugin.spring") version "1.3.72"
-    id("com.google.cloud.tools.jib") version "2.5.0"
+    id("com.google.cloud.tools.jib") version "3.1.4"
 }
 
+open class GitTools(p: String) {
+    val tag: String? by lazy {
+        Runtime.getRuntime().exec("git describe --exact-match --tags HEAD").let {
+            it.waitFor()
+            if (it.exitValue() == 0) String(it.inputStream.readAllBytes()).trim() else null
+        }
+    }
+    val hash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse HEAD").inputStream.readAllBytes()).trim() }
+    val shortHash: String by lazy { String(Runtime.getRuntime().exec("git rev-parse --short HEAD").inputStream.readAllBytes()).trim() }
+    val branch: String by lazy { String(Runtime.getRuntime().exec("git name-rev --name-only HEAD").inputStream.readAllBytes()).trim().replace("remotes/origin/", "") }
+}
+val git: GitTools by project
+project.extensions.create("git", GitTools::class.java, "")
+
 group = "ch.hevs.cloudio"
-version = "0.2.0-SNAPSHOT"
+version = git.tag ?: "${git.branch}-latest"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 springBoot {
-    buildInfo()
+    buildInfo {
+        properties {
+            additional = mapOf(
+                "hash" to git.hash,
+                "shortHash" to git.shortHash
+            )
+        }
+    }
 }
 
 repositories {
@@ -65,10 +86,7 @@ tasks.bootRun {
 
             // RabbitMQ (AMQPs).
             environment("spring.rabbitmq.host", "localhost")
-            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.ssl.verify-hostname", "false")
-            environment("spring.rabbitmq.ssl.trust-store", "file:./cloudio-dev-environment/certificates/ca.jks")
-            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
@@ -97,10 +115,7 @@ tasks.test {
 
             // RabbitMQ (AMQPs).
             environment("spring.rabbitmq.host", "localhost")
-            environment("spring.rabbitmq.ssl.key-store", "file:./cloudio-dev-environment/certificates/cloudio_services.p12")
             environment("spring.rabbitmq.ssl.verify-hostname", "false")
-            environment("spring.rabbitmq.ssl.trust-store", "file:./cloudio-dev-environment/certificates/ca.jks")
-            environment("spring.rabbitmq.ssl.trust-store-password", "cloudioDEV")
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
@@ -120,4 +135,25 @@ tasks.test {
     }
 }
 
-jib.to.image = "cloudio/${project.name}:${project.version}"
+jib {
+    from {
+        platforms {
+            platform {
+                architecture = "amd64"
+                os = "linux"
+            }
+            platform {
+                architecture = "arm64"
+                os = "linux"
+            }
+            platform {
+                architecture = "arm"
+                os = "linux"
+            }
+        }
+    }
+    to {
+        image = "cloudio/${project.name}:${project.version}"
+        tags = if (git.tag != null) setOf("latest") else setOf()
+    }
+}
