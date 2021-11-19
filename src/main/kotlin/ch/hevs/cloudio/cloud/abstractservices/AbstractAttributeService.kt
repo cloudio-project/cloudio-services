@@ -70,6 +70,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
                         when (action) {
                             ActionIdentifier.ATTRIBUTE_UPDATE -> attributeUpdated(attributeId, attribute)
                             ActionIdentifier.ATTRIBUTE_SET -> attributeSet(attributeId, attribute)
+                            else -> log.error("Unexpected action: ${id.action}")
                         }
                     } else {
                         log.error("The Attribute $attributeTopic with the constraint ${attribute.constraint} can't be changed with the prefix $action")
@@ -86,7 +87,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
     }
 
     private fun handleAttributeDidSetMessage(id: ModelIdentifier, message: Message) {
-        TODO("Implement")
+        // TODO: Implement.
     }
 
     // Abstract method to handle update of attribute.
