@@ -26,6 +26,7 @@ import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
+import ch.hevs.cloudio.cloud.restapi.endpoint.data.DataModelFilter
 
 @RestController
 @Profile("rest-api")
@@ -74,13 +75,30 @@ class EndpointDataAccessController(
         }
 
         // If the model path is empty, we return the whole data model of the endpoint.
-        val data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
+        var data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
             CloudioHttpExceptions.NotFound("Model element not found.")
         }
 
         // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
+        if (!endpointPermission.fulfills(EndpointPermission.READ)) {
             // TODO: Filter endpoint data based on model element permissions.
+            when (data) {
+                is EndpointDataModel -> {
+                    data = DataModelFilter.filterEndpoint(data, permissionManager, authentication, modelIdentifier)
+                }
+                is Node -> {
+                    data = DataModelFilter.filterNode(data, permissionManager, authentication, modelIdentifier)
+                }
+                is CloudioObject -> {
+                    data = DataModelFilter.filterObject(data, permissionManager, authentication, modelIdentifier)
+                }
+                is Attribute -> {
+                    data = DataModelFilter.filterAttribute(data, permissionManager, authentication, modelIdentifier)
+                }
+            }
+            if(data == null){
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            }
         }
 
         // Fill data from influxDB.
