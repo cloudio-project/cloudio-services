@@ -26,7 +26,6 @@ import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
-import ch.hevs.cloudio.cloud.restapi.endpoint.data.DataModelFilter
 
 @RestController
 @Profile("rest-api")
@@ -79,35 +78,53 @@ class EndpointDataAccessController(
             CloudioHttpExceptions.NotFound("Model element not found.")
         }
 
-        // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        if (!endpointPermission.fulfills(EndpointPermission.READ)) {
-            // TODO: Filter endpoint data based on model element permissions.
+
+        if (endpointPermission.fulfills(EndpointPermission.READ)) {
+            // Fill data from influxDB.
             when (data) {
-                is EndpointDataModel -> {
-                    data = DataModelFilter.filterEndpoint(data, permissionManager, authentication, modelIdentifier)
-                }
-                is Node -> {
-                    data = DataModelFilter.filterNode(data, permissionManager, authentication, modelIdentifier)
-                }
-                is CloudioObject -> {
-                    data = DataModelFilter.filterObject(data, permissionManager, authentication, modelIdentifier)
-                }
-                is Attribute -> {
-                    data = DataModelFilter.filterAttribute(data, permissionManager, authentication, modelIdentifier)
-                }
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
             }
+        }
+        // If the user only has partial access to the endpoint's model, filter the data model accordingly.
+        else{
+            val noDataStructure : Any?
+
+            //Endpoint permission is BROWSE
+            if(endpointPermission.fulfills(EndpointPermission.BROWSE)){
+                //The user can see the whole endpoint structure
+                noDataStructure = data
+            }
+            //Endpoint permission is ACCESS
+            else{
+                //Get the part of structure that the user can see
+                noDataStructure = DataModelFilter.filter(data, permissionManager, authentication,
+                        modelIdentifier, EndpointModelElementPermission.VIEW)
+            }
+
+            //Get the part of structure that must be filled with values
+            data = DataModelFilter.filter(data, permissionManager, authentication,
+                    modelIdentifier, EndpointModelElementPermission.READ)
+
+            // Fill data from influxDB.
+            when (data) {
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+            }
+
+            //merge the filled structure with the empty one
+            data = DataModelFilter.merge(data, noDataStructure)
+
             if(data == null){
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
 
-        // Fill data from influxDB.
-        when (data) {
-            is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
-            is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-            is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-            is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-        }
+
 
         // TODO: We should create an entity class to return.
         return data
