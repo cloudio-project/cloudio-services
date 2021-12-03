@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")

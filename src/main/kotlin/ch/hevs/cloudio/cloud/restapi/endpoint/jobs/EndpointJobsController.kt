@@ -22,7 +22,6 @@ import java.io.IOException
 import java.time.Instant
 import java.util.*
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(

@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["User Management"], description = "Allows an admin user to manage users.")

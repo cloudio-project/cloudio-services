@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import java.util.*
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(

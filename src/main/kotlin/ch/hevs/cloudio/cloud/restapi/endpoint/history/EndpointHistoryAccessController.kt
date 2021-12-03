@@ -23,7 +23,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["Endpoint Model Access"], description = "Allows an user to access time series data of endpoints.")

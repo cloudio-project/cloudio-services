@@ -18,7 +18,6 @@ import java.net.InetAddress
     tags = ["Node info"],
     description = "Information about the cloud.iO service node."
 )
-@CrossOrigin(origins = ["*"])
 @RestController
 @RequestMapping("api/v1/node")
 class NodeController(

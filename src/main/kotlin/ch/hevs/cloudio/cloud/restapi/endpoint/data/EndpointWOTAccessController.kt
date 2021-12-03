@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoints in a WOT compatible manner.")

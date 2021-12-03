@@ -16,7 +16,6 @@ import springfox.documentation.annotations.ApiIgnore
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(

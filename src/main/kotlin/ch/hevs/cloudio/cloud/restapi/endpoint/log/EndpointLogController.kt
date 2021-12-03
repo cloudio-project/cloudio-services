@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(
