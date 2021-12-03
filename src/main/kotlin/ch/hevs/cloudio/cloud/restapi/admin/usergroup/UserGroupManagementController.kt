@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import javax.transaction.Transactional
 
+@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["Group Management"], description = "Allows an admin user to manage user groups.")

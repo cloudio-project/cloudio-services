@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import springfox.documentation.annotations.ApiIgnore
 
+@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(

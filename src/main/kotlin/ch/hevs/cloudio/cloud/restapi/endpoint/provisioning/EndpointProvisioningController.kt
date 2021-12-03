@@ -23,6 +23,7 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+@CrossOrigin(origins = ["*"])
 @RestController
 @Profile("rest-api")
 @Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")

@@ -151,7 +151,8 @@ class CloudioApplication {
         }
 
         override fun configure(http: HttpSecurity) {
-            http.csrf().disable()
+            http.cors().and()
+                .csrf().disable()
                 .authorizeRequests().antMatchers(
                     "/v2/api-docs", "/v3/api-docs",
                     "/swagger-resources/**", "/swagger-ui/**",
