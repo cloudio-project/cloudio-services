@@ -19,7 +19,7 @@ data class Node(
          * Interfaces can be used to mark a given node to have a set (not exclusive) of attributes. It is not checked or validated at all by cloud.iO , but it can be handy to search for common
          * data structures in the database.
          */
-        val implements: Set<String> = mutableSetOf(),
+        var implements: Set<String> = mutableSetOf(),
 
         /**
          * All objects of the node.
