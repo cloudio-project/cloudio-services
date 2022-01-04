@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoints in a WOT compatible manner.")
+@Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoint's nodes in a WOT compatible manner.")
 @RequestMapping("/api/v1/wot")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
