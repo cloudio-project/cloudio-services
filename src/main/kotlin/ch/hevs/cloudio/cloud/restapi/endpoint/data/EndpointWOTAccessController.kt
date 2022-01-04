@@ -3,12 +3,12 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.data
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
+import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.userDetails
-import ch.hevs.cloudio.cloud.model.ActionIdentifier
-import ch.hevs.cloudio.cloud.model.ModelIdentifier
-import ch.hevs.cloudio.cloud.model.Node
+import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
+import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import io.swagger.annotations.Api
@@ -66,27 +66,25 @@ class EndpointWOTAccessController(private val endpointRepository: EndpointReposi
         }
 
         // If the model path is empty, we return the whole data model of the endpoint.
-        val data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
+        var data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
             CloudioHttpExceptions.NotFound("Model element not found.")
         }
 
-        // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
-            // TODO: Filter endpoint data based on model element permissions.
-        }
+        //Filter the datamodel regarding the user's permission
+        data = DataModelFilter.filter(data, permissionManager, authentication,
+                modelIdentifier, EndpointModelElementPermission.VIEW)
 
-        // Fill data from influxDB.
-        return when(data) {
-
+        // Convert data to WoT format
+        when (data) {
             is Node -> {
-                data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-                WotSerializationFormat.wotNodeFromCloudioNode(endpoint.dataModel, endpoint.uuid.toString(), modelIdentifier.last(), request.baseURL())
+                data = WotSerializationFormat.wotNodeFromCloudioNode(endpoint.dataModel, endpoint.uuid.toString(), modelIdentifier.last(), data, request.baseURL())
                         ?: throw CloudioHttpExceptions.InternalServerError("WOT serialization error")
             }
             else -> {
                 throw CloudioHttpExceptions.BadRequest("Requested element is not a node.")
             }
         }
+        return data
     }
 
     private fun HttpServletRequest.baseURL(): String {

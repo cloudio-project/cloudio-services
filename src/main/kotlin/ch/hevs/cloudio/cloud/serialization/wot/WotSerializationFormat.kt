@@ -3,45 +3,42 @@ package ch.hevs.cloudio.cloud.serialization.wot
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
+import ch.hevs.cloudio.cloud.model.Node
 
 
 object WotSerializationFormat {
 
-    fun wotNodeFromCloudioNode(endpoint: EndpointDataModel, endpointName: String, nodeName: String, host: String): NodeThingDescription? {
+    fun wotNodeFromCloudioNode(endpoint: EndpointDataModel, endpointName: String, nodeName: String, node: Node, host: String): NodeThingDescription? {
 
         val mqttHost = host.replace("https", "mqtts").replace("http", "mqtts").replace("8081", "8883")
-        val node = endpoint.nodes.get(nodeName)
-        if (node != null) {
+        //val node = endpoint.nodes.get(nodeName)
 
-            val propertiesMap: MutableMap<String, PropertyAffordance> = mutableMapOf()
-            val eventMap: MutableMap<String, EventAffordance> = mutableMapOf()
+        val propertiesMap: MutableMap<String, PropertyAffordance> = mutableMapOf()
+        val eventMap: MutableMap<String, EventAffordance> = mutableMapOf()
 
 
-            for (cloudioObject in node.objects) {
-                propertiesMap.putAll(buildProperties("$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
+        for (cloudioObject in node.objects) {
+            propertiesMap.putAll(buildProperties("$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
 
-                /* TODO: Once events are implemented, return those here.
-                eventMap.putAll(buildEvents(cloudioObject.key, "$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
-                 */
-            }
-
-            val securityDefinition = mapOf(
-                    "https_sc" to SecurityDefinition(scheme = "basic", input = "query") /* TODO: Leaving MQTT out for the moment. ,
-                    "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null)*/
-            )
-
-            return NodeThingDescription(
-                    context = "https://www.w3.org/2019/wot/td/v1",
-                    id = "urn:$endpointName:$nodeName",
-                    title = nodeName,
-                    securityDefinitions = securityDefinition,
-                    security = securityDefinition.keys,
-                    properties = propertiesMap,
-                    events = eventMap
-            )
-        } else {
-            return null
+            /* TODO: Once events are implemented, return those here.
+            eventMap.putAll(buildEvents(cloudioObject.key, "$endpointName/$nodeName/${cloudioObject.key}", cloudioObject.value, host, mqttHost))
+             */
         }
+
+        val securityDefinition = mapOf(
+                "https_sc" to SecurityDefinition(scheme = "basic", input = "query") /* TODO: Leaving MQTT out for the moment. ,
+                "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null)*/
+        )
+
+        return NodeThingDescription(
+                context = "https://www.w3.org/2019/wot/td/v1",
+                id = "urn:$endpointName:$nodeName",
+                title = nodeName,
+                securityDefinitions = securityDefinition,
+                security = securityDefinition.keys,
+                properties = propertiesMap,
+                events = eventMap
+        )
     }
 
     private fun buildProperties(cloudioObjectTopic: String, cloudioObject: CloudioObject, host: String, mqttHost: String): MutableMap<String, PropertyAffordance> {
