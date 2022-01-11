@@ -7,7 +7,7 @@ import ch.hevs.cloudio.cloud.model.Node
 
 
 object WotSerializationFormat {
-
+    //TODO set the correct host: check the x-forwarded-host?
     fun wotNodeFromCloudioNode(endpoint: EndpointDataModel, endpointName: String, nodeName: String, node: Node, host: String): NodeThingDescription? {
 
         val mqttHost = host.replace("https", "mqtts").replace("http", "mqtts").replace("8081", "8883")
@@ -26,7 +26,7 @@ object WotSerializationFormat {
         }
 
         val securityDefinition = mapOf(
-                "https_sc" to SecurityDefinition(scheme = "basic", input = "query") /* TODO: Leaving MQTT out for the moment. ,
+                "https_sc" to SecurityDefinition(scheme = "basic", input = "header") /* TODO: Leaving MQTT out for the moment. ,
                 "mqtts_sc" to SecurityDefinition(scheme = "cert", input = null)*/
         )
 
