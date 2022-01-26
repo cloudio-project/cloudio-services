@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioCorsConfigurationSource
 import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -151,7 +152,7 @@ class CloudioApplication {
         }
 
         override fun configure(http: HttpSecurity) {
-            http.cors().and()
+            http.cors().configurationSource(CloudioCorsConfigurationSource()).and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers(
                     "/v2/api-docs", "/v3/api-docs",
