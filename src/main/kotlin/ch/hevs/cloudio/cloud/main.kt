@@ -1,7 +1,9 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.cors.CorsRepository
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioCorsConfigurationSource
 import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -30,6 +32,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.web.cors.CorsConfigurationSource
 import springfox.documentation.builders.ApiInfoBuilder
 import springfox.documentation.builders.PathSelectors
 import springfox.documentation.builders.RequestHandlerSelectors
@@ -145,13 +148,17 @@ class CloudioApplication {
         }
 
     @Bean
+    fun corsConfigurationSource(repo: CorsRepository): CorsConfigurationSource = CloudioCorsConfigurationSource(repo)
+
+    @Bean
     fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
         override fun configure(auth: AuthenticationManagerBuilder) {
             auth.userDetailsService(cloudioUserDetailsService)
         }
 
         override fun configure(http: HttpSecurity) {
-            http.csrf().disable()
+            http.cors().and()
+                .csrf().disable()
                 .authorizeRequests().antMatchers(
                     "/v2/api-docs", "/v3/api-docs",
                     "/swagger-resources/**", "/swagger-ui/**",
