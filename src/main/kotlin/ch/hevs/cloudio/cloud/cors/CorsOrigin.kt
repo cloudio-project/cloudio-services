@@ -7,7 +7,7 @@ import javax.persistence.*
 @Table(name = "cloudio_cors_allowed_origins")
 data class CorsOrigin(
         @Column(length = 1024, nullable = false, unique = true)
-        var origin: String = ""
+        val origin: String = ""
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

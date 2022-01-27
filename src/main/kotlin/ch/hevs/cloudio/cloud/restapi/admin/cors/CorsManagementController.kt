@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class CorsManagementController (
-        private var corsRepository: CorsRepository
+        private val corsRepository: CorsRepository
 ){
     @ApiOperation("List all allowed origins.")
     @GetMapping("/cors")
     @ResponseStatus(HttpStatus.OK)
-    fun getAllUsers() = corsRepository.findAll().map {
+    fun getAllOrigins() = corsRepository.findAll().map {
         it.origin
     }
 
