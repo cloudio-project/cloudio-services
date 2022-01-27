@@ -9,7 +9,7 @@ data class CloudioObject(
          * An object can conform to a given scheme. A scheme defines the exact set of attributes an object has to contain.
          * Note that cloud.iO does not enforce or validates this conformity at all, however it can serve to mark compatible data structures.
          */
-        val conforms: String? = null,
+        var conforms: String? = null,
 
         /**
          * Child objects.

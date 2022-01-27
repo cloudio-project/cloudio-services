@@ -74,22 +74,57 @@ class EndpointDataAccessController(
         }
 
         // If the model path is empty, we return the whole data model of the endpoint.
-        val data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
+        var data = modelIdentifier.resolve(endpoint.dataModel).orElseThrow {
             CloudioHttpExceptions.NotFound("Model element not found.")
         }
 
+
+        if (endpointPermission.fulfills(EndpointPermission.READ)) {
+            // Fill data from influxDB.
+            when (data) {
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+            }
+        }
         // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
-            // TODO: Filter endpoint data based on model element permissions.
+        else{
+            val noDataStructure : Any?
+
+            //Endpoint permission is BROWSE
+            if(endpointPermission.fulfills(EndpointPermission.BROWSE)){
+                //The user can see the whole endpoint structure
+                noDataStructure = data
+            }
+            //Endpoint permission is ACCESS
+            else{
+                //Get the part of structure that the user can see
+                noDataStructure = DataModelFilter.filter(data, permissionManager, authentication,
+                        modelIdentifier, EndpointModelElementPermission.VIEW)
+            }
+
+            //Get the part of structure that must be filled with values
+            data = DataModelFilter.filter(data, permissionManager, authentication,
+                    modelIdentifier, EndpointModelElementPermission.READ)
+
+            // Fill data from influxDB.
+            when (data) {
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+            }
+
+            //merge the filled structure with the empty one
+            data = DataModelFilter.merge(data, noDataStructure)
+
+            if(data == null){
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            }
         }
 
-        // Fill data from influxDB.
-        when (data) {
-            is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
-            is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-            is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-            is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-        }
+
 
         // TODO: We should create an entity class to return.
         return data
