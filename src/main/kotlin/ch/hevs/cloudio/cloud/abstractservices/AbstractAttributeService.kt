@@ -88,6 +88,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
 
     private fun handleAttributeDidSetMessage(id: ModelIdentifier, message: Message) {
         // TODO: Implement.
+        log.info("Received didSet from $id: ${message.body}");
     }
 
     // Abstract method to handle update of attribute.

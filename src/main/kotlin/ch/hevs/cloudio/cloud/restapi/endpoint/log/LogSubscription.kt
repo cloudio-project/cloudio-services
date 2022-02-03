@@ -34,13 +34,13 @@ class LogSubscription(endpointUUID: ModelIdentifier, timeout: Long, private val 
                 val data = message.body
                 val messageFormat = serializationFormats.detect(data)
                 if (messageFormat != null) {
-                    val message = messageFormat.deserializeLogMessage(data)
+                    val logMessage = messageFormat.deserializeLogMessage(data)
                     send(LogMessageEntity(
-                        time = Date((message.timestamp*1000).toLong()).toString(),
-                        level = message.level,
-                        message = message.message,
-                        loggerName = message.loggerName,
-                        logSource = message.logSource
+                        time = Date((logMessage.timestamp*1000).toLong()).toString(),
+                        level = logMessage.level,
+                        message = logMessage.message,
+                        loggerName = logMessage.loggerName,
+                        logSource = logMessage.logSource
                     ))
                 }
             }

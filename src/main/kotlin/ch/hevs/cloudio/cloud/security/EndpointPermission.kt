@@ -72,7 +72,7 @@ enum class EndpointPermission(private val value: Int) {
      * @param permission    Permission to check against.
      * @return              Higher permission.
      */
-    fun higher(permission: EndpointPermission) = arrayOf(this, permission).maxBy { it.value }!!
+    fun higher(permission: EndpointPermission) = arrayOf(this, permission).maxByOrNull { it.value }!!
 
     /**
      * Returns the lower permission: Either the actual permission or the permission passed as parameter.
@@ -80,7 +80,7 @@ enum class EndpointPermission(private val value: Int) {
      * @param permission    Permission to check against.
      * @return              Lower permission.
      */
-    fun lower(permission: EndpointPermission) = arrayOf(this, permission).minBy { it.value }!!
+    fun lower(permission: EndpointPermission) = arrayOf(this, permission).minByOrNull { it.value }!!
 
     companion object {
         val DEFAULT = DENY

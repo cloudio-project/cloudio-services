@@ -98,7 +98,7 @@ object WotSerializationFormat {
                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                             "timestamp" to DataSchema("number", null),
-                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                            "value" to DataSchema(cloudioAttribute.value.type.toString().replaceFirstChar { it.lowercase() }, null)
                     ),
                     forms = forms,
                     required = setOf("constraint", "type", "timestamp", "value"),
@@ -115,8 +115,8 @@ object WotSerializationFormat {
         val eventSet: MutableMap<String, EventAffordance> = mutableMapOf()
 
         for (innerCloudioObject in cloudioObject.objects) {
-            eventSet.putAll(buildEvents(cloudioObjectName + innerCloudioObject.key.capitalize(),
-                    cloudioNodeObjectTopic + "/" + innerCloudioObject.key.capitalize(),
+            eventSet.putAll(buildEvents(cloudioObjectName + innerCloudioObject.key.replaceFirstChar { it.uppercase() },
+                    cloudioNodeObjectTopic + "/" + innerCloudioObject.key.replaceFirstChar { it.uppercase() },
                     innerCloudioObject.value,
                     host, mqttHost))
         }
@@ -134,7 +134,7 @@ object WotSerializationFormat {
                                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                                             "timestamp" to DataSchema("number", null),
-                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().replaceFirstChar { it.lowercase() }, null)
                                     ),
                                     required = setOf("constraint", "type", "timestamp", "value"),
                                     enum = null
@@ -159,7 +159,7 @@ object WotSerializationFormat {
                                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                                             "timestamp" to DataSchema("number", null),
-                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().replaceFirstChar { it.lowercase() }, null)
                                     ),
                                     required = setOf("constraint", "type", "timestamp", "value"),
                                     enum = null

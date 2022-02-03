@@ -70,7 +70,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
             }
             "check_resource" -> {
                 val resource = message.messageProperties.headers["resource"]?.toString()
-                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).uppercase())
                 val name = message.messageProperties.headers["name"]?.toString()
                 when (resource) {
                     "queue" -> if (permission.value <= BrokerPermission.CONFIGURE.value) {
@@ -92,7 +92,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 }
             }
             "check_topic" -> {
-                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).uppercase())
                 val modelIdentifier = ModelIdentifier(message.messageProperties.headers["routing_key"] as String)
                 when {
                     !modelIdentifier.valid -> {
@@ -170,7 +170,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 else -> userDetails.authorities
                         .map(GrantedAuthority::getAuthority)
                         .filter { it.startsWith("BROKER_MANAGEMENT_") }
-                        .joinToString(separator = ",") { it.substring(18).toLowerCase() }
+                        .joinToString(separator = ",") { it.substring(18).uppercase() }
             }
         }
     } catch (exception: UsernameNotFoundException) {

@@ -8,7 +8,10 @@ import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
 import springfox.documentation.annotations.ApiIgnore
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
@@ -26,7 +29,7 @@ class NodeController(
     @GetMapping("/info")
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation("Returns node info.")
-    fun getNodeInfo(@ApiIgnore authentication: Authentication?) = mutableMapOf(
+    fun getNodeInfo(@ApiIgnore authentication: Authentication?) = mutableMapOf<String,Any>(
         "version" to buildProperties.version,
         "commit" to buildProperties["shortHash"],
         "code" to "https://github.com/cloudio-project/cloudio-services/commits/${buildProperties["hash"]}",
