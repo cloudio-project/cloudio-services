@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.3.3.RELEASE"
-    id("io.spring.dependency-management") version "1.0.10.RELEASE"
-    kotlin("jvm") version "1.3.72"
-    kotlin("plugin.spring") version "1.3.72"
-    id("com.google.cloud.tools.jib") version "3.1.4"
+    id("org.springframework.boot") version "2.6.3"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    kotlin("jvm") version "1.6.10"
+    kotlin("plugin.spring") version "1.6.10"
+    id("com.google.cloud.tools.jib") version "3.2.0"
 }
 
 open class GitTools(p: String) {
@@ -51,9 +51,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
     implementation("org.postgresql:postgresql")
-    implementation("com.vladmihalcea:hibernate-types-52:2.9.13")
+    implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
     implementation("org.influxdb:influxdb-java")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.66")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
