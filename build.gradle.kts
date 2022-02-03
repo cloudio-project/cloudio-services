@@ -23,7 +23,7 @@ val git: GitTools by project
 project.extensions.create("git", GitTools::class.java, "")
 
 group = "ch.hevs.cloudio"
-version = git.tag ?: "${git.branch}-latest"
+version = git.tag ?: "${git.branch.replace("/", "-")}-latest"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 springBoot {
