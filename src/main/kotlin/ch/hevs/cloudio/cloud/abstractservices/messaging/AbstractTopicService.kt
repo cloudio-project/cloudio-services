@@ -15,7 +15,7 @@ abstract class AbstractTopicService(private val topics: Set<String>) : RabbitLis
 
     constructor(topic: String) : this(setOf(topic))
 
-    override fun configureRabbitListeners(registrar: RabbitListenerEndpointRegistrar) {
+    final override fun configureRabbitListeners(registrar: RabbitListenerEndpointRegistrar) {
         if (topics.isNotEmpty()) {
             val exchange = TopicExchange("amq.topic")
             val queue = Queue(javaClass.canonicalName)

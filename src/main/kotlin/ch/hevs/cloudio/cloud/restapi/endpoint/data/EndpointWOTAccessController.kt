@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.data
 
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.dao.InfluxQueryAPI
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.model.ActionIdentifier
@@ -13,12 +13,14 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.influxdb.InfluxDB
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
 import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
@@ -28,8 +30,8 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping("/api/v1/wot")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
-                                  private val influxDB: InfluxDB,
-                                  private val influxProperties: CloudioInfluxProperties) {
+                                  private val influx: InfluxQueryAPI
+                                  ) {
     private val antMatcher = AntPathMatcher()
 
     @GetMapping("/**")
@@ -76,7 +78,7 @@ class EndpointWOTAccessController(private val endpointRepository: EndpointReposi
         return when(data) {
 
             is Node -> {
-                data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                data.fillAttributesFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
                 WotSerializationFormat.wotNodeFromCloudioNode(endpoint.dataModel, endpoint.uuid.toString(), modelIdentifier.last(), request.baseURL())
                         ?: throw CloudioHttpExceptions.InternalServerError("WOT serialization error")
             }

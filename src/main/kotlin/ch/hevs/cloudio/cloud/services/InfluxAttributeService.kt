@@ -1,73 +1,73 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractAttributeService
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.AttributeType
+import ch.hevs.cloudio.cloud.dao.InfluxWriteAPI
+import ch.hevs.cloudio.cloud.model.*
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import org.apache.commons.logging.LogFactory
-import org.influxdb.BatchOptions
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Point
-import org.influxdb.dto.Query
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
-import javax.annotation.PostConstruct
 
 @Service
 @Profile("update-influx", "default")
 class InfluxAttributeService(
-        private val influx: InfluxDB,
-        private val influxProperties: CloudioInfluxProperties
+        private val influx: InfluxWriteAPI
 ) : AbstractAttributeService() {
     private val log = LogFactory.getLog(InfluxAttributeService::class.java)
 
-    @PostConstruct
-    fun initialize() {
-        // Create database if needed
-        if (influx.query(Query("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.firstOrNull() == influxProperties.database} != false)
-            influx.query(Query("CREATE DATABASE ${influxProperties.database}", ""))
-
-        influx.enableBatch(BatchOptions.DEFAULTS.actions(influxProperties.batchSize).flushDuration(influxProperties.batchIntervalMs))
-    }
-
-    override fun attributeUpdated(attributeId: String, attribute: Attribute) {
+    override fun attributeUpdated(id: ModelIdentifier, attribute: Attribute) {
         if (attribute.timestamp != null) {
-            // create the influxDB point
-            val point = Point
-                    .measurement(attributeId)
-                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                    .tag("constraint", attribute.constraint.toString())
-                    .tag("type", attribute.type.toString())
-
-            try {
-                // complete the point depending on attribute type
-                when (attribute.type) {
-                    AttributeType.Boolean -> point.addField("value", attribute.value as Boolean)
-                    AttributeType.Integer -> point.addField("value", attribute.value as Long)
-                    AttributeType.Number -> {
-                        if (attribute.value is Int) {
-                            attribute.value = (attribute.value as Int).toFloat()
-                        }
-                        point.addField("value", attribute.value as Number)
-                    }
-                    AttributeType.String -> point.addField("value", attribute.value as String)
-                    else -> {
-                    }
-                }
-                //write the actual point in influx
-                val myPoint = point.build()
-
-                //if batch enabled, save point in set, either send it
-                influx.write(influxProperties.database, "autogen", myPoint)
-
-            } catch (e: ClassCastException) {
-                log.error("The attribute $attributeId has been updated with wrong data type")
-            }
+            Point.measurement(id.toInfluxSeriesName())
+                .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                .addTag("event", "update")
+                .addTag("constraint", attribute.constraint.toString())
+                .addTag("type", attribute.type.toString())
+                .writeValue(id, attribute.value, attribute.type)
         }
     }
 
-    override fun attributeSet(attributeId: String, attribute: Attribute) {
-        attributeUpdated(attributeId, attribute)
+    override fun attributeSet(id: ModelIdentifier, attribute: AttributeSetCommand) {
+        Point.measurement(id.toInfluxSeriesName())
+            .time((attribute.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+            .addTag("event", "set")
+            .writeValue(id, attribute.value)
+    }
+
+    override fun attributeDidSet(id: ModelIdentifier, attribute: AttributeSetStatus) {
+        Point.measurement(id.toInfluxSeriesName())
+            .time((attribute.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+            .addTag("event", "didset")
+            .writeValue(id, attribute.value)
+    }
+
+    private fun Point.writeValue(id: ModelIdentifier, value: Any?, type: AttributeType? = null) {
+        try {
+            val effectiveType = type ?: when (value?.javaClass?.kotlin) {
+                    Boolean::class -> AttributeType.Boolean
+                    Long::class -> AttributeType.Integer
+                    Number::class -> AttributeType.Number
+                    String::class -> AttributeType.String
+                    else -> AttributeType.Invalid
+            }
+            when (effectiveType) {
+                AttributeType.Boolean -> addField("value", value as Boolean)
+                AttributeType.Integer -> addField("value", value as Long)
+                AttributeType.Number -> {
+                    if (value is Int) {
+                        addField("value", value.toFloat())
+                    } else {
+                        addField("value", value as Number)
+                    }
+                }
+                AttributeType.String -> addField("value", value as String)
+                else -> {
+                    log.error("Invalid datatype.")
+                }
+            }
+            influx.writePoint("${id.endpoint}", this)
+        } catch (e: ClassCastException) {
+            log.error("The attribute $id has been updated with wrong data type")
+        }
     }
 }

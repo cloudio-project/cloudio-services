@@ -52,7 +52,7 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
     implementation("org.postgresql:postgresql")
     implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
-    implementation("org.influxdb:influxdb-java")
+    implementation("com.influxdb:influxdb-client-java:4.2.0")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -61,7 +61,7 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.72")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.6.10")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
@@ -97,7 +97,7 @@ tasks.bootRun {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "cloudioadmin")
             environment("jpa.hibernate.ddl-auto" ,"update")
         }
     }
@@ -128,7 +128,7 @@ tasks.test {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudiotest")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "cloudioadmin")
             environment("jpa.hibernate.ddl-auto" ,"create")
 
         }

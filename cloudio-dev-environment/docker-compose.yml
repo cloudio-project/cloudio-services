@@ -13,9 +13,15 @@ services:
       SERVER_KEY: ${SERVER_KEY}
 
   influx:
-    image: influxdb:1.5-alpine
+    image: influxdb:2.1-alpine
     ports:
     - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_ORG: cloudio
+      DOCKER_INFLUXDB_INIT_BUCKET: system
+      DOCKER_INFLUXDB_INIT_USERNAME: cloudio
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${ADMIN_PASSWORD}
 
   database:
     image: postgres:12.2-alpine

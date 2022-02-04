@@ -1,86 +1,73 @@
 package ch.hevs.cloudio.cloud.services
 
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
+import ch.hevs.cloudio.cloud.dao.InfluxWriteAPI
 import ch.hevs.cloudio.cloud.model.*
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import org.apache.commons.logging.LogFactory
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("lifecycle-influx", "default")
 class InfluxLifecycleService(
-    private val influx: InfluxDB,
-    private val influxProperties: CloudioInfluxProperties
+    private val influx: InfluxWriteAPI
 ) : AbstractLifecycleService() {
     private val log = LogFactory.getLog(InfluxLifecycleService::class.java)
 
     override fun endpointIsOnline(endpointUUID: UUID, dataModel: EndpointDataModel) {
-        influx.write(
-            influxProperties.database, "autogen", Point
-                .measurement(endpointUUID.toString())
-                .addField("event", "online")
-                .build()
+        influx.writePoint("$endpointUUID", Point.measurement("lifecycle")
+            .addTag("event", "online")
+            .addField("version", dataModel.version)
         )
-        dataModel.nodes.writeAttributeValues(endpointUUID.toString())
+        dataModel.nodes.writeAttributeValues(endpointUUID)
     }
 
     override fun endpointIsOffline(endpointUUID: UUID) {
-        influx.write(
-            influxProperties.database, "autogen", Point
-                .measurement(endpointUUID.toString())
-                .addField("event", "offline")
-                .build()
+        influx.writePoint("$endpointUUID", Point.measurement("lifecycle")
+            .addTag("event", "offline")
         )
     }
 
     override fun nodeAdded(endpointUUID: UUID, nodeName: String, node: Node) {
-        influx.write(
-            influxProperties.database, "autogen", Point
-                .measurement(endpointUUID.toString())
-                .tag("node", nodeName)
-                .addField("event", "added")
-                .build()
+        influx.writePoint("$endpointUUID", Point.measurement("lifecycle")
+            .addTag("event", "node-added")
+            .addField("name", nodeName)
         )
-        node.writeAttributeValues("$endpointUUID.$nodeName")
+        node.writeAttributeValues(endpointUUID, nodeName)
     }
 
     override fun nodeRemoved(endpointUUID: UUID, nodeName: String) {
-        influx.write(
-            influxProperties.database, "autogen", Point
-                .measurement(endpointUUID.toString())
-                .tag("node", nodeName)
-                .addField("event", "removed")
-                .build()
+        influx.writePoint("$endpointUUID", Point.measurement("lifecycle")
+            .addTag("event", "node-removed")
+            .addField("name", nodeName)
         )
     }
 
-    private fun Map<String, Node>.writeAttributeValues(endpointId: String) {
-        forEach { (name, node) -> node.writeAttributeValues("$endpointId.$name") }
+    private fun Map<String, Node>.writeAttributeValues(endpointUUID: UUID) {
+        forEach { (name, node) -> node.writeAttributeValues(endpointUUID , name) }
     }
 
-    private fun Node.writeAttributeValues(nodeId: String) {
-        objects.forEach { (name, obj) -> obj.writeAttributeValues("$nodeId.$name") }
+    private fun Node.writeAttributeValues(endpointUUID: UUID, nodeName: String) {
+        objects.forEach { (name, obj) -> obj.writeAttributeValues(endpointUUID, "$nodeName.$name") }
     }
 
-    private fun CloudioObject.writeAttributeValues(objectId: String) {
-        objects.forEach { (name, obj) -> obj.writeAttributeValues("$objectId.$name") }
-        attributes.forEach { (name, attribute) -> attribute.writeAttributeValue("$objectId.$name") }
+    private fun CloudioObject.writeAttributeValues(endpointUUID: UUID, objectId: String) {
+        objects.forEach { (name, obj) -> obj.writeAttributeValues(endpointUUID, "$objectId.$name") }
+        attributes.forEach { (name, attribute) -> attribute.writeAttributeValue(endpointUUID, "$objectId.$name") }
     }
 
-    private fun Attribute.writeAttributeValue(attributeId: String) {
+    private fun Attribute.writeAttributeValue(endpointUUID: UUID, attributeId: String) {
         if (timestamp != null && constraint != AttributeConstraint.Static) {
 
             // create the influxDB point
-            val point = Point
-                .measurement(attributeId)
-                .time((timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                .tag("constraint", constraint.toString())
-                .tag("type", type.toString())
+            val point = Point.measurement(attributeId)
+                .time((timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                .addTag("event", "online")
+                .addTag("constraint", constraint.toString())
+                .addTag("type", type.toString())
 
             try {
                 // complete the point depending on attribute type
@@ -97,11 +84,8 @@ class InfluxLifecycleService(
                     else -> {
                     }
                 }
-                //write the actual point in influx
-                val myPoint = point.build()
 
-                //if batch enabled, save point in set, either send it
-                influx.write(influxProperties.database, "autogen", myPoint)
+                influx.writePoint("$endpointUUID", point)
 
             } catch (e: ClassCastException) {
                 log.error("The attribute $attributeId has been updated with wrong data type")

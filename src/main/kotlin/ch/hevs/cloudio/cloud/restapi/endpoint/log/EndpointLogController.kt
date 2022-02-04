@@ -1,6 +1,6 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.log
 
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
+import ch.hevs.cloudio.cloud.dao.InfluxQueryAPI
 import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
@@ -9,8 +9,6 @@ import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
 import org.springframework.amqp.core.AmqpAdmin
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.context.annotation.Profile
@@ -28,8 +26,7 @@ import java.util.*
 )
 @RequestMapping("/api/v1/endpoints")
 class EndpointLogController(
-    private val influx: InfluxDB,
-    private val influxProperties: CloudioInfluxProperties,
+    private val influx: InfluxQueryAPI,
     private val serializationFormats: Collection<SerializationFormat>,
     private val amqpAdmin: AmqpAdmin,
     private val connectionFactory: ConnectionFactory
@@ -45,7 +42,8 @@ class EndpointLogController(
         @RequestParam @ApiParam("Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
         @RequestParam @ApiParam("Maximal number of log entries to return, defaults to 1000.", required = false, defaultValue = "1000") max: Int?
     ): List<LogMessageEntity> {
-        val result = influx.query(Query(
+        // TODO: Implement using new API.
+        /*val result = influx.query(Query(
             "SELECT time, level, message, logSource, loggerName FROM \"$uuid.logs\" " +
                     "WHERE level <= ${(threshold ?: LogLevel.WARN).ordinal} " +
                     (from?.let { "AND time >= '${it.toDate().toRFC3339()}' " } ?: "") +
@@ -56,9 +54,9 @@ class EndpointLogController(
 
         if (result.hasError()) {
             throw CloudioHttpExceptions.InternalServerError("InfluxDB error: ${result.error}")
-        }
+        }*/
 
-        return result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
+        return /*result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
             LogMessageEntity(
                 time = it[0] as String,
                 level = LogLevel.values()[(it[1] as Double).toInt()],
@@ -66,7 +64,7 @@ class EndpointLogController(
                 loggerName = it[3] as String,
                 logSource = it[4] as String
             )
-        } ?: emptyList()
+        } ?:*/ emptyList()
     }
 
     @GetMapping("/{uuid}.log", produces = ["text/plain"])

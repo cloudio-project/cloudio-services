@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.history
 
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.dao.InfluxQueryAPI
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
@@ -11,8 +11,6 @@ import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
@@ -30,8 +28,7 @@ import javax.servlet.http.HttpServletRequest
 class EndpointHistoryAccessController(
         private val endpointRepository: EndpointRepository,
         private val permissionManager: CloudioPermissionManager,
-        private val influx: InfluxDB,
-        private val influxProperties: CloudioInfluxProperties
+        private val influx: InfluxQueryAPI
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -65,7 +62,8 @@ class EndpointHistoryAccessController(
             throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
-        val result = influx.query(Query(
+        // TODO: Implement using new InfluxDB API
+        /*val result = influx.query(Query(
                 "SELECT time, ${
                     if (resampleInterval != null) {
                         (resampleFunction ?: ResampleFunction.MEAN).toString() + "(value)"
@@ -82,14 +80,14 @@ class EndpointHistoryAccessController(
 
         if (result.hasError()) {
             throw CloudioHttpExceptions.InternalServerError("InfluxDB error: ${result.error}")
-        }
+        }*/
 
-        return result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
+        return /*result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
             DataPointEntity(
                     time = it[0] as String,
                     value = it[1]
             )
-        } ?: emptyList()
+        } ?:*/ emptyList()
     }
 
     private fun String.toDate() = try {

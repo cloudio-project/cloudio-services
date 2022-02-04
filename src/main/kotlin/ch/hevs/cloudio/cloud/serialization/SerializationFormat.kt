@@ -9,6 +9,8 @@ interface SerializationFormat {
     fun deserializeNode(data: ByteArray): Node
     fun serializeAttribute(attribute: Attribute): ByteArray
     fun deserializeAttribute(data: ByteArray): Attribute
+    fun deserializeAttributeSetCommand(data: ByteArray): AttributeSetCommand
+    fun deserializeAttributeSetStatus(data: ByteArray): AttributeSetStatus
     fun deserializeTransaction(data: ByteArray): Transaction
     fun deserializeDelayedMessages(data: ByteArray): DelayedMessages
     fun deserializeLogMessage(data: ByteArray): LogMessage

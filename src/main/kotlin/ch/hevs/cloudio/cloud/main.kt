@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.cors.CorsRepository
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.security.Authority
@@ -8,6 +9,7 @@ import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.influxdb.client.InfluxDBClientFactory
 import com.rabbitmq.client.DefaultSaslConfig
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
@@ -146,6 +148,9 @@ class CloudioApplication {
             }
             setConnectionNameStrategy { InetAddress.getLocalHost().getHostName() }
         }
+
+    @Bean
+    fun influxDBClient(properties: CloudioInfluxProperties) = InfluxDBClientFactory.create(properties.url, properties.token.toCharArray(), properties.organisation)
 
     @Bean
     fun corsConfigurationSource(repo: CorsRepository): CorsConfigurationSource = CloudioCorsConfigurationSource(repo)

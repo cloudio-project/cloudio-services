@@ -9,15 +9,6 @@ data class AttributeSetCommand(
          * Correlation ID to send with the request to the endpoint has received in the @set message
          */
         val correlationID: String = "",
-        /**
-         * Defines if the attribute can be read or written from the cloud or if it is static.
-         */
-        var constraint: AttributeConstraint = AttributeConstraint.Invalid,
-
-        /**
-         * Data type of the attribute.
-         */
-        var type: AttributeType = AttributeType.Invalid,
 
         /**
          * Timestamp.

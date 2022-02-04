@@ -131,7 +131,7 @@ class ModelIdentifier(uri: String) : Serializable {
      *
      * @return InfluxDB series name.
      */
-    fun toInfluxSeriesName() = if (valid && count() > 0) "$endpoint.${toModelPath('.')}" else ""
+    fun toInfluxSeriesName() = if (valid && count() > 0) toModelPath('.') else ""
 
     /**
      * Searches the endpoint data model element referenced by itself in the passed endpoint data model.

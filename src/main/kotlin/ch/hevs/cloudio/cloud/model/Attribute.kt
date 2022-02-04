@@ -20,7 +20,7 @@ data class Attribute(
         var type: AttributeType = AttributeType.Invalid,
 
         /**
-         * Timestamp of the last value change (reported to the cloud) of the attribute or timestamp of the set request from the the cloud to the endpoint.
+         * Timestamp of the last value change (reported to the cloud) of the attribute.
          * UNIX Epoch time in seconds, floating point type allows higher resolution than seconds.
          */
         @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.data
 
-import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
+import ch.hevs.cloudio.cloud.dao.InfluxQueryAPI
 import ch.hevs.cloudio.cloud.extension.fillAttributesFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.userDetails
@@ -15,7 +15,6 @@ import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.influxdb.InfluxDB
 import org.springframework.amqp.core.AmqpAdmin
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -34,8 +33,7 @@ import javax.servlet.http.HttpServletRequest
 class EndpointDataAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
-    private val influxDB: InfluxDB,
-    private val influxProperties: CloudioInfluxProperties,
+    private val influx: InfluxQueryAPI,
     private val serializationFormats: Collection<SerializationFormat>,
     private val rabbitTemplate: RabbitTemplate,
     private val amqpAdmin: AmqpAdmin,
@@ -82,10 +80,10 @@ class EndpointDataAccessController(
         if (endpointPermission.fulfills(EndpointPermission.READ)) {
             // Fill data from influxDB.
             when (data) {
-                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
-                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influx, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
             }
         }
         // If the user only has partial access to the endpoint's model, filter the data model accordingly.
@@ -110,10 +108,10 @@ class EndpointDataAccessController(
 
             // Fill data from influxDB.
             when (data) {
-                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, endpoint.uuid)
-                is Node -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-                is CloudioObject -> data.fillAttributesFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
-                is Attribute -> data.fillFromInfluxDB(influxDB, influxProperties.database, modelIdentifier.toInfluxSeriesName())
+                is EndpointDataModel -> data.fillAttributesFromInfluxDB(influx, endpoint.uuid)
+                is Node -> data.fillAttributesFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
+                is CloudioObject -> data.fillAttributesFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
+                is Attribute -> data.fillFromInfluxDB(influx, modelIdentifier.toInfluxSeriesName())
             }
 
             //merge the filled structure with the empty one
@@ -123,8 +121,6 @@ class EndpointDataAccessController(
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
-
 
         // TODO: We should create an entity class to return.
         return data

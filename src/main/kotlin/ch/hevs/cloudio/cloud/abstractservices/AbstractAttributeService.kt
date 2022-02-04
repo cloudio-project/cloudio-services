@@ -1,10 +1,7 @@
 package ch.hevs.cloudio.cloud.abstractservices
 
 import ch.hevs.cloudio.cloud.abstractservices.messaging.AbstractTopicService
-import ch.hevs.cloudio.cloud.model.ActionIdentifier
-import ch.hevs.cloudio.cloud.model.Attribute
-import ch.hevs.cloudio.cloud.model.AttributeConstraint
-import ch.hevs.cloudio.cloud.model.ModelIdentifier
+import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.detect
 import org.apache.commons.logging.LogFactory
@@ -27,8 +24,8 @@ abstract class AbstractAttributeService : AbstractTopicService(
         val id = ModelIdentifier(message.messageProperties.receivedRoutingKey)
         if (id.valid) {
             when (id.action) {
-                ActionIdentifier.ATTRIBUTE_UPDATE -> handleAttributeUpdateOrSetMessage(id, message)
-                ActionIdentifier.ATTRIBUTE_SET -> handleAttributeUpdateOrSetMessage(id, message)
+                ActionIdentifier.ATTRIBUTE_UPDATE -> handleAttributeUpdateMessage(id, message)
+                ActionIdentifier.ATTRIBUTE_SET -> handleAttributeSetMessage(id, message)
                 ActionIdentifier.ATTRIBUTE_DID_SET -> handleAttributeDidSetMessage(id, message)
                 else -> log.error("Unexpected action: ${id.action}")
             }
@@ -37,63 +34,74 @@ abstract class AbstractAttributeService : AbstractTopicService(
         }
     }
 
-    private fun handleAttributeUpdateOrSetMessage(id: ModelIdentifier, message: Message) {
-        val action = id.action
-            message.messageProperties.receivedRoutingKey.split(".")[0]
+    private fun handleAttributeUpdateMessage(id: ModelIdentifier, message: Message) {
         try {
-            val attributeTopic = message.messageProperties.receivedRoutingKey.removePrefix("$action.")
-
             val data = message.body
             val messageFormat = serializationFormats.detect(data)
             if (messageFormat != null) {
                 val attribute = messageFormat.deserializeAttribute(data)
                 if (attribute.timestamp != null && attribute.timestamp != -1.0 && attribute.value != null) {
-
-                    if (action == ActionIdentifier.ATTRIBUTE_UPDATE && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) ||
-                        (action == ActionIdentifier.ATTRIBUTE_SET && (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint))
+                    if (id.action == ActionIdentifier.ATTRIBUTE_UPDATE && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status)
                     ) {
-
-                        var attributeId = ""
-                        val splitAttributeId = attributeTopic.split(".")
-
-                        //check if topic follow pattern of cloud.iO v0.1 or v0.2
-                        if (splitAttributeId[1] == "nodes" && splitAttributeId[3] == "objects" && splitAttributeId[splitAttributeId.lastIndex - 1] == "attributes") {
-
-                            splitAttributeId.forEachIndexed { i, topicPart ->
-                                when {
-                                    i % 2 == 0 -> attributeId += topicPart
-                                    i != splitAttributeId.lastIndex -> attributeId += "."
-                                }
-                            }
-                        } else
-                            attributeId = attributeTopic
-                        when (action) {
-                            ActionIdentifier.ATTRIBUTE_UPDATE -> attributeUpdated(attributeId, attribute)
-                            ActionIdentifier.ATTRIBUTE_SET -> attributeSet(attributeId, attribute)
-                            else -> log.error("Unexpected action: ${id.action}")
-                        }
+                        attributeUpdated(id, attribute)
                     } else {
-                        log.error("The Attribute $attributeTopic with the constraint ${attribute.constraint} can't be changed with the prefix $action")
+                        log.error("The Attribute $id with the constraint ${attribute.constraint} can't be changed with the prefix ${id.action}")
                     }
                 } else {
-                    log.error("The Attribute $attributeTopic has be $action with a timestamp of -1 0r value of null")
+                    log.error("The Attribute $id has be ${id.action} with a timestamp of -1 0r value of null")
                 }
             } else {
-                log.error("Unrecognized message format in $action message from $attributeTopic")
+                log.error("Unrecognized message format in ${id.action} message from $id")
             }
         } catch (e: Exception) {
-            log.error("Exception during $action message handling:", e)
+            log.error("Exception during ${id.action} message handling:", e)
+        }
+    }
+
+    private fun handleAttributeSetMessage(id: ModelIdentifier, message: Message) {
+        try {
+            val data = message.body
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
+                val attribute = messageFormat.deserializeAttributeSetCommand(data)
+                if (attribute.timestamp != -1.0 && attribute.value != null) {
+                    attributeSet(id, attribute)
+                } else {
+                    log.error("The Attribute $id has be ${id.action} with a timestamp of -1 0r value of null")
+                }
+            } else {
+                log.error("Unrecognized message format in ${id.action} message from $id")
+            }
+        } catch (e: Exception) {
+            log.error("Exception during ${id.action} message handling:", e)
         }
     }
 
     private fun handleAttributeDidSetMessage(id: ModelIdentifier, message: Message) {
-        // TODO: Implement.
-        log.info("Received didSet from $id: ${message.body}");
+        try {
+            val data = message.body
+            val messageFormat = serializationFormats.detect(data)
+            if (messageFormat != null) {
+                val attribute = messageFormat.deserializeAttributeSetStatus(data)
+                if (attribute.timestamp != -1.0 && attribute.value != null) {
+                    attributeDidSet(id, attribute)
+                } else {
+                    log.error("The Attribute $id has be ${id.action} with a timestamp of -1 0r value of null")
+                }
+            } else {
+                log.error("Unrecognized message format in ${id.action} message from $id")
+            }
+        } catch (e: Exception) {
+            log.error("Exception during ${id.action} message handling:", e)
+        }
     }
 
-    // Abstract method to handle update of attribute.
-    abstract fun attributeUpdated(attributeId: String, attribute: Attribute)
+    // Abstract method to handle update event of attribute.
+    abstract fun attributeUpdated(id: ModelIdentifier, attribute: Attribute)
 
-    // Abstract method to handle set of attribute.
-    abstract fun attributeSet(attributeId: String, attribute: Attribute)
+    // Abstract method to handle set event of attribute.
+    abstract fun attributeSet(id: ModelIdentifier, attribute: AttributeSetCommand)
+
+    // Abstract method to handle didSet event of attribute.
+    abstract fun attributeDidSet(id: ModelIdentifier, attribute: AttributeSetStatus)
 }

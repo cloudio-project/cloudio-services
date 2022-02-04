@@ -48,6 +48,18 @@ abstract class AbstractJacksonSerializationFormat(private val mapper: ObjectMapp
         throw SerializationException("Error deserializing attribute.")
     }
 
+    override fun deserializeAttributeSetCommand(data: ByteArray) = try {
+        mapper.readerForUpdating(JacksonAttributeSetCommandOrStatus()).readValue<JacksonAttributeSetCommandOrStatus>(data).toAttributeSetCommand()
+    } catch (_: Exception) {
+        throw SerializationException("Error deserializing attribute set command.")
+    }
+
+    override fun deserializeAttributeSetStatus(data: ByteArray)= try {
+        mapper.readerForUpdating(JacksonAttributeSetCommandOrStatus()).readValue<JacksonAttributeSetCommandOrStatus>(data).toAttributeSetStatus()
+    } catch (_: Exception) {
+        throw SerializationException("Error deserializing attribute set command.")
+    }
+
     override fun deserializeTransaction(data: ByteArray) = try {
         mapper.readerForUpdating(JacksonTransaction()).readValue<JacksonTransaction>(data).toTransaction()
     } catch (_: Exception) {
