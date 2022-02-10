@@ -86,7 +86,7 @@ class InfluxLifecycleService(
                 // complete the point depending on attribute type
                 when (type) {
                     AttributeType.Boolean -> point.addField("value", value as Boolean)
-                    AttributeType.Integer -> point.addField("value", value as Int)
+                    AttributeType.Integer -> point.addField("value", value as Long)
                     AttributeType.Number -> {
                         if (value is Int) {
                             value = (value as Int).toFloat()
