@@ -81,7 +81,7 @@ class DelayedService(
                 // complete the point depending on attribute type
                 when (attribute.type) {
                     AttributeType.Boolean -> point.addField("value", attribute.value as Boolean)
-                    AttributeType.Integer -> point.addField("value", attribute.value as Int)
+                    AttributeType.Integer -> point.addField("value", attribute.value as Long)
                     AttributeType.Number -> {
                         if (attribute.value is Int) {
                             attribute.value = (attribute.value as Int).toFloat()
