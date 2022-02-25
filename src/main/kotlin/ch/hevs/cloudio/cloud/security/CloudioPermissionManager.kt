@@ -127,11 +127,12 @@ class CloudioPermissionManager(
         temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
         temp = temp.drop(1)
 
-        //the permission with the longer modelId is the most precise
+        //the higher level permission is selected
+        var p = EndpointModelElementPermission.DENY
         for (i in 1..modelID.count()){
             allPermissionsList.forEach(){
-                if(it.key == temp){
-                    return it.value
+                if(it.key == temp && it.value.fulfills(p)){
+                    p = it.value
                 }
             }
 
@@ -140,7 +141,7 @@ class CloudioPermissionManager(
             //delete the "/"
             temp = temp.dropLast(1)
         }
-        return EndpointModelElementPermission.DENY
+        return p
     }
 
     fun resolvePermissions(userDetails: CloudioUserDetails): Collection<AbstractEndpointPermission> {
