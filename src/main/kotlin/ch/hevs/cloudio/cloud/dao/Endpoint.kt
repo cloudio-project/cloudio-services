@@ -15,6 +15,9 @@ data class Endpoint(
 
         var online: Boolean = false, // TODO: Remove, this will be stored in InfluxDB
 
+        @ManyToMany(fetch = FetchType.LAZY, cascade = [])
+        val groupMemberships: MutableSet<EndpointGroup> = mutableSetOf(),
+
         @Embedded
         val configuration: EndpointConfiguration = EndpointConfiguration(),
 
