@@ -35,7 +35,8 @@ class EndpointManagementController(
         private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
         private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
         private val serializationFormats: Collection<SerializationFormat>,
-        private val rabbitTemplate: RabbitTemplate
+        private val rabbitTemplate: RabbitTemplate,
+        private val endpointGroupRepository: EndpointGroupRepository
 ) {
     @GetMapping("", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
@@ -89,7 +90,8 @@ class EndpointManagementController(
                 metaData = it.metaData,
                 version = it.dataModel.version,
                 messageFormatVersion = it.dataModel.messageFormatVersion,
-                supportedFormats = it.dataModel.supportedFormats
+                supportedFormats = it.dataModel.supportedFormats,
+                groupMemberships = it.groupMemberships.map { it.groupName }.toSet()
         )
     }
 
@@ -244,7 +246,12 @@ class EndpointManagementController(
                 metaData = endpoint.metaData,
                 version = endpoint.dataModel.version,
                 messageFormatVersion = endpoint.dataModel.messageFormatVersion,
-                supportedFormats = endpoint.dataModel.supportedFormats
+                supportedFormats = endpoint.dataModel.supportedFormats,
+                groupMemberships = endpoint.groupMemberships.map {
+                    endpointGroupRepository.findByGroupName(it.groupName).orElseThrow {
+                        CloudioHttpExceptions.NotFound("Group '$it' does not exist.")
+                    }.groupName
+                }.toSet()
         )
     }
 
@@ -268,6 +275,12 @@ class EndpointManagementController(
             banned = body.banned
             metaData.clear()
             metaData.putAll(body.metaData)
+            groupMemberships.clear()
+            body.groupMemberships.forEach {
+                groupMemberships.add(endpointGroupRepository.findByGroupName(it).orElseThrow {
+                    CloudioHttpExceptions.NotFound("Group '$it' does not exist.")
+                })
+            }
             endpointRepository.save(this)
         }
     }

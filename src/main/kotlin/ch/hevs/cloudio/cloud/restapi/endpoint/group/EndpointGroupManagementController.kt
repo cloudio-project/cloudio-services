@@ -1,8 +1,6 @@
-package ch.hevs.cloudio.cloud.restapi.admin.usergroup
+package ch.hevs.cloudio.cloud.restapi.endpoint.group
 
-import ch.hevs.cloudio.cloud.dao.UserGroup
-import ch.hevs.cloudio.cloud.dao.UserGroupRepository
-import ch.hevs.cloudio.cloud.dao.UserRepository
+import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.annotations.Api
@@ -14,72 +12,72 @@ import javax.transaction.Transactional
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["User Group Management"], description = "Allows an admin user to manage user groups.")
-@RequestMapping("/api/v1/admin")
+@Api(tags = ["Endpoint Group Management"], description = "Allows an admin user to manage endpoint groups.")
+@RequestMapping("/api/v1/endpoints")
 @Authority.HttpAdmin
-class UserGroupManagementController(
-        private var userGroupRepository: UserGroupRepository,
-        private var userRepository: UserRepository
+class EndpointGroupManagementController(
+        private var endpointGroupRepository: EndpointGroupRepository,
+        private var endpointRepository: EndpointRepository
 ) {
-    @ApiOperation("List all user group names.")
+    @ApiOperation("List all endpoint group names.")
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
-    fun getAllGroups() = userGroupRepository.findAll().map { it.groupName }
+    fun getAllGroups() = endpointGroupRepository.findAll().map { it.groupName }
 
-    @ApiOperation("Create a new user group.")
+    @ApiOperation("Create a new endpoint group.")
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun createGroup(@RequestBody body: PostUserGroupEntity) {
-        if (userGroupRepository.existsByGroupName(body.name)) {
+    fun createGroup(@RequestBody body: EndpointGroupEntity) {
+        if (endpointGroupRepository.existsByGroupName(body.name)) {
             throw CloudioHttpExceptions.Conflict("Group '${body.name}' exists.")
         }
-        userGroupRepository.save(UserGroup(
+        endpointGroupRepository.save(EndpointGroup(
                 groupName = body.name,
                 metaData = body.metaData.toMutableMap()
         ))
     }
 
-    @ApiOperation("Get user group information.")
+    @ApiOperation("Get endpoint group information.")
     @GetMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.OK)
     @Transactional
-    fun getGroupByGroupName(@PathVariable groupName: String) = userGroupRepository.findByGroupName(groupName).orElseThrow {
+    fun getGroupByGroupName(@PathVariable groupName: String) = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
         CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
     }.run {
-        UserGroupEntity(
+        EndpointGroupEntity(
                 name = groupName,
                 metaData = metaData
         )
     }
 
-    @ApiOperation("Modify user group.")
+    @ApiOperation("Modify endpoint group.")
     @PutMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun updateGroupByGroupName(@PathVariable groupName: String, @RequestBody body: UserGroupEntity) {
+    fun updateGroupByGroupName(@PathVariable groupName: String, @RequestBody body: EndpointGroupEntity) {
         if (groupName != body.name) {
             throw CloudioHttpExceptions.Conflict("Group name in URL and body do not match.")
         }
-        userGroupRepository.findByGroupName(groupName).orElseThrow {
+        endpointGroupRepository.findByGroupName(groupName).orElseThrow {
             CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
         }.run {
             metaData = body.metaData.toMutableMap()
-            userGroupRepository.save(this)
+            endpointGroupRepository.save(this)
         }
     }
 
-    @ApiOperation("Deletes user group.")
+    @ApiOperation("Deletes endpoint group.")
     @DeleteMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun deleteGroupByGroupName(@PathVariable groupName: String) = userGroupRepository.findByGroupName(groupName).orElseThrow {
+    fun deleteGroupByGroupName(@PathVariable groupName: String) = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
         CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
     }.run {
-        userRepository.findByGroupMembershipsContains(this).forEach {
+        endpointRepository.findByGroupMembershipsContains(this).forEach {
             it.groupMemberships.remove(this)
-            userRepository.save(it)
+            endpointRepository.save(it)
         }
-        userGroupRepository.delete(this)
+        endpointGroupRepository.delete(this)
     }
 }

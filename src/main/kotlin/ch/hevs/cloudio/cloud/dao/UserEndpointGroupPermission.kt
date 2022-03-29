@@ -15,7 +15,7 @@ data class UserEndpointGroupPermission(
         val userID: Long = 0,
 
         @Column(name = "endpoint_group_id", nullable = false)
-        val EndpointGroupId: Long = 0,
+        val endpointGroupID: Long = 0,
 
         @Enumerated(EnumType.STRING)
         @Column(length = 32)
