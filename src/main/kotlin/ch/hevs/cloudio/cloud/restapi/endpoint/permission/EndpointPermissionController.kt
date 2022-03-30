@@ -41,7 +41,7 @@ class EndpointPermissionController(
             @RequestParam @ApiParam("Group name to grant the permission to.", required = false) groupName: String?,
             @RequestParam @ApiParam("Permission to grant.") permission: EndpointPermission
     ) = when {
-        permission == EndpointPermission.GRANT -> throw CloudioHttpExceptions.BadRequest("OWM permission can not be granted.")
+        permission == EndpointPermission.OWN -> throw CloudioHttpExceptions.BadRequest("OWN permission can not be granted.")
         userName != null -> userRepository.findByUserName(userName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("User not found.")
         }.id.let {userID ->
