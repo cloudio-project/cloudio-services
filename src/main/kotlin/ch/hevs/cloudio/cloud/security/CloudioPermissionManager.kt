@@ -1,7 +1,6 @@
 package ch.hevs.cloudio.cloud.security
 
-import ch.hevs.cloudio.cloud.dao.UserEndpointPermissionRepository
-import ch.hevs.cloudio.cloud.dao.UserGroupEndpointPermissionRepository
+import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import org.apache.juli.logging.LogFactory
 import org.springframework.security.access.PermissionEvaluator
@@ -13,7 +12,10 @@ import java.util.*
 @Service
 class CloudioPermissionManager(
         private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-        private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
+        private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
+        private val endpointGroupRepository: EndpointGroupRepository,
+        private val userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
+        private val endpointRepository: EndpointRepository
 ) : PermissionEvaluator {
     private val log = LogFactory.getLog(CloudioPermissionManager::class.java)
 
@@ -32,6 +34,12 @@ class CloudioPermissionManager(
                 false
             }
         }
+        /*subject is String && permission is EndpointGroupPermission && authentication.principal is CloudioUserDetails -> try {
+            hasEndpointGroupPermission(authentication.principal as CloudioUserDetails, endpointGroupRepository.findByGroupName(subject).orElseThrow(), permission)
+        }catch (e: Exception){
+            log.error("Invalid endpoint group name: Authentication = $authentication, subject = $subject, permission = $permission")
+            false
+        }*/
         else -> {
             log.error("Unknown permission request: Authentication = $authentication, subject = $subject, permission = $permission")
             false
@@ -54,6 +62,17 @@ class CloudioPermissionManager(
         log.warn("Permission $permission on endpoint $endpointUUID rejected for user ${userDetails.username}")
         false
     }
+
+    /*fun hasEndpointGroupPermission(cloudioUserDetails: CloudioUserDetails, endpointGroup: EndpointGroup, permission: EndpointGroupPermission): Boolean {
+        return if(resolveEndpointGroupPermission(cloudioUserDetails, endpointGroup).fulfills(permission)){
+            log.debug("Permission $permission on endpoint group ${endpointGroup.groupName} granted for user ${cloudioUserDetails.username}")
+            true
+        }
+        else{
+            log.warn("Permission $permission on endpoint group ${endpointGroup.groupName} rejected for user ${cloudioUserDetails.username}")
+            false
+        }
+    }*/
 
     fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission): Boolean {
         // Ensure that the model ID is correct.
@@ -95,16 +114,43 @@ class CloudioPermissionManager(
     fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
         var permission = EndpointPermission.DENY
 
+        //check user on endpoint
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, endpointUUID).ifPresent {
             permission = permission.higher(it.permission)
         }
 
+        //check user group on endpoint
         if (!permission.fulfills(EndpointPermission.GRANT)) {
             userDetails.groupMembershipIDs.forEach { groupID ->
                 userGroupEndpointPermissionRepository.findByUserGroupIDAndEndpointUUID(groupID, endpointUUID).ifPresent {
                     permission = permission.higher(it.permission)
                 }
             }
+        }
+
+        //check user on endpoint group
+        if (!permission.fulfills(EndpointPermission.GRANT)) {
+            userEndpointGroupPermissionRepository.findByUserID(userDetails.id).forEach { userEndpointGroupPermission ->
+                endpointGroupRepository.findById(userEndpointGroupPermission.endpointGroupID).ifPresent { endpointGroup ->
+                    endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach {
+                        if(it.uuid == endpointUUID){
+                            permission = permission.higher(userEndpointGroupPermission.permission)
+                        }
+                    }
+                }
+            }
+        }
+
+        //TODO: check user group on endpoint group
+
+        return permission
+    }
+
+    fun resolveEndpointGroupPermission(userDetails: CloudioUserDetails, endpointGroup: EndpointGroup): EndpointPermission {
+        var permission = EndpointPermission.DENY
+
+        userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(userDetails.id, endpointGroup.id).ifPresent{
+            permission = permission.higher(it.permission)
         }
 
         return permission
@@ -161,6 +207,27 @@ class CloudioPermissionManager(
                 }
             } else {
                 permissions.add(groupPermission)
+            }
+        }
+
+        // Add higher permissions from endpoint groups
+        userEndpointGroupPermissionRepository.findByUserID(userDetails.id).forEach { userEndpointGroupPermission ->
+            endpointGroupRepository.findById(userEndpointGroupPermission.endpointGroupID).ifPresent { endpointGroup ->
+                endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach { endpoint ->
+                    val existingPermission = permissions.find { it.endpointUUID == endpoint.uuid}
+                    if (existingPermission != null) {
+                        existingPermission.permission = existingPermission.permission.higher(userEndpointGroupPermission.permission)
+                        if (existingPermission.permission.fulfills(EndpointPermission.WRITE)) {
+                            existingPermission.modelPermissions.clear()
+                        } else {
+                            userEndpointGroupPermission.modelPermissions.forEach { (key, permission) ->
+                                existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key] ?: EndpointModelElementPermission.DENY).higher(permission)
+                            }
+                        }
+                    } else {
+                        permissions.add(UserEndpointPermission(userDetails.id, endpoint.uuid, userEndpointGroupPermission.permission))
+                    }
+                }
             }
         }
 

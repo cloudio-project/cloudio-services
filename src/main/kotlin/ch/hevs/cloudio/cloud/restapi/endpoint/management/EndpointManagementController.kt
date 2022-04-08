@@ -260,7 +260,7 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
 
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
 
     @ApiOperation("Update endpoint data.")
 
@@ -290,9 +290,9 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
 
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
 
-    @ApiOperation("Update endpoint's user-frienly name.")
+    @ApiOperation("Update endpoint's user-friendly name.")
 
     fun putEndpointFriendlyNameByUUID(
             @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
@@ -311,7 +311,7 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
 
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
 
     @ApiOperation("Update if an endpoint is banned (Can not connect to broker) or not.")
     fun putEndpointBlockedByUUID(
@@ -331,7 +331,7 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
 
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
 
     @ApiOperation("Update endpoint's configuration parameter.")
 
