@@ -20,14 +20,17 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Api(
         tags = ["Endpoint Group Permissions"],
-        description = "Allows users to manage permissions to their owned endpoints groups or endpoints they have the GRANT permission."
+        description = "Allows users to manage permissions to their owned endpoints groups they have the GRANT permission."
 )
 @RequestMapping("/api/v1/endpoints/groups")
 class EndpointGroupPermissionController(
         private val userRepository: UserRepository,
         private val userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
         private val endpointGroupRepository: EndpointGroupRepository,
-        private val userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository
+        private val userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository,
+        private val userGroupRepository: UserGroupRepository,
+        private val userGroupEndpointGroupPermissionRepository: UserGroupEndpointGroupPermissionRepository,
+        private val userGroupEndpointGroupModelElementPermissionRepository: UserGroupEndpointGroupPermissionRepository
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -42,26 +45,30 @@ class EndpointGroupPermissionController(
             @RequestParam @ApiParam("Permission to grant.") permission: EndpointPermission
     )
     {
-         if (userName != null) {
+        if(permission == EndpointPermission.OWN){throw CloudioHttpExceptions.Forbidden("OWN permission can not be granted.")}
+
+        val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+            throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
+        }
+
+        //get the authenticated user permission
+        userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id, endpointGroup.id)
+                .ifPresentOrElse(
+                        {
+                            if(!it.permission.fulfills(EndpointPermission.GRANT)){
+                                throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
+                            }
+                        },
+                        {
+                            throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
+                        }
+                )
+
+        if(userName != null){
             val user = userRepository.findByUserName(userName).orElseThrow {
                 throw CloudioHttpExceptions.NotFound("User not found.")
             }
-            val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
-                throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
-            }
 
-            //get the authenticated user permission
-            userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id, endpointGroup.id)
-                    .ifPresentOrElse(
-                {
-                    if(!it.permission.fulfills(EndpointPermission.GRANT)){
-                        throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
-                    }
-                },
-                {
-                    throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
-                }
-            )
             when (permission) {
                 EndpointPermission.DENY -> userEndpointGroupPermissionRepository.deleteByUserIDAndEndpointGroupID(user.id, endpointGroup.id)
                 else -> {
@@ -72,9 +79,24 @@ class EndpointGroupPermissionController(
                 }
             }
         }
-        else{
-            throw CloudioHttpExceptions.Forbidden("Username cannot be null.")
-         }
+        if(userGroupName != null){
+            val userGroup = userGroupRepository.findByGroupName(userGroupName).orElseThrow {
+                throw CloudioHttpExceptions.NotFound("User Group not found.")
+            }
+
+            when (permission) {
+                EndpointPermission.DENY -> userGroupEndpointGroupPermissionRepository.deleteByUserGroupIDAndEndpointGroupID(userGroup.id, endpointGroup.id)
+                else -> {
+                    val endpointGroupPermission = userGroupEndpointGroupPermissionRepository.findByUserGroupIDAndEndpointGroupID(userGroup.id, endpointGroup.id)
+                            .orElse(UserGroupEndpointGroupPermission(userGroup.id, endpointGroup.id, permission))
+                    endpointGroupPermission.permission = permission
+                    userGroupEndpointGroupPermissionRepository.save(endpointGroupPermission)
+                }
+            }
+        }
+        if(userGroupName == null && userName == null){
+            throw CloudioHttpExceptions.Forbidden("Username and groupName cannot be null.")
+        }
     }
 
     @PutMapping("/{endpointGroupName}/grant/**")
@@ -89,26 +111,27 @@ class EndpointGroupPermissionController(
             @ApiIgnore request: HttpServletRequest
     )
     {
+        val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+            throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
+        }
+
+        //get the authenticated user permission
+        userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id, endpointGroup.id)
+                .ifPresentOrElse(
+                        {
+                            if(!it.permission.fulfills(EndpointPermission.GRANT)){
+                                throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
+                            }
+                        },
+                        {
+                            throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
+                        }
+                )
+
         if (userName != null) {
             val user = userRepository.findByUserName(userName).orElseThrow {
                 throw CloudioHttpExceptions.NotFound("User not found.")
             }
-            val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
-                throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
-            }
-
-            //get the authenticated user permission
-            userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id, endpointGroup.id)
-                    .ifPresentOrElse(
-                            {
-                                if(!it.permission.fulfills(EndpointPermission.GRANT)){
-                                    throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
-                                }
-                            },
-                            {
-                                throw CloudioHttpExceptions.Forbidden("User does not have the GRANT permission on this endpoint group.")
-                            }
-                    )
 
             val modelPath = antMatcher.extractPathWithinPattern("/api/v1/endpoints/groups/$endpointGroupName/grant/**", request.requestURI)
 
@@ -127,8 +150,31 @@ class EndpointGroupPermissionController(
                 }
             }
         }
-        else{
-            throw CloudioHttpExceptions.Forbidden("Username cannot be null.")
+
+        if (userGroupName != null) {
+            val userGroup = userGroupRepository.findByGroupName(userGroupName).orElseThrow {
+                throw CloudioHttpExceptions.NotFound("User group not found.")
+            }
+
+            val modelPath = antMatcher.extractPathWithinPattern("/api/v1/endpoints/groups/$endpointGroupName/grant/**", request.requestURI)
+
+            when (permission) {
+                EndpointModelElementPermission.DENY -> userGroupEndpointGroupModelElementPermissionRepository
+                        .findByUserGroupIDAndEndpointGroupID(userGroup.id, endpointGroup.id).ifPresent {
+                            it.modelPermissions.remove(modelPath)
+                            userGroupEndpointGroupModelElementPermissionRepository.save(it)
+                        }
+                else -> {
+                    userGroupEndpointGroupModelElementPermissionRepository.findByUserGroupIDAndEndpointGroupID(userGroup.id, endpointGroup.id)
+                            .orElse(UserGroupEndpointGroupPermission(userGroup.id, endpointGroup.id, EndpointPermission.ACCESS)).let {
+                                it.modelPermissions[modelPath] = permission
+                                userGroupEndpointGroupModelElementPermissionRepository.save(it)
+                            }
+                }
+            }
+        }
+        if(userGroupName == null && userName == null){
+            throw CloudioHttpExceptions.Forbidden("Username and groupName cannot be null.")
         }
     }
 }
