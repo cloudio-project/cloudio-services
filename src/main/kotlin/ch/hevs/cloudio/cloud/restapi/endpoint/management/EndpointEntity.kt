@@ -30,5 +30,8 @@ data class EndpointEntity(
         val messageFormatVersion: Int?,
 
         @ApiModelProperty("Serialization formats supported by the endpoint.", readOnly = true, example = "[\"CBOR\", \"JSON\"]")
-        val supportedFormats: Set<String>
+        val supportedFormats: Set<String>,
+
+        @ApiModelProperty("List of the endpoint group memberships.")
+        var groupMemberships: Set<String>
 )

@@ -14,7 +14,7 @@ import javax.transaction.Transactional
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Group Management"], description = "Allows an admin user to manage user groups.")
+@Api(tags = ["User Group Management"], description = "Allows an admin user to manage user groups.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserGroupManagementController(
