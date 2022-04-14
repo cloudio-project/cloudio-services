@@ -1,7 +1,7 @@
 package ch.hevs.cloudio.cloud.security
 
 import ch.hevs.cloudio.cloud.dao.*
-import ch.hevs.cloudio.cloud.model.ModelIdentifier
+import ch.hevs.cloudio.cloud.model.*
 import org.apache.juli.logging.LogFactory
 import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.core.Authentication
@@ -61,14 +61,22 @@ class CloudioPermissionManager(
     }
 
     fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission): Boolean {
+        // Get the global permission of the user for the endpoint.
+        val endpointPermission = resolveEndpointPermission(userDetails, modelID.endpoint)
+
+        //Get the model element permissions list user - endpoint
+        val permissionList = getAllEndpointModelElementPermissions(userDetails, modelID.endpoint)
+
+        return hasEndpointModelElementPermission(userDetails, modelID, permission, endpointPermission, permissionList)
+    }
+
+    private fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission
+                                                  , endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Boolean {
         // Ensure that the model ID is correct.
         if (!modelID.valid) {
             log.warn("Permission $permission to \"$modelID \"rejected for user \"${userDetails.username}\": Invalid model identifier.")
             return false
         }
-
-        // Get the global permission of the user for the endpoint.
-        val endpointPermission = resolveEndpointPermission(userDetails, modelID.endpoint)
 
         // If the user has no access to the endpoint, reject any access.
         if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
@@ -94,8 +102,38 @@ class CloudioPermissionManager(
         }
 
         // Check for element specific permission.
-        return resolveEndpointModelElementPermission(userDetails, modelID).fulfills(permission)
+        //add the permissions with the most precise modelPath to the permissionsList
+        var temp = modelID.toString()
+
+        //if a @ is the first letter, delete the first element
+        if(temp.first().equals('@', true)){
+            //drop the @something and the "/"
+            temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
+            temp = temp.drop(1)
+        }
+
+        //drop the uuid and the "/"
+        temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
+        temp = temp.drop(1)
+
+        //the higher level permission is selected
+        var p = EndpointModelElementPermission.DENY
+        for (i in 1..modelID.count()){
+            permissionList.forEach(){
+                if(it.key == temp && it.value.fulfills(p)){
+                    p = it.value
+                }
+            }
+
+            //delete chars util the next "/"
+            temp = temp.dropLastWhile { !it.equals('/', ignoreCase = true) }
+            //delete the "/"
+            temp = temp.dropLast(1)
+        }
+        return p.fulfills(permission)
     }
+
+
 
     fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
         var permission = EndpointPermission.DENY
@@ -143,40 +181,6 @@ class CloudioPermissionManager(
         }
 
         return permission
-    }
-
-    fun resolveEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier): EndpointModelElementPermission {
-        val allPermissionsList = getAllEndpointModelElementPermissions(userDetails, modelID.endpoint)
-
-        //add the permissions with the most precise modelPath to the permissionsList
-        var temp = modelID.toString()
-
-        //if a @ is the first letter, delete the first element
-        if(temp.first().equals('@', true)){
-            //drop the @something and the "/"
-            temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
-            temp = temp.drop(1)
-        }
-
-        //drop the uuid and the "/"
-        temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
-        temp = temp.drop(1)
-
-        //the higher level permission is selected
-        var p = EndpointModelElementPermission.DENY
-        for (i in 1..modelID.count()){
-            allPermissionsList.forEach(){
-                if(it.key == temp && it.value.fulfills(p)){
-                    p = it.value
-                }
-            }
-
-            //delete chars util the next "/"
-            temp = temp.dropLastWhile { !it.equals('/', ignoreCase = true) }
-            //delete the "/"
-            temp = temp.dropLast(1)
-        }
-        return p
     }
 
     fun resolvePermissions(userDetails: CloudioUserDetails): Collection<AbstractEndpointPermission> {
@@ -337,5 +341,203 @@ class CloudioPermissionManager(
         allPermissionsList.sortBy { it.key.filter { it == '/' }.count() }
 
         return allPermissionsList
+    }
+
+    /**
+     * filter the given structure on the given EndpointModelElementPermission
+     */
+    fun filter(data: Any, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
+               permission: EndpointModelElementPermission): Any? {
+
+        val permissionList = getAllEndpointModelElementPermissions(cloudioUserDetails, modelIdentifier.endpoint)
+        val endpointPermission = resolveEndpointPermission(cloudioUserDetails, modelIdentifier.endpoint)
+
+        when (data) {
+            is EndpointDataModel -> {
+                return filterEndpoint(data, cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)
+            }
+            is Node -> {
+                return filterNode(data, cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)
+            }
+            is CloudioObject -> {
+                return filterObject(data, cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)
+            }
+            is Attribute -> {
+                return filterAttribute(data, cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)
+            }
+        }
+
+        return null
+    }
+
+    private fun filterEndpoint(endpoint: EndpointDataModel, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
+                       permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): EndpointDataModel? {
+        val e = EndpointDataModel()
+        e.messageFormatVersion = endpoint.messageFormatVersion
+        e.supportedFormats = endpoint.supportedFormats
+        e.version = endpoint.version
+
+        endpoint.nodes.forEach {
+            val nodeId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
+            val temp = filterNode(it.value, cloudioUserDetails, nodeId, permission, endpointPermission, permissionList)
+            if (temp is Node) {
+                e.nodes[it.key] = temp
+            }
+        }
+
+        if (e.nodes.isNotEmpty()) {
+            return e
+        }
+
+        return null
+    }
+
+
+    private fun filterNode(node: Node, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
+                   permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Node? {
+
+        if (hasEndpointModelElementPermission(cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)) {
+            return node
+        }
+        val n = Node()
+        n.online = n.online
+        n.implements = n.implements
+
+        node.objects.forEach {
+            val objId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
+            val temp = filterObject(it.value,  cloudioUserDetails, objId, permission, endpointPermission, permissionList)
+            if (temp is CloudioObject) {
+                n.objects[it.key] = temp
+            }
+        }
+
+        if (n.objects.isNotEmpty()) {
+            return n
+        }
+
+        return null
+    }
+
+    private fun filterObject(obj: CloudioObject, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
+                     permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): CloudioObject? {
+
+        if (hasEndpointModelElementPermission(cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)) {
+            return obj
+        }
+
+        val o = CloudioObject()
+        o.conforms = obj.conforms
+
+        obj.objects.forEach {
+            val objId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
+            val temp = filterObject(it.value,  cloudioUserDetails, objId, permission, endpointPermission, permissionList)
+            if (temp is CloudioObject) {
+                o.objects[it.key] = temp
+            }
+        }
+
+        obj.attributes.forEach {
+            val attrId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
+            val temp = filterAttribute(it.value,  cloudioUserDetails, attrId, permission, endpointPermission, permissionList)
+            if (temp is Attribute) {
+                o.attributes[it.key] = temp
+            }
+        }
+
+        if (o.objects.isNotEmpty() || o.attributes.isNotEmpty()) {
+            return o
+        }
+
+        return null
+    }
+
+    private fun filterAttribute(attribute: Attribute, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
+                        permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Attribute? {
+
+        if (hasEndpointModelElementPermission(cloudioUserDetails,
+                        modelIdentifier, permission, endpointPermission, permissionList)) {
+            return attribute
+        }
+
+        return null
+    }
+
+    /**
+     * Merge the noDataStructure in data
+     * if an element does not exist in data, add it from noDataStructure
+     */
+    fun merge(data: Any?, noDataStructure: Any?): Any? {
+        if(data == null){
+            return noDataStructure
+        }
+        if(noDataStructure == null){
+            return data
+        }
+
+        when (data) {
+            is EndpointDataModel -> {
+                if (noDataStructure is EndpointDataModel){
+                    return mergeEndpoint(data, noDataStructure)
+                }
+            }
+            is Node -> {
+                if (noDataStructure is Node){
+                    return mergeNode(data, noDataStructure)
+                }
+            }
+            is CloudioObject -> {
+                if (noDataStructure is CloudioObject){
+                    return mergeObject(data, noDataStructure)
+                }
+            }
+            is Attribute -> {
+                return data
+            }
+        }
+
+        return null
+    }
+
+    private fun mergeEndpoint(data: EndpointDataModel, noDataStructure: EndpointDataModel): EndpointDataModel {
+        noDataStructure.nodes.forEach {
+            val n = Node()
+            n.implements = it.value.implements
+            n.online = it.value.online
+
+
+            data.nodes[it.key] = mergeNode(data.nodes.getOrDefault(it.key, n), it.value)
+        }
+        return data
+    }
+
+    private fun mergeNode(data: Node, noDataStructure: Node): Node {
+        noDataStructure.objects.forEach {
+            val o = CloudioObject()
+            o.conforms = it.value.conforms
+
+            data.objects[it.key] = mergeObject(data.objects.getOrDefault(it.key, o), it.value)
+        }
+        return data
+    }
+
+    private fun mergeObject(data: CloudioObject, noDataStructure: CloudioObject): CloudioObject {
+        noDataStructure.objects.forEach {
+            val o = CloudioObject()
+            o.conforms = it.value.conforms
+
+            data.objects[it.key] = mergeObject(data.objects.getOrDefault(it.key, o), it.value)
+        }
+
+        noDataStructure.attributes.forEach {
+            data.attributes.putIfAbsent(it.key, it.value)
+        }
+
+        return data
     }
 }
