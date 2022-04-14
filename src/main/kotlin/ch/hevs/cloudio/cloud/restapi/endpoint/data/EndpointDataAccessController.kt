@@ -78,7 +78,6 @@ class EndpointDataAccessController(
             CloudioHttpExceptions.NotFound("Model element not found.")
         }
 
-
         if (endpointPermission.fulfills(EndpointPermission.READ)) {
             // Fill data from influxDB.
             when (data) {
@@ -100,12 +99,12 @@ class EndpointDataAccessController(
             //Endpoint permission is ACCESS
             else{
                 //Get the part of structure that the user can see
-                noDataStructure = DataModelFilter.filter(data, permissionManager, authentication,
+                noDataStructure = permissionManager.filter(data, authentication.userDetails(),
                         modelIdentifier, EndpointModelElementPermission.VIEW)
             }
 
             //Get the part of structure that must be filled with values
-            data = DataModelFilter.filter(data, permissionManager, authentication,
+            data = permissionManager.filter(data, authentication.userDetails(),
                     modelIdentifier, EndpointModelElementPermission.READ)
 
             // Fill data from influxDB.
@@ -117,7 +116,7 @@ class EndpointDataAccessController(
             }
 
             //merge the filled structure with the empty one
-            data = DataModelFilter.merge(data, noDataStructure)
+            data = permissionManager.merge(data, noDataStructure)
 
             if(data == null){
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
