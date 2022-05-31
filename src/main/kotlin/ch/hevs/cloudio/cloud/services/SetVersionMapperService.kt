@@ -20,10 +20,13 @@ class SetVersionMapperService(
 
     override fun handleMessage(message: Message) {
         try {
-            val modelIdentifier = ModelIdentifier(message.messageProperties.receivedRoutingKey)
+            val topic = message.messageProperties.receivedRoutingKey
+            val modelIdentifier = ModelIdentifier(topic)
             if (modelIdentifier.valid) {
                 endpointRepository.findById(modelIdentifier.endpoint).ifPresent {
-                    if (it.dataModel.messageFormatVersion == 1) {
+                    //if endpoint v1 and message topic is v2
+                    if (it.dataModel.messageFormatVersion == 1 && !(topic.contains("nodes")
+                                    && topic.contains("objects") && topic.contains("attributes"))) {
                         rabbitTemplate.convertAndSend("amq.topic", modelIdentifier.toAMQPTopicForMessageFormat1Endpoints(), message)
                     }
                 }
