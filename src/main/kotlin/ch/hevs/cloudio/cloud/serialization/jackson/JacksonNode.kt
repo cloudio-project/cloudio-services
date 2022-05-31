@@ -9,7 +9,7 @@ data class JacksonNode(
 ) {
     fun toNode() = Node(
             online = false,
-            implements = implements.get(),
-            objects = objects.get().mapValues { it.value.toObject() }.toMutableMap()
+            implements = if (implements.isPresent) implements.get() else emptySet(),
+            objects = if (objects.isPresent) objects.get().mapValues { it.value.toObject() }.toMutableMap() else mutableMapOf()
     )
 }

@@ -11,7 +11,7 @@ data class JacksonObject(
     fun toObject(): CloudioObject {
         return CloudioObject(
                 conforms = conforms,
-                objects = objects.get().mapValues { it.value.toObject() }.toMutableMap(),
+                objects = if (objects.isPresent) objects.get().mapValues { it.value.toObject() }.toMutableMap() else mutableMapOf(),
                 attributes = attributes.get().mapValues { it.value.toAttribute() }.toMutableMap()
         )
     }
