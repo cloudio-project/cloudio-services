@@ -42,7 +42,7 @@ class ModelIdentifier(uri: String) : Serializable {
         val nodesIndex = splitURI.indexOf("nodes")
         if (nodesIndex in 1..2) {
             splitURI = splitURI.filterIndexed { i, _ ->
-                i < nodesIndex || (i - nodesIndex).rem(2) != 0
+                i < nodesIndex || (i - nodesIndex).rem(2) != 0 || i == splitURI.lastIndex
             }.toMutableList()
         }
 
