@@ -125,7 +125,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                     }
                     else -> try {
                         (userDetailsService.loadUserByUsername(id) as CloudioUserDetails).let { userDetails ->
-                            if (modelIdentifier.count() == 0 || modelIdentifier.wildcard) {
+                            if (modelIdentifier.count() == 1 && modelIdentifier[0] == "#") {
                                 if (permissionManager.hasEndpointPermission(userDetails, modelIdentifier.endpoint, permission.toEndpointPermission())) {
                                     "allow"
                                 } else {
