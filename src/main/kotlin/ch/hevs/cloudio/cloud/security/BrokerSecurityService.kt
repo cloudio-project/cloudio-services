@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.transaction.Transactional
 
 @Service
 @Profile("authentication", "default")
@@ -44,6 +45,8 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 )
         )
     ])
+
+    @Transactional
     fun authenticate(message: Message): Message {
         val action = message.messageProperties.headers["action"]?.toString()
         val id = message.messageProperties.headers["username"].toString()
@@ -122,7 +125,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                     }
                     else -> try {
                         (userDetailsService.loadUserByUsername(id) as CloudioUserDetails).let { userDetails ->
-                            if (modelIdentifier.count() == 0 || modelIdentifier.wildcard) {
+                            if (modelIdentifier.count() == 1 && modelIdentifier[0] == "#") {
                                 if (permissionManager.hasEndpointPermission(userDetails, modelIdentifier.endpoint, permission.toEndpointPermission())) {
                                     "allow"
                                 } else {
