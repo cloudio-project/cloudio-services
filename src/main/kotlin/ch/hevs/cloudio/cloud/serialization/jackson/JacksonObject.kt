@@ -12,7 +12,7 @@ data class JacksonObject(
         return CloudioObject(
                 conforms = conforms,
                 objects = if (objects.isPresent) objects.get().mapValues { it.value.toObject() }.toMutableMap() else mutableMapOf(),
-                attributes = attributes.get().mapValues { it.value.toAttribute() }.toMutableMap()
+                attributes = if (attributes.isPresent) attributes.get().mapValues { it.value.toAttribute() }.toMutableMap() else mutableMapOf()
         )
     }
 }
