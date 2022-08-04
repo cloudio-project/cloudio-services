@@ -13,13 +13,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 class WebSocketConfig(private val webSocketSecurityService: WebSocketSecurityService) : WebSocketMessageBrokerConfigurer {
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
-        config.enableSimpleBroker("/topic")
+        config.enableSimpleBroker("/attribute", "/log")
         config.setApplicationDestinationPrefixes("/app")
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/attribute-events")
-        registry.addEndpoint("/attribute-events").withSockJS()
+        registry.addEndpoint("/events")
+        registry.addEndpoint("/events").withSockJS()
     }
 
     override fun configureClientInboundChannel(registration: ChannelRegistration) {

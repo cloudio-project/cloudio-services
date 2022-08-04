@@ -22,7 +22,7 @@ class WebSocketAttributeService(private val template: SimpMessagingTemplate) : A
 
     fun sendToClients(attributeId: String, attribute: Attribute) {
         val topic = attributeId.replace(".", "/")
-        template.convertAndSend("/topic/".plus(topic), attribute)
+        template.convertAndSend("/attribute/".plus(topic), attribute)
     }
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {

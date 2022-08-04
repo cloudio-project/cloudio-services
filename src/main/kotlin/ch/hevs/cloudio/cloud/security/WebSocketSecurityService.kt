@@ -21,12 +21,22 @@ class WebSocketSecurityService(private val permissionManager: CloudioPermissionM
                 if(userDetails is CloudioUserDetails){
                     var topic = message.headers["simpDestination"]
                     if(topic is String){
-                        topic = topic.removePrefix("/topic/")
-                        val modelIdentifier = ModelIdentifier(topic)
+                        if (topic.startsWith("/attribute/")) {
+                            topic = topic.removePrefix("/attribute/")
+                            val modelIdentifier = ModelIdentifier(topic)
 
-                        // Resolve the access level the user has to the element.
-                        if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ)) {
-                            return super.preSend(message, channel)
+                            // Resolve the access level the user has to the element.
+                            if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ)) {
+                                return super.preSend(message, channel)
+                            }
+                        }
+                        else if(topic.startsWith("/log/")){
+                            val uuid = ModelIdentifier(topic.removePrefix("/log/")).endpoint
+
+                            // Resolve the access leve the user has to the endpoint
+                            if(permissionManager.hasEndpointPermission(userDetails, uuid, EndpointPermission.READ)){
+                                return super.preSend(message, channel)
+                            }
                         }
                     }
                 }
