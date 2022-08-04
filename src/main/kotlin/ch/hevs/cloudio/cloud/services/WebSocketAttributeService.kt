@@ -13,12 +13,12 @@ import org.springframework.messaging.simp.stomp.StompCommand
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor
 
 import org.springframework.messaging.MessageChannel
-
-
+import org.springframework.messaging.handler.annotation.DestinationVariable
+import org.springframework.messaging.handler.annotation.Payload
 
 
 @Controller
-class WebSocketAttributeService(private val template: SimpMessagingTemplate) : AbstractAttributeService(), ChannelInterceptor {
+class WebSocketAttributeService(private val template: SimpMessagingTemplate) : AbstractAttributeService(){
 
     fun sendToClients(attributeId: String, attribute: Attribute) {
         val topic = attributeId.replace(".", "/")
@@ -31,20 +31,5 @@ class WebSocketAttributeService(private val template: SimpMessagingTemplate) : A
 
     override fun attributeSet(attributeId: String, attribute: Attribute) {
         sendToClients(attributeId, attribute)
-    }
-
-    @SubscribeMapping("/**")
-    fun subscribe(topic: String){
-        print(topic)
-    }
-
-
-    override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
-        val accessor = StompHeaderAccessor.wrap(message)
-        val command: StompCommand? = accessor.command
-        if (StompCommand.SUBSCRIBE == command){
-            print("alo")
-        }
-        return message
     }
 }
