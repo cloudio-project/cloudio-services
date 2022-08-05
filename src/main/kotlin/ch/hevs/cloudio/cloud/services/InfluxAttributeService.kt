@@ -70,4 +70,8 @@ class InfluxAttributeService(
     override fun attributeSet(attributeId: String, attribute: Attribute) {
         attributeUpdated(attributeId, attribute)
     }
+
+    override fun attributeDidSet(attributeId: String, attribute: Attribute) {
+
+    }
 }

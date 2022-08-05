@@ -95,4 +95,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
 
     // Abstract method to handle set of attribute.
     abstract fun attributeSet(attributeId: String, attribute: Attribute)
+
+    // Abstract method to handel didSet of attribute.
+    abstract fun attributeDidSet(attributeId: String, attribute: Attribute)
 }

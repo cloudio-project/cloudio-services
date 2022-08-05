@@ -13,7 +13,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 class WebSocketConfig(private val webSocketSecurityService: WebSocketSecurityService) : WebSocketMessageBrokerConfigurer {
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
-        config.enableSimpleBroker("/attribute", "/log")
+        config.enableSimpleBroker("/update", "/set", "/didSet", "/log")
         config.setApplicationDestinationPrefixes("/app")
     }
 
