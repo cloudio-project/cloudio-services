@@ -194,24 +194,4 @@ class EndpointDataAccessController(
             else -> throw CloudioHttpExceptions.BadRequest("Only Attributes can be modified.")
         }
     }
-
-    @PostMapping("/subscribe")
-    @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Subscribe to changes of multiple attributes.")
-    fun postAttributeChangeSubscription(
-        @ApiIgnore authentication: Authentication,
-        @RequestBody @ApiParam("List of attributes to subscribe to.", required = true) ids: Array<String>,
-        @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
-    ) = AttributeUpdateSubscription(ids.map {
-        val id = ModelIdentifier(it)
-        if (!id.valid || id.action != ActionIdentifier.NONE) {
-            throw CloudioHttpExceptions.BadRequest("Invalid attribute id")
-        }
-
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), id, EndpointModelElementPermission.READ)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
-        }
-
-        id
-    }, timeout, serializationFormats, amqpAdmin, connectionFactory)
 }

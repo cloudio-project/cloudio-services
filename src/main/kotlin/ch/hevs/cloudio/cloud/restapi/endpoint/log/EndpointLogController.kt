@@ -82,21 +82,6 @@ class EndpointLogController(
         "${it.time} [${it.level}] ${it.message}"
     }
 
-    @GetMapping("/{uuid}/out")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Subscribe to log output of an endpoint.")
-    fun getEndpointLogOutputByUUID(
-        @PathVariable @ApiParam("UUID of the endpoint of which the log output should be subscribed to.", required = true) uuid: UUID,
-        @RequestParam(required = false, defaultValue = "300000") @ApiParam("Optional timeout in  milliseconds.", required = false) timeout: Long
-    ) = LogSubscription(uuid.let {
-        val id = ModelIdentifier(it.toString())
-        if (!id.valid || id.action != ActionIdentifier.NONE || id.count() != 0) {
-            throw CloudioHttpExceptions.BadRequest("Invalid endpoint UUID")
-        }
-        id
-    }, timeout, serializationFormats, amqpAdmin, connectionFactory)
-
     private fun String.toDate() = try {
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").apply { timeZone = TimeZone.getTimeZone("UTC") }.parse(this)
     } catch (exception: Exception) {
