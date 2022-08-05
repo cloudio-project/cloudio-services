@@ -18,8 +18,8 @@ class WebSocketConfig(private val webSocketSecurityService: WebSocketSecuritySer
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/events")
-        registry.addEndpoint("/events").withSockJS()
+        registry.addEndpoint("/api/v1/events")
+        registry.addEndpoint("/api/v1/events").withSockJS()
     }
 
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
