@@ -27,9 +27,9 @@ abstract class AbstractAttributeService : AbstractTopicService(
         val id = ModelIdentifier(message.messageProperties.receivedRoutingKey)
         if (id.valid) {
             when (id.action) {
-                ActionIdentifier.ATTRIBUTE_UPDATE -> handleAttributeUpdateOrSetMessage(id, message)
-                ActionIdentifier.ATTRIBUTE_SET -> handleAttributeUpdateOrSetMessage(id, message)
-                ActionIdentifier.ATTRIBUTE_DID_SET -> handleAttributeDidSetMessage(id, message)
+                ActionIdentifier.ATTRIBUTE_UPDATE -> handleAttributeMessage(id, message)
+                ActionIdentifier.ATTRIBUTE_SET -> handleAttributeMessage(id, message)
+                ActionIdentifier.ATTRIBUTE_DID_SET -> handleAttributeMessage(id, message)
                 else -> log.error("Unexpected action: ${id.action}")
             }
         } else {
@@ -37,7 +37,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
         }
     }
 
-    private fun handleAttributeUpdateOrSetMessage(id: ModelIdentifier, message: Message) {
+    private fun handleAttributeMessage(id: ModelIdentifier, message: Message) {
         val action = id.action
             message.messageProperties.receivedRoutingKey.split(".")[0]
         try {
@@ -50,7 +50,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
                 if (attribute.timestamp != null && attribute.timestamp != -1.0 && attribute.value != null) {
 
                     if (action == ActionIdentifier.ATTRIBUTE_UPDATE && (attribute.constraint == AttributeConstraint.Measure || attribute.constraint == AttributeConstraint.Status) ||
-                        (action == ActionIdentifier.ATTRIBUTE_SET && (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint))
+                        ((action == ActionIdentifier.ATTRIBUTE_SET || action == ActionIdentifier.ATTRIBUTE_DID_SET) && (attribute.constraint == AttributeConstraint.Parameter || attribute.constraint == AttributeConstraint.SetPoint))
                     ) {
 
                         var attributeId = ""
@@ -70,6 +70,7 @@ abstract class AbstractAttributeService : AbstractTopicService(
                         when (action) {
                             ActionIdentifier.ATTRIBUTE_UPDATE -> attributeUpdated(attributeId, attribute)
                             ActionIdentifier.ATTRIBUTE_SET -> attributeSet(attributeId, attribute)
+                            ActionIdentifier.ATTRIBUTE_DID_SET -> attributeDidSet(attributeId, attribute)
                             else -> log.error("Unexpected action: ${id.action}")
                         }
                     } else {
@@ -86,16 +87,12 @@ abstract class AbstractAttributeService : AbstractTopicService(
         }
     }
 
-    private fun handleAttributeDidSetMessage(id: ModelIdentifier, message: Message) {
-        // TODO: Implement.
-    }
-
     // Abstract method to handle update of attribute.
     abstract fun attributeUpdated(attributeId: String, attribute: Attribute)
 
     // Abstract method to handle set of attribute.
     abstract fun attributeSet(attributeId: String, attribute: Attribute)
 
-    // Abstract method to handel didSet of attribute.
+    // Abstract method to handle didSet of attribute.
     abstract fun attributeDidSet(attributeId: String, attribute: Attribute)
 }
