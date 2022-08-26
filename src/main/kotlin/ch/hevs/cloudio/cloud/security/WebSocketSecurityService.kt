@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.security
 
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
+import org.apache.commons.logging.LogFactory
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.simp.stomp.StompCommand
@@ -11,6 +12,7 @@ import javax.transaction.Transactional
 
 @Service
 class WebSocketSecurityService(private val permissionManager: CloudioPermissionManager): ChannelInterceptor{
+    private val log = LogFactory.getLog(WebSocketSecurityService::class.java)
 
     @Transactional
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
@@ -29,6 +31,10 @@ class WebSocketSecurityService(private val permissionManager: CloudioPermissionM
                             if(permissionManager.hasEndpointPermission(userDetails, uuid, EndpointPermission.READ)){
                                 return super.preSend(message, channel)
                             }
+                            else{
+                                log.info("Subscribe to $uuid logs denied for user ${userDetails.username}")
+                                return null
+                            }
                         }
                         // if action is update set or didSet
                         else{
@@ -41,7 +47,12 @@ class WebSocketSecurityService(private val permissionManager: CloudioPermissionM
                             if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, EndpointModelElementPermission.READ)) {
                                 return super.preSend(message, channel)
                             }
+                            else{
+                                log.info("Subscribe to $topic denied for user ${userDetails.username}")
+                                return null
+                            }
                         }
+                        log.info("Wrong STOMP subscribe message format")
                     }
                 }
             }
