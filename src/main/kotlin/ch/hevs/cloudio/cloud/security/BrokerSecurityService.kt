@@ -47,7 +47,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
     ])
 
     @Transactional
-    fun authenticate(message: Message): Message {
+    fun authenticate(message: Message): Message? {
         val action = message.messageProperties.headers["action"]?.toString()
         val id = message.messageProperties.headers["username"].toString()
 
@@ -73,7 +73,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
             }
             "check_resource" -> {
                 val resource = message.messageProperties.headers["resource"]?.toString()
-                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).uppercase())
                 val name = message.messageProperties.headers["name"]?.toString()
                 when (resource) {
                     "queue" -> if (permission.value <= BrokerPermission.CONFIGURE.value) {
@@ -95,7 +95,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 }
             }
             "check_topic" -> {
-                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).toUpperCase())
+                val permission = BrokerPermission.valueOf((message.messageProperties.headers["permission"] as String).uppercase())
                 val modelIdentifier = ModelIdentifier(message.messageProperties.headers["routing_key"] as String)
                 when {
                     !modelIdentifier.valid -> {
@@ -148,11 +148,12 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 }
             }
             else -> {
-                throw RuntimeException("Invalid authentication action \"$action\"")
+                log.info("Access refused - Invalid authentication action \"$action\".")
+                null
             }
         }
 
-        return Message(body.toByteArray(), MessageProperties())
+        return body?.let { Message(it.toByteArray(), MessageProperties()) }
     }
 
     private fun authenticateUser(userName: String, password: String) = try {
