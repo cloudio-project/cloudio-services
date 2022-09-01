@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.serialization.wot
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
+import java.util.*
 
 
 object WotSerializationFormat {
@@ -159,7 +160,7 @@ object WotSerializationFormat {
                                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                                             "timestamp" to DataSchema("number", null),
-                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().replaceFirstChar { it.lowercase(Locale.getDefault()) }, null)
                                     ),
                                     required = setOf("constraint", "type", "timestamp", "value"),
                                     enum = null

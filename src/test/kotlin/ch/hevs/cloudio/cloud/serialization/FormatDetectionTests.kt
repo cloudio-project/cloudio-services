@@ -10,7 +10,7 @@ class FormatDetectionTests {
         (0..255).forEach {
             val format = formats.detect(byteArrayOf(it.toByte()))
             when {
-                it == '{'.toInt() -> assert(format?.identifier() == "JSON")
+                it == '{'.code -> assert(format?.identifier() == "JSON")
                 it and 0b11100000 == 0b10100000 -> assert(format?.identifier() == "CBOR")
                 else -> assert(format == null)
             }

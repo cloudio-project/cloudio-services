@@ -174,7 +174,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                 else -> userDetails.authorities
                         .map(GrantedAuthority::getAuthority)
                         .filter { it.startsWith("BROKER_MANAGEMENT_") }
-                        .joinToString(separator = ",") { it.substring(18).toLowerCase() }
+                        .joinToString(separator = ",") { it.substring(18).lowercase() }
             }
         }
     } catch (exception: UsernameNotFoundException) {
