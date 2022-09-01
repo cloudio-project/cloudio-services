@@ -59,14 +59,14 @@ class CloudioApplication {
 
     @Bean
     fun jackson2ObjectMapperBuilderCustomizer() = Jackson2ObjectMapperBuilderCustomizer {
-        it.modulesToInstall(KotlinModule())
+        it.modulesToInstall(KotlinModule.Builder().build())
     }
 
     @Bean
     fun messageConverter() = object : SmartMessageConverter {
         private val simple = SimpleMessageConverter()
         private val json = Jackson2JsonMessageConverter().apply {
-            jacksonObjectMapper().registerModule(KotlinModule())
+            jacksonObjectMapper().registerModule(KotlinModule.Builder().build())
         }
 
         override fun toMessage(obj: Any, messageProperties: MessageProperties) = when (obj) {
