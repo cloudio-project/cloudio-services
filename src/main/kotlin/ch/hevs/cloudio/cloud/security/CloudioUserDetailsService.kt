@@ -20,6 +20,7 @@ class CloudioUserDetailsService(
 ) : UserDetailsService {
     private val log = LogFactory.getLog(CloudioUserDetailsService::class.java)
 
+    @Transactional
     override fun loadUserByUsername(userName: String): UserDetails = userRepository.findByUserName(userName).orElseThrow {
         UsernameNotFoundException("User \"$userName\"not found.")
     }.let { user ->
