@@ -2,21 +2,20 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.management
 
 import ch.hevs.cloudio.cloud.model.LogLevel
 import com.fasterxml.jackson.annotation.JsonInclude
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import io.swagger.v3.oas.annotations.media.Schema
 
-@ApiModel(description = "Endpoint configuration.")
+@Schema(description = "Endpoint configuration.")
 data class EndpointConfigurationEntity(
-        @ApiModelProperty("Configuration properties.")
+        @Schema(description = "Configuration properties.")
         val properties: MutableMap<String, String>,
 
-        @ApiModelProperty("TLS client certificate to use for endpoint authentication.", readOnly = true)
+        @Schema(description = "TLS client certificate to use for endpoint authentication.", readOnly = true)
         var clientCertificate: String,
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        @ApiModelProperty("TLS client private key used to authenticate the endpoint.", readOnly = true, required = false)
+        @Schema(description = "TLS client private key used to authenticate the endpoint.", readOnly = true, required = false)
         var privateKey: String,
 
-        @ApiModelProperty("Log level threshold for endpoint's log output send to the cloud.")
+        @Schema(description = "Log level threshold for endpoint's log output send to the cloud.")
         var logLevel: LogLevel
 )

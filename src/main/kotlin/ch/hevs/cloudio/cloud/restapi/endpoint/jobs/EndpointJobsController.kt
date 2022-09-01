@@ -8,7 +8,7 @@ import ch.hevs.cloudio.cloud.serialization.detect
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.DeliverCallback
-import io.swagger.annotations.Api
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.juli.logging.LogFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -24,8 +24,7 @@ import java.util.*
 
 @RestController
 @Profile("rest-api")
-@Api(
-    tags = ["Endpoint remote job execution"],
+@Tag(name = "Endpoint remote job execution",
     description = "Run job remotely on endpoints."
 )
 @RequestMapping("/api/v1/endpoints")

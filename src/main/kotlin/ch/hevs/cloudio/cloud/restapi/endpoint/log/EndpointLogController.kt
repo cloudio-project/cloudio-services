@@ -1,14 +1,12 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.log
 
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
-import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.LogLevel
-import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import org.springframework.amqp.core.AmqpAdmin
@@ -22,10 +20,7 @@ import java.util.*
 
 @RestController
 @Profile("rest-api")
-@Api(
-    tags = ["Endpoint Log Access"],
-    description = "Access endpoint logs."
-)
+@Tag(name = "Endpoint Log Access", description = "Access endpoint logs.")
 @RequestMapping("/api/v1/endpoints")
 class EndpointLogController(
     private val influx: InfluxDB,
@@ -37,13 +32,13 @@ class EndpointLogController(
     @GetMapping("/{uuid}/log", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Retrieve log output of a given endpoint in JSON format.")
+    @Operation(summary = "Retrieve log output of a given endpoint in JSON format.")
     fun getEndpointLogsByUUID(
-        @PathVariable @ApiParam("UUID of the endpoint of which the log output should be retrieved.", required = true) uuid: UUID,
-        @RequestParam @ApiParam("Log level threshold, defaults to WARN.", defaultValue = "WARN") threshold: LogLevel?,
-        @RequestParam @ApiParam("Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
-        @RequestParam @ApiParam("Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
-        @RequestParam @ApiParam("Maximal number of log entries to return, defaults to 1000.", required = false, defaultValue = "1000") max: Int?
+        @PathVariable @Parameter(description = "UUID of the endpoint of which the log output should be retrieved.", required = true) uuid: UUID,
+        @RequestParam @Parameter(description = "Log level threshold, defaults to WARN.") threshold: LogLevel?, // TODO: Doc default value of "WARN"
+        @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
+        @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
+        @RequestParam @Parameter(description = "Maximal number of log entries to return, defaults to 1000.", required = false) max: Int? // TODO: Doc default value of 1000
     ): List<LogMessageEntity> {
         val result = influx.query(Query(
             "SELECT time, level, message, logSource, loggerName FROM \"$uuid.logs\" " +
@@ -71,13 +66,13 @@ class EndpointLogController(
 
     @GetMapping("/{uuid}.log", produces = ["text/plain"])
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Retrieve log output of a given endpoint as text file.")
+    @Operation(summary = "Retrieve log output of a given endpoint as text file.")
     fun getEndpointLogFileByUUID(
-        @PathVariable @ApiParam("UUID of the endpoint of which the log output should be retrieved.", required = true) uuid: UUID,
-        @RequestParam @ApiParam("Log level threshold, defaults to WARN.", defaultValue = "WARN") threshold: LogLevel?,
-        @RequestParam @ApiParam("Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
-        @RequestParam @ApiParam("Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
-        @RequestParam @ApiParam("Maximal number of log entries to return, defaults to 1000.", required = false, defaultValue = "1000") max: Int?
+        @PathVariable @Parameter(description = "UUID of the endpoint of which the log output should be retrieved.", required = true) uuid: UUID,
+        @RequestParam @Parameter(description = "Log level threshold, defaults to WARN.") threshold: LogLevel?, // TODO: Doc default value of "WARN"
+        @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
+        @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
+        @RequestParam @Parameter(description = "Maximal number of log entries to return, defaults to 1000.", required = false) max: Int? // TODO: Doc default value of 1000
     ) = getEndpointLogsByUUID(uuid, threshold, from, to, max).joinToString("\n") {
         "${it.time} [${it.level}] ${it.message}"
     }

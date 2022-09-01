@@ -12,9 +12,9 @@ import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.springframework.amqp.core.AmqpAdmin
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
@@ -24,12 +24,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
+@Tag(name = "Endpoint Model Access", description = "Allows an user to access data models of endpoints.")
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(
     private val endpointRepository: EndpointRepository,
@@ -43,12 +42,12 @@ class EndpointDataAccessController(
 ) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to endpoint's data model.")
+    @Operation(summary = "Read access to endpoint's data model.")
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
-        @ApiIgnore authentication: Authentication,
-        @ApiIgnore request: HttpServletRequest
+        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 
         // Extract model identifier and check it for validity.
@@ -129,13 +128,13 @@ class EndpointDataAccessController(
         return data
     }
 
-    @ApiOperation("Write access to all endpoint's data model.")
+    @Operation(summary = "Write access to all endpoint's data model.")
     @PutMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun putAttribute(
-        @RequestParam @ApiParam("Value to set.") value: String,
-        @ApiIgnore authentication: Authentication,
-        @ApiIgnore request: HttpServletRequest
+        @RequestParam @Parameter(description = "Value to set.") value: String,
+        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) request: HttpServletRequest
     ) {
 
         // Extract model identifier and check it for validity.

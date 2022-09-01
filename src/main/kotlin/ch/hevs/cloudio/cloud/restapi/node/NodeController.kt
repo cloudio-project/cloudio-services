@@ -1,8 +1,9 @@
 package ch.hevs.cloudio.cloud.restapi.node
 
 import ch.hevs.cloudio.cloud.security.Authority
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -12,15 +13,11 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import springfox.documentation.annotations.ApiIgnore
 import java.lang.management.ManagementFactory
 import java.net.InetAddress
 
 @Profile("rest-api")
-@Api(
-    tags = ["Node info"],
-    description = "Information about the cloud.iO service node."
-)
+@Tag(name = "Node info", description = "Information about the cloud.iO service node.")
 @RestController
 @RequestMapping("api/v1/node")
 class NodeController(
@@ -28,8 +25,8 @@ class NodeController(
 ) {
     @GetMapping("/info")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Returns node info.")
-    fun getNodeInfo(@ApiIgnore authentication: Authentication?) = mutableMapOf<String,Any>(
+    @Operation(summary = "Returns node info.")
+    fun getNodeInfo(@Parameter(hidden = true)  authentication: Authentication?) = mutableMapOf<String,Any>(
         "version" to buildProperties.version,
         "commit" to buildProperties["shortHash"],
         "code" to "https://github.com/cloudio-project/cloudio-services/commits/${buildProperties["hash"]}",

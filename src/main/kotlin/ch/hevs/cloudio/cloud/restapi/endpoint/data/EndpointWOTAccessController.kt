@@ -11,20 +11,23 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
-import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint WOT Access"], description = "Allows to access data models of endpoints in a WOT compatible manner.")
+@Tag(name = "Endpoint WOT Access", description = "Allows to access data models of endpoints in a WOT compatible manner.")
 @RequestMapping("/api/v1/wot")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
@@ -34,10 +37,10 @@ class EndpointWOTAccessController(private val endpointRepository: EndpointReposi
 
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Read access to endpoint's WOT data model.")
+    @Operation(summary = "Read access to endpoint's WOT data model.")
     fun getModelElement(
-            @ApiIgnore authentication: Authentication,
-            @ApiIgnore request: HttpServletRequest
+        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 
         // Extract model identifier and check it for validity.

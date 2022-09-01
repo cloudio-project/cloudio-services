@@ -5,8 +5,8 @@ import ch.hevs.cloudio.cloud.dao.UserGroupRepository
 import ch.hevs.cloudio.cloud.dao.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -14,19 +14,19 @@ import javax.transaction.Transactional
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["User Group Management"], description = "Allows an admin user to manage user groups.")
+@Tag(name = "User Group Management", description = "Allows an admin user to manage user groups.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserGroupManagementController(
         private var userGroupRepository: UserGroupRepository,
         private var userRepository: UserRepository
 ) {
-    @ApiOperation("List all user group names.")
+    @Operation(summary = "List all user group names.")
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
     fun getAllGroups() = userGroupRepository.findAll().map { it.groupName }
 
-    @ApiOperation("Create a new user group.")
+    @Operation(summary = "Create a new user group.")
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
@@ -40,7 +40,7 @@ class UserGroupManagementController(
         ))
     }
 
-    @ApiOperation("Get user group information.")
+    @Operation(summary = "Get user group information.")
     @GetMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.OK)
     @Transactional
@@ -53,7 +53,7 @@ class UserGroupManagementController(
         )
     }
 
-    @ApiOperation("Modify user group.")
+    @Operation(summary = "Modify user group.")
     @PutMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
@@ -69,7 +69,7 @@ class UserGroupManagementController(
         }
     }
 
-    @ApiOperation("Deletes user group.")
+    @Operation(summary = "Deletes user group.")
     @DeleteMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional

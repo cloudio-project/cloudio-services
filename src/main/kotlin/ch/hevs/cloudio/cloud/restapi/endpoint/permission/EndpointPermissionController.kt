@@ -4,24 +4,20 @@ import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(
-        tags = ["Endpoint Permissions"],
-        description = "Allows users to manage permissions to their owned endpoints or endpoints they have the GRANT permission."
-)
+@Tag(name = "Endpoint Permissions", description = "Allows users to manage permissions to their owned endpoints or endpoints they have the GRANT permission.")
 @RequestMapping("/api/v1/endpoints")
 class EndpointPermissionController(
         private val userRepository: UserRepository,
@@ -34,12 +30,12 @@ class EndpointPermissionController(
     @PutMapping("/{uuid}/grant")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
-    @ApiOperation("Grant permission to whole endpoint to another user.")
+    @Operation(summary = "Grant permission to whole endpoint to another user.")
     fun grantPermissionByUUID(
-            @PathVariable @ApiParam("UUID of endpoint.", required = true) uuid: UUID,
-            @RequestParam @ApiParam("User name to grant the permission to.", required = false) userName: String?,
-            @RequestParam @ApiParam("Group name to grant the permission to.", required = false) groupName: String?,
-            @RequestParam @ApiParam("Permission to grant.") permission: EndpointPermission
+        @PathVariable @Parameter(description = "UUID of endpoint.", required = true) uuid: UUID,
+        @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
+        @RequestParam @Parameter(description = "Group name to grant the permission to.", required = false) groupName: String?,
+        @RequestParam @Parameter(description = "Permission to grant.") permission: EndpointPermission
     ) = when {
         permission == EndpointPermission.OWN -> throw CloudioHttpExceptions.BadRequest("OWN permission can not be granted.")
         userName != null -> userRepository.findByUserName(userName).orElseThrow {
@@ -84,13 +80,13 @@ class EndpointPermissionController(
     @PutMapping("/{uuid}/grant/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
-    @ApiOperation("Grant permission to element of endpoint's data model to another user.")
+    @Operation(summary = "Grant permission to element of endpoint's data model to another user.")
     fun grantModelPermissionByUUID(
-            @PathVariable @ApiParam("UUID of endpoint.", required = true) uuid: UUID,
-            @RequestParam @ApiParam("User name to grant the permission to.", required = false) userName: String?,
-            @RequestParam @ApiParam("Group name to grant the permission to.", required = false) groupName: String?,
-            @RequestParam @ApiParam("Permission to grant.") permission: EndpointModelElementPermission,
-            @ApiIgnore request: HttpServletRequest
+            @PathVariable @Parameter(description = "UUID of endpoint.", required = true) uuid: UUID,
+            @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
+            @RequestParam @Parameter(description = "Group name to grant the permission to.", required = false) groupName: String?,
+            @RequestParam @Parameter(description = "Permission to grant.") permission: EndpointModelElementPermission,
+            @Parameter(hidden = true) request: HttpServletRequest
     ) = when {
         userName != null -> userRepository.findByUserName(userName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("User not found.")

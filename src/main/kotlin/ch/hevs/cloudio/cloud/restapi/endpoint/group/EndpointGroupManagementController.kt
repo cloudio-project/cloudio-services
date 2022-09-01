@@ -3,20 +3,19 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.group
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.EndpointPermission
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import javax.transaction.Transactional
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Group Management"], description = "Allows a user to manage endpoint groups.")
+@Tag(name = "Endpoint Group Management", description = "Allows a user to manage endpoint groups.")
 @RequestMapping("/api/v1/endpoints")
 class EndpointGroupManagementController(
         private var endpointGroupRepository: EndpointGroupRepository,
@@ -24,16 +23,16 @@ class EndpointGroupManagementController(
         private var userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
         private var userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository
 ) {
-    @ApiOperation("List all endpoint group names.")
+    @Operation(summary = "List all endpoint group names.")
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
     fun getAllGroups() = endpointGroupRepository.findAll().map { it.groupName }
 
-    @ApiOperation("Create a new endpoint group.")
+    @Operation(summary = "Create a new endpoint group.")
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun createGroup(@RequestBody body: EndpointGroupEntity, @ApiIgnore authentication: Authentication) {
+    fun createGroup(@RequestBody body: EndpointGroupEntity, @Parameter(hidden = true) authentication: Authentication) {
         if (endpointGroupRepository.existsByGroupName(body.name)) {
             throw CloudioHttpExceptions.Conflict("Group '${body.name}' exists.")
         }
@@ -54,7 +53,7 @@ class EndpointGroupManagementController(
         }
     }
 
-    @ApiOperation("Get endpoint group information.")
+    @Operation(summary = "Get endpoint group information.")
     @GetMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.OK)
     @Transactional
@@ -67,14 +66,14 @@ class EndpointGroupManagementController(
         )
     }
 
-    @ApiOperation("Modify endpoint group.")
+    @Operation(summary = "Modify endpoint group.")
     @PutMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     fun updateGroupByGroupName(
             @PathVariable groupName: String,
             @RequestBody body: EndpointGroupEntity,
-            @ApiIgnore authentication: Authentication
+            @Parameter(hidden = true) authentication: Authentication
     )
     {
         val endpointGroup = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
@@ -102,11 +101,11 @@ class EndpointGroupManagementController(
         }
     }
 
-    @ApiOperation("Deletes endpoint group.")
+    @Operation(summary = "Deletes endpoint group.")
     @DeleteMapping("/groups/{groupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun deleteGroupByGroupName(@PathVariable groupName: String, @ApiIgnore authentication: Authentication)
+    fun deleteGroupByGroupName(@PathVariable groupName: String, @Parameter(hidden = true) authentication: Authentication)
     {
         val endpointGroup = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")

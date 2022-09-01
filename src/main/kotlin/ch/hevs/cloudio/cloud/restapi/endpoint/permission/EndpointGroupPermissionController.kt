@@ -5,23 +5,19 @@ import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(
-        tags = ["Endpoint Group Permissions"],
-        description = "Allows users to manage permissions to their owned endpoints groups they have the GRANT permission."
-)
+@Tag(name = "Endpoint Group Permissions", description = "Allows users to manage permissions to their owned endpoints groups they have the GRANT permission.")
 @RequestMapping("/api/v1/endpoints/groups")
 class EndpointGroupPermissionController(
         private val userRepository: UserRepository,
@@ -36,13 +32,13 @@ class EndpointGroupPermissionController(
 
     @PutMapping("/{endpointGroupName}/grant")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation("Grant permission to whole endpoint group to another user.")
+    @Operation(summary = "Grant permission to whole endpoint group to another user.")
     fun grantPermissionByEndpointGroup(
-            @ApiIgnore authentication: Authentication,
-            @PathVariable @ApiParam("The endpoint group name.", required = true) endpointGroupName: String,
-            @RequestParam @ApiParam("User name to grant the permission to.", required = false) userName: String?,
-            @RequestParam @ApiParam("User group name to grant the permission to.", required = false) userGroupName: String?,
-            @RequestParam @ApiParam("Permission to grant.") permission: EndpointPermission
+        @Parameter(hidden = true) authentication: Authentication,
+        @PathVariable @Parameter(description = "The endpoint group name.", required = true) endpointGroupName: String,
+        @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
+        @RequestParam @Parameter(description = "User group name to grant the permission to.", required = false) userGroupName: String?,
+        @RequestParam @Parameter(description = "Permission to grant.") permission: EndpointPermission
     )
     {
         if(permission == EndpointPermission.OWN){throw CloudioHttpExceptions.Forbidden("OWN permission can not be granted.")}
@@ -101,14 +97,14 @@ class EndpointGroupPermissionController(
 
     @PutMapping("/{endpointGroupName}/grant/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @ApiOperation("Grant permission to element of endpoint group's data model to another user.")
+    @Operation(summary = "Grant permission to element of endpoint group's data model to another user.")
     fun grantModelPermissionByUUID(
-            @ApiIgnore authentication: Authentication,
-            @PathVariable @ApiParam("The endpoint group name.", required = true) endpointGroupName: String,
-            @RequestParam @ApiParam("User name to grant the permission to.", required = false) userName: String?,
-            @RequestParam @ApiParam("Group name to grant the permission to.", required = false) userGroupName: String?,
-            @RequestParam @ApiParam("Permission to grant.") permission: EndpointModelElementPermission,
-            @ApiIgnore request: HttpServletRequest
+            @Parameter(hidden = true) authentication: Authentication,
+            @PathVariable @Parameter(description = "The endpoint group name.", required = true) endpointGroupName: String,
+            @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
+            @RequestParam @Parameter(description = "Group name to grant the permission to.", required = false) userGroupName: String?,
+            @RequestParam @Parameter(description = "Permission to grant.") permission: EndpointModelElementPermission,
+            @Parameter(hidden = true) request: HttpServletRequest
     )
     {
         val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {

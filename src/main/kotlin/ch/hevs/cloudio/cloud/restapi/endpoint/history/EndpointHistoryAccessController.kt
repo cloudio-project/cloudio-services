@@ -8,9 +8,9 @@ import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
 import org.springframework.context.annotation.Profile
@@ -18,14 +18,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access time series data of endpoints.")
+@Tag(name = "Endpoint Model Access", description = "Allows an user to access time series data of endpoints.")
 @RequestMapping("/api/v1/history")
 class EndpointHistoryAccessController(
         private val endpointRepository: EndpointRepository,
@@ -35,18 +34,18 @@ class EndpointHistoryAccessController(
 ) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to endpoint's historical values.")
+    @Operation(summary = "Read access to endpoint's historical values.")
     @GetMapping("/**")
     @ResponseStatus(HttpStatus.OK)
     fun getModelElement(
-            @ApiIgnore authentication: Authentication,
-            @RequestParam @ApiParam("Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
-            @RequestParam @ApiParam("Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
-            @RequestParam @ApiParam("Optional interval to resample data to. The format is a number followed by n, u, ms, s, m, h, d or w.", required = false) resampleInterval: String?,
-            @RequestParam @ApiParam("Function used to resample data. Only considered when a resample interval was given too. Defaults to MEAN", required = false) resampleFunction: ResampleFunction?,
-            @RequestParam @ApiParam("Value to use fill resampled intervals with no data. Only considered when a resample interval was given too. Defaults to NULL")fillValue: FillValue?,
-            @RequestParam @ApiParam("Maximal number of entries to return, defaults to 1000.", required = false, defaultValue = "1000") max: Int?,
-            @ApiIgnore request: HttpServletRequest
+        @Parameter(hidden = true) authentication: Authentication,
+        @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) from: String?,
+        @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'.", required = false) to: String?,
+        @RequestParam @Parameter(description = "Optional interval to resample data to. The format is a number followed by n, u, ms, s, m, h, d or w.", required = false) resampleInterval: String?,
+        @RequestParam @Parameter(description = "Function used to resample data. Only considered when a resample interval was given too. Defaults to MEAN", required = false) resampleFunction: ResampleFunction?,
+        @RequestParam @Parameter(description = "Value to use fill resampled intervals with no data. Only considered when a resample interval was given too. Defaults to NULL")fillValue: FillValue?,
+        @RequestParam @Parameter(description = "Maximal number of entries to return, defaults to 1000.", required = false) max: Int?, // TODO: document default value of 1000
+        @Parameter(hidden = true) request: HttpServletRequest
     ): Collection<DataPointEntity> {
 
         // Extract model identifier and check it for validity.

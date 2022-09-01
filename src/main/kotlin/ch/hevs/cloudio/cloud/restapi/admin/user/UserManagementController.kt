@@ -6,8 +6,8 @@ import ch.hevs.cloudio.cloud.dao.UserGroupRepository
 import ch.hevs.cloudio.cloud.dao.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["User Management"], description = "Allows an admin user to manage users.")
+@Tag(name = "User Management", description = "Allows an admin user to manage users.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserManagementController(
@@ -24,7 +24,7 @@ class UserManagementController(
         private var groupRepository: UserGroupRepository,
         private var passwordEncoder: PasswordEncoder
 ) {
-    @ApiOperation("List all users.")
+    @Operation(summary = "List all users.")
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
     fun getAllUsers() = userRepository.findAll().map {
@@ -36,7 +36,7 @@ class UserManagementController(
         )
     }
 
-    @ApiOperation("Create a new user.")
+    @Operation(summary = "Create a new user.")
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
@@ -63,7 +63,7 @@ class UserManagementController(
         ))
     }
 
-    @ApiOperation("Get user information.")
+    @Operation(summary = "Get user information.")
     @GetMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.OK)
     @Transactional(readOnly = true)
@@ -80,7 +80,7 @@ class UserManagementController(
         )
     }
 
-    @ApiOperation("Modify user information.")
+    @Operation(summary = "Modify user information.")
     @PutMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
@@ -112,7 +112,7 @@ class UserManagementController(
         }
     }
 
-    @ApiOperation("Change user's password.")
+    @Operation(summary = "Change user's password.")
     @PutMapping("/users/{userName}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun changeUserPassword(@PathVariable userName: String, @RequestParam password: String) {
@@ -124,7 +124,7 @@ class UserManagementController(
         }
     }
 
-    @ApiOperation("Delete user.")
+    @Operation(summary = "Delete user.")
     @DeleteMapping("/users/{userName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional

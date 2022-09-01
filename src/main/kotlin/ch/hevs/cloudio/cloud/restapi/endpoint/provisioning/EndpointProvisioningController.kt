@@ -7,9 +7,9 @@ import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -25,7 +25,7 @@ import java.util.zip.ZipOutputStream
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")
+@Tag(name = "Endpoint Provisioning", description = "Allows users or developers to provision new endpoints into the system.")
 @RequestMapping("/api/v1")
 class EndpointProvisioningController(
         private val endpointRepository: EndpointRepository,
@@ -38,7 +38,7 @@ class EndpointProvisioningController(
 
     @GetMapping("/ca-certificate", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Returns the certificate used by the certificate authority of the cloud.iO installation.")
+    @Operation(summary = "Returns the certificate used by the certificate authority of the cloud.iO installation.")
     fun getCaCertificate() = ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("application/x-x509-user-cert"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.crt\"")
@@ -48,10 +48,10 @@ class EndpointProvisioningController(
     @ResponseStatus(HttpStatus.OK)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Prepare endpoint for provision and returns the token that can be used for provisioning.")
+    @Operation(summary = "Prepare endpoint for provision and returns the token that can be used for provisioning.")
     fun prepareProvisionByUUID(
-            @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
-            @RequestBody @ApiParam("Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestBody @Parameter(description = "Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
     ): String {
         // Get endpoint.
         val endpoint = endpointRepository.findById(uuid).orElseThrow {
@@ -78,11 +78,11 @@ class EndpointProvisioningController(
     @GetMapping("/endpoints/{uuid}/provision")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Get endpoint configuration information for a given endpoint.")
+    @Operation(summary = "Get endpoint configuration information for a given endpoint.")
     fun provisionByUUID(
-        @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
-        @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
-        @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestParam @Parameter(description = "Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
+        @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?
     ): ResponseEntity<Any> = endpointRepository.findById(uuid).orElseThrow {
         CloudioHttpExceptions.NotFound("Not found")
     }.getProvisionEntity(endpointProvisionDataFormat, publicKey)
@@ -90,11 +90,11 @@ class EndpointProvisioningController(
 
     @GetMapping("/provision/{token}")
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Get endpoint configuration information for a pending provision token.")
+    @Operation(summary = "Get endpoint configuration information for a pending provision token.")
     fun provisionByToken(
-            @PathVariable @ApiParam("Provision token.", required = true) token: String,
-            @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
-            @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
+            @PathVariable @Parameter(description = "Provision token.", required = true) token: String,
+            @RequestParam @Parameter(description = "Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
+            @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?
     ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
         CloudioHttpExceptions.Forbidden("Forbidden")
     }.let {
