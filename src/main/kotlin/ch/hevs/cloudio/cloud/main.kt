@@ -144,7 +144,7 @@ class CloudioApplication {
                 connection.mode?.let { cacheMode = it }
                 connection.size?.let { connectionCacheSize = it }
             }
-            setConnectionNameStrategy { InetAddress.getLocalHost().getHostName() }
+            setConnectionNameStrategy { InetAddress.getLocalHost().hostName }
         }
 
     @Bean

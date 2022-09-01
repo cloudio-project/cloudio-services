@@ -25,7 +25,7 @@ class WebSocketSecurityService(private val permissionManager: CloudioPermissionM
                     if(topic is String){
                         if(topic.startsWith("/log/")){
                             topic = topic.removePrefix("/log/")
-                            val uuid = ModelIdentifier(topic as String).endpoint
+                            val uuid = ModelIdentifier(topic).endpoint
 
                             // Resolve the access leve the user has to the endpoint
                             if(permissionManager.hasEndpointPermission(userDetails, uuid, EndpointPermission.READ)){
@@ -52,10 +52,10 @@ class WebSocketSecurityService(private val permissionManager: CloudioPermissionM
                                 return null
                             }
                         }
-                        log.info("Wrong STOMP subscribe message format")
                     }
                 }
             }
+            log.info("Wrong STOMP subscribe message format")
         }
         else{
             return super.preSend(message, channel)
