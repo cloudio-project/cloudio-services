@@ -7,6 +7,7 @@ import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -36,7 +37,8 @@ class EndpointJobsController(
     @ApiResponses(value = [
         ApiResponse(description = "Job was scheduled for execution. Note that this does not mean that the job exist on the endpoint and that the job execution started.", responseCode = "204"),
         ApiResponse(description = "Endpoint with the given UUID does not exist.", responseCode = "404"),
-        ApiResponse(description = "Endpoint job serialization error.", responseCode = "500")
+        ApiResponse(description = "Endpoint job serialization error.", responseCode = "500"),
+        ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
     ])
     fun runJobOnEndpointByUUIDAndJobName(
             @PathVariable @Parameter(description = "UUID of the endpoint to run the command on.") uuid: UUID,

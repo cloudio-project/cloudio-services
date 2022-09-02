@@ -18,7 +18,7 @@ data class EndpointEntity(
         @Schema(description = "If true the endpoint is online.", readOnly = true, example = "true")
         val online: Boolean,
 
-        @Schema(description = "Metadata assigned to the endpoint - Can be set to any particular JSON object/structure.")
+        @Schema(description = "Metadata assigned to the endpoint - Can be set to any particular JSON object/structure.", example = "{\"city\": \"Sion\", \"address\": \"Rue de l'industrie 23\"}")
         val metaData: Map<String, Any>,
 
         @Schema(description = "Software version actually running on the endpoint.", readOnly = true, example = "v0.2")
@@ -31,6 +31,6 @@ data class EndpointEntity(
         @Schema(description = "Serialization formats supported by the endpoint.", readOnly = true, example = "[\"CBOR\", \"JSON\"]")
         val supportedFormats: Set<String>,
 
-        @Schema(description = "List of the endpoint group memberships.")
+        @Schema(description = "List of the endpoint group memberships.", example = "[\"BuildingAutomation\", \"Metrics\"]")
         var groupMemberships: Set<String>
 )

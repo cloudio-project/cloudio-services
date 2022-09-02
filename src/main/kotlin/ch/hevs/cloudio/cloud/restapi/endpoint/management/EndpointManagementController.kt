@@ -11,6 +11,11 @@ import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
@@ -23,7 +28,7 @@ import java.util.*
 
 @RestController
 @Profile("rest-api")
-@Tag(name = "Endpoint Management", description = "Allows users to manage their endpoints.")
+@Tag(name = "Endpoint Management", description = "Allows users to list and manage their endpoints.")
 @RequestMapping("/api/v1/endpoints")
 class EndpointManagementController(
     private val endpointRepository: EndpointRepository,
@@ -37,7 +42,17 @@ class EndpointManagementController(
     @GetMapping("", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
     @Transactional(readOnly = true)
-    @Operation(summary = "List all endpoints accessible by the currently authenticated user.") // TODO: response = EndpointListEntity::class, responseContainer = "List"
+    @Operation(summary = "List all endpoints accessible by the currently authenticated user.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "List of endpoints accessible for the logged user.",
+                responseCode = "200",
+                content = [Content(array = ArraySchema(schema = Schema(implementation = EndpointListEntity::class)))]
+            ),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun getAllAccessibleEndpoints(
         @Parameter(hidden = true) authentication: Authentication,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given friendly name.") friendlyName: String?,
@@ -46,7 +61,7 @@ class EndpointManagementController(
     ) = permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm ->
         endpointRepository.findById(perm.endpointUUID).orElse(null)?.let {
             when {
-                friendlyName != null && friendlyName.isNotEmpty() && it.friendlyName != friendlyName -> null
+                !friendlyName.isNullOrEmpty() && it.friendlyName != friendlyName -> null
                 banned != null && it.banned != banned -> null
                 online != null && it.online != online -> null
                 else -> EndpointListEntity(
@@ -65,9 +80,15 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get detailed information for a given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint details.", responseCode = "200", content = [Content(schema = Schema(implementation = EndpointEntity::class))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointByUUID(
-        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
-        @Parameter(hidden = true) authentication: Authentication
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
         CloudioHttpExceptions.NotFound("Endpoint not found.")
     }.let {
@@ -89,6 +110,13 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get user-friendly name of given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "User-friendly name of the endpoint.", responseCode = "200", content = [Content(schema = Schema(type = "string", example = "My Endpoint"))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointFriendlyNameByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -100,6 +128,13 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Returns true if the endpoint is banned (Can not connect to broker) or false if not.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Banned status.", responseCode = "200", content = [Content(schema = Schema(type = "boolean", example = "false"))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointBlockedByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -111,6 +146,13 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get online state of given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Online status.", responseCode = "200", content = [Content(schema = Schema(type = "boolean", example = "true"))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointOnlineByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -122,6 +164,13 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get configuration parameters of given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint configuration.", responseCode = "200", content = [Content(schema = Schema(implementation = EndpointConfigurationEntity::class))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointConfigurationByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -139,6 +188,22 @@ class EndpointManagementController(
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get configuration properties of given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "Endpoint configuration.",
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        type = "object",
+                        example = "{\"ch.hevs.cloudio.endpoint.uuid\": \"041c0e1e-b6d4-4f47-92b4-9f63343dbd28\", \"ch.hevs.cloudio.endpoint.hostUri\": \"cloudio.hevs.ch\"}"
+                    )
+                )]
+            ),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointConfigurationPropertiesByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -146,10 +211,18 @@ class EndpointManagementController(
     }.configuration.properties
 
 
-    @GetMapping("/{uuid}/configuration/properties/{key}")
+    @GetMapping("/{uuid}/configuration/properties/{key}", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get endpoint's configuration property by key.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint configuration property.", responseCode = "200", content = [Content(schema = Schema(type = "string", example = "cloudio.hevs.ch"))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Property not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointConfigurationPropertyByUUIDAndPropertyName(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
         @PathVariable @Parameter(description = "Name of the property to retrieve.", required = true) key: String
@@ -158,10 +231,17 @@ class EndpointManagementController(
     }.configuration.properties.getOrDefault(key, null) ?: throw CloudioHttpExceptions.NotFound("Property not found.")
 
 
-    @GetMapping("/{uuid}/configuration/logLevel")
+    @GetMapping("/{uuid}/configuration/logLevel", produces = ["text/plain"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get endpoint's log level.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint log level.", responseCode = "200", content = [Content(schema = Schema(implementation = LogLevel::class))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointLogLevelByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -172,7 +252,18 @@ class EndpointManagementController(
     @GetMapping("/{uuid}/metaData", produces = ["application/json"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
-    @Operation(summary = "Get meta data of given endpoint.")
+    @Operation(summary = "Get metadata of given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "Endpoint metadata.",
+                responseCode = "200",
+                content = [Content(schema = Schema(type = "object", example = "{\"city\": \"Sion\", \"address\": \"Rue de l'industrie 23\"}"))]
+            ),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()])
+        ]
+    )
     fun getEndpointMetaDataByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
@@ -185,9 +276,14 @@ class EndpointManagementController(
     @Transactional
     @Authority.HttpEndpointCreation
     @Operation(summary = "Create a new endpoint.") // TODO: responseReference = "UUID assigned to the newly created endpoint."
-
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint details.", responseCode = "200", content = [Content(schema = Schema(implementation = EndpointEntity::class))]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun postEndpointByFriendlyName(
-        @RequestParam @Parameter(description = "Name of the endpoint.") friendlyName: String = "New Endpoint", // TODO: defaultValue = "New endpoint"
+        @RequestParam @Parameter(description = "Name of the endpoint.", schema = Schema(type = "string", defaultValue = "New endpoint", example = "My endpoint")) friendlyName: String = "New Endpoint",
         @Parameter(hidden = true) authentication: Authentication
     ) = authentication.userDetails().let { user ->
         val endpoint = endpointRepository.save(
@@ -220,11 +316,18 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}")
+    @PutMapping("/{uuid}", consumes = ["application/json"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
-    @Operation(summary = "Update endpoint data.")
+    @Operation(summary = "Update endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint data modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun putEndpointByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
         @RequestBody body: EndpointEntity
@@ -247,14 +350,21 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/friendlyName")
+    @PutMapping("/{uuid}/friendlyName", consumes = ["text/plain"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Update endpoint's user-friendly name.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint user-friendly name modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun putEndpointFriendlyNameByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
-        @RequestParam @Parameter(description = "User-friendly name to set.", required = true) friendlyName: String
+        @RequestParam @Parameter(description = "User-friendly name to set.", required = true, schema = Schema(type = "string", example = "My endpoint")) friendlyName: String
     ) {
         endpointRepository.findById(uuid).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
@@ -265,14 +375,21 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/banned")
+    @PutMapping("/{uuid}/banned", consumes = ["application/json"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
     @Operation(summary = "Update if an endpoint is banned (Can not connect to broker) or not.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint banned status modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun putEndpointBlockedByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
-        @RequestParam @Parameter(description = "true to block endpoint, false to unblock endpoint.", required = true) blocked: Boolean
+        @RequestParam @Parameter(description = "True to block endpoint, false to unblock endpoint.", required = true) blocked: Boolean
     ) {
         endpointRepository.findById(uuid).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
@@ -283,15 +400,22 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/configuration/properties/{key}")
+    @PutMapping("/{uuid}/configuration/properties/{key}", consumes = ["text/plain"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
     @Operation(summary = "Update endpoint's configuration parameter.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint configuration parameter modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun putEndpointConfigurationPropertyByUUIDAndPropertyName(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
-        @PathVariable @Parameter(description = "Name of the property to change.", required = true) key: String,
-        @RequestParam @Parameter(description = "Value to set the property to.", required = true) value: String
+        @PathVariable @Parameter(description = "Name of the property to change.", required = true, schema = Schema(type = "string", example = "ch.hevs.cloudio.endpoint.hostUri")) key: String,
+        @RequestParam @Parameter(description = "Value to set the property to.", required = true, schema = Schema(type = "string", example = "cloudio.hevs.ch")) value: String
     ) {
         endpointRepository.findById(uuid).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
@@ -302,10 +426,17 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/configuration/logLevel")
+    @PutMapping("/{uuid}/configuration/logLevel", consumes = ["application/json"])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Change an endpoint's log level.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint log level modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun putEndpointConfigurationLogLevelByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
         @RequestParam @Parameter(description = "Log level.", required = true) logLevel: LogLevel
@@ -326,9 +457,19 @@ class EndpointManagementController(
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).OWN)")
     @Operation(summary = "Deletes the given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint deleted.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun deleteEndpointByUUID(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) {
+        if (!endpointRepository.existsById(uuid)) {
+            throw CloudioHttpExceptions.NotFound("Endpoint not found.")
+        }
         endpointRepository.deleteById(uuid)
         userEndpointPermissionRepository.deleteByEndpointUUID(uuid)
         userGroupEndpointPermissionRepository.deleteByEndpointUUID(uuid)
