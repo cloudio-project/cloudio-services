@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.model.LogLevel
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 
-@Schema(description = "Endpoint configuration.")
+@Schema(name = "EndpointConfiguration", description = "Endpoint configuration.")
 data class EndpointConfigurationEntity(
         @Schema(description = "Configuration properties.")
         val properties: MutableMap<String, String>,

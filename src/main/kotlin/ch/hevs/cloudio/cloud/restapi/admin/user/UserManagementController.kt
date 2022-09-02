@@ -7,6 +7,10 @@ import ch.hevs.cloudio.cloud.dao.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -16,7 +20,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @Profile("rest-api")
-@Tag(name = "User Management", description = "Allows an admin user to manage users.")
+@Tag(name = "User Management", description = "Allows a user with the authority HTTP_ADMIN to manage users.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserManagementController(
@@ -24,9 +28,10 @@ class UserManagementController(
         private var groupRepository: UserGroupRepository,
         private var passwordEncoder: PasswordEncoder
 ) {
-    @Operation(summary = "List all users.")
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "List all users.")
+    @ApiResponse(description = "Success", responseCode = "200", content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(implementation = ListUserEntity::class)))])
     fun getAllUsers() = userRepository.findAll().map {
         ListUserEntity(
                 name = it.userName,
@@ -36,10 +41,12 @@ class UserManagementController(
         )
     }
 
-    @Operation(summary = "Create a new user.")
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
+    @Operation(summary = "Create a new user.")
+    @ApiResponse(description = "User was created", responseCode = "204")
+    @ApiResponse(description = "User with same username exists", responseCode = "409")
     fun createUser(@RequestBody body: PostUserEntity) {
         if (userRepository.existsByUserName(body.name)) {
             throw CloudioHttpExceptions.Conflict("User '${body.name}' exists.")

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.*
 
-@Schema(description = "Endpoint details.")
+@Schema(name = "Endpoint", description = "Endpoint details.")
 data class EndpointEntity(
         @Schema(description = "The unique identifier of the endpoint.", readOnly = true)
         val uuid: UUID,

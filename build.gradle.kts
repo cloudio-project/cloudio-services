@@ -53,6 +53,7 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     implementation("org.springdoc:springdoc-openapi-ui:1.6.11")
+    implementation("org.springdoc:springdoc-openapi-kotlin:1.6.11")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")

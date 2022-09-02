@@ -5,7 +5,7 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.*
 
-@Schema(description = "Summarizes the permission the currently authenticated user has on a given endpoint and it's data model.")
+@Schema(name = "EndpointPermission", description = "Summarizes the permission the currently authenticated user has on a given endpoint and it's data model.")
 data class EndpointPermissionEntity(
         @Schema(description = "UUID of the endpoint.", readOnly = true)
         val endpoint: UUID,

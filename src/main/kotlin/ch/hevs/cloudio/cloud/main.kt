@@ -9,6 +9,11 @@ import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
+import io.swagger.v3.oas.annotations.info.Info
+import io.swagger.v3.oas.annotations.info.License
+import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
@@ -41,6 +46,19 @@ import javax.net.ssl.TrustManagerFactory
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableScheduling
+@OpenAPIDefinition(
+    info = Info(
+        title = "cloud.iO API",
+        version = "v1",
+        description = "API Documentation for cloud.iO",
+        license = License(name = "MIT", url = "https://opensource.org/licenses/MIT")
+    )
+)
+@SecurityScheme(
+    name = "basicAuth",
+    type = SecuritySchemeType.HTTP,
+    scheme = "basic"
+)
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
@@ -148,7 +166,7 @@ class CloudioApplication {
             http.cors().and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers(
-                    "/v3/api-docs", "/swagger-ui.html", "/swagger-ui/**",
+                    "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
                     "/api/v1/provision/*", "/messageformat/**"
                 ).permitAll()
                 .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)

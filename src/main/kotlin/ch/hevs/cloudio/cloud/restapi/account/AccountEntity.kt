@@ -3,7 +3,7 @@ package ch.hevs.cloudio.cloud.restapi.account
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.v3.oas.annotations.media.Schema
 
-@Schema(description = "User account information.")
+@Schema(name = "Account", description = "User account information.")
 data class AccountEntity(
         @Schema(description = "Username.", readOnly = true, example = "d.vader")
         var name: String,

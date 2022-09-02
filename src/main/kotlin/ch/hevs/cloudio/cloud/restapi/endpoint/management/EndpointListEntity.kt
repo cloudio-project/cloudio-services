@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.*
 
-@Schema(description = "Endpoint overview used in endpoint listing.")
+@Schema(name = "EndpointListEntry", description = "Endpoint overview used in endpoint listing.")
 data class EndpointListEntity(
         @Schema(description = "The unique identifier of the endpoint.", readOnly = true)
         val uuid: UUID,

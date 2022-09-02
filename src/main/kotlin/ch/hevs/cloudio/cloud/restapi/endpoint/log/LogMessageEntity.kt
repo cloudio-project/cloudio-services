@@ -4,7 +4,7 @@ import ch.hevs.cloudio.cloud.model.LogLevel
 import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 
-@Schema(description = "Endpoint log entry.")
+@Schema(name = "LogMessage", description = "Endpoint log entry.")
 data class LogMessageEntity(
         @Schema(description = "Timestamp the log entry was created at the endpoint.", readOnly = true)
         val time: String,
