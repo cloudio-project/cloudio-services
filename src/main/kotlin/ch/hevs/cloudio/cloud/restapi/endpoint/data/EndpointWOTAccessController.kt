@@ -13,21 +13,25 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
-import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
 
-@RestController
+//@RestController
 @Profile("rest-api")
-@Tag(name = "Endpoint WOT Access", description = "Allows to access data models of endpoints in a WOT compatible manner.")
+@Tag(name = "Endpoint Data Access")
 @RequestMapping("/api/v1/wot")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
@@ -35,9 +39,17 @@ class EndpointWOTAccessController(private val endpointRepository: EndpointReposi
                                   private val influxProperties: CloudioInfluxProperties) {
     private val antMatcher = AntPathMatcher()
 
-    @GetMapping("/**")
+    @GetMapping("/**", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Read access to endpoint's WOT data model.")
+    @Operation(summary = "Read access to endpoint's data in a WOT compatible manner.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint WOT data at the given path.", responseCode = "200", content = [Content(schema = Schema(type = "object"))]),
+            ApiResponse(description = "Invalid model identifier.", responseCode = "400", content = [Content()]),
+            ApiResponse(description = "Endpoint not found or model element not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun getModelElement(
         @Parameter(hidden = true) authentication: Authentication,
         @Parameter(hidden = true) request: HttpServletRequest
