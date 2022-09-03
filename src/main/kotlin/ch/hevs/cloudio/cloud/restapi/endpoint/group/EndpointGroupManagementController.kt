@@ -13,6 +13,9 @@ import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import javax.transaction.Transactional
 
+// TODO: If users can create endpoint groups, such a group should be owned by one or more users and the user should only see his owned groups and not all groups on the system!
+// TODO: Complete documentation.
+
 @RestController
 @Profile("rest-api")
 @Tag(name = "Endpoint Group Management", description = "Allows a user to manage endpoint groups.")
