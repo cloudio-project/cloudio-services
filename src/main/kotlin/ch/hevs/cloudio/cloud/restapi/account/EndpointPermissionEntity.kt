@@ -14,7 +14,7 @@ data class EndpointPermissionEntity(
         val permission: EndpointPermission,
 
         @Schema(description = "User's permission for certain model elements of the endpoint.", readOnly = true,
-                example = "[\"adc1/frequency/value\": \"READ\"]"
+                example = "{\"adc1/frequency/value\": \"READ\"}"
         )
         val modelPermissions: Map<String, EndpointModelElementPermission>
 )
