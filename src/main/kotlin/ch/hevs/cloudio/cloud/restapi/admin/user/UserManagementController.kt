@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @Profile("rest-api")
-@Tag(name = "User Management", description = "Allows a user with the authority HTTP_ADMIN to manage users.")
+@Tag(name = "User Management", description = "Allows a user with the authority HTTP_ADMIN to manage users and user groups.")
 @RequestMapping("/api/v1/admin")
 @Authority.HttpAdmin
 class UserManagementController(
@@ -79,7 +79,7 @@ class UserManagementController(
     @Transactional(readOnly = true)
     @Operation(summary = "Get user information.")
     @ApiResponses(value = [
-        ApiResponse(description = "User details.", responseCode = "200", content = [Content(mediaType = "application/json", schema = Schema(implementation = UserEntity::class))]),
+        ApiResponse(description = "User details.", responseCode = "200", content = [Content(schema = Schema(implementation = UserEntity::class))]),
         ApiResponse(description = "User not found.", responseCode = "404", content = [Content()]),
         ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
     ])
