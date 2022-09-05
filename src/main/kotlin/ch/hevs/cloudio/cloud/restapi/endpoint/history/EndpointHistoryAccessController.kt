@@ -101,7 +101,6 @@ class EndpointHistoryAccessController(
         } ?: emptyList()
     }
 
-    // TODO: Test...
     @Operation(summary = "Read access to endpoint's historical values.")
     @GetMapping("/**", produces = ["text/csv"])
     @ResponseStatus(HttpStatus.OK)
@@ -156,7 +155,7 @@ class EndpointHistoryAccessController(
         }
 
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
-        joinToString(prefix = "time${separator ?: ";"}value\n", separator = "\n") {
+        joinToString(separator = "\n") {
             "${it[0] as String}${separator ?: ";"}${it[1]}"
         }.orEmpty()
     }
