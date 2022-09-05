@@ -13,6 +13,7 @@ import org.springframework.amqp.core.AmqpAdmin
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.text.SimpleDateFormat
@@ -29,7 +30,7 @@ class EndpointLogController(
     private val amqpAdmin: AmqpAdmin,
     private val connectionFactory: ConnectionFactory
 ) {
-    @GetMapping("/{uuid}/log", produces = ["application/json"])
+    @GetMapping("/{uuid}/log", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Retrieve log output of a given endpoint in JSON format.")

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.transaction.annotation.Transactional
@@ -30,7 +31,7 @@ class AccountController(
     private val permissionManager: CloudioPermissionManager,
     private val passwordEncoder: PasswordEncoder
 ) {
-    @GetMapping("", produces = ["application/json"])
+    @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Transactional(readOnly = true)
     @Operation(summary = "Get information about the currently authenticated user.")
@@ -117,7 +118,7 @@ class AccountController(
         }
     }
 
-    @GetMapping("/metaData", produces = ["application/json"])
+    @GetMapping("/metaData", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Returns the currently authenticated user's meta data.")
     @ApiResponses(value = [
@@ -131,7 +132,7 @@ class AccountController(
         CloudioHttpExceptions.NotFound("User not found.")
     }.metaData
 
-    @PutMapping("/metaData", consumes = ["application/json"])
+    @PutMapping("/metaData", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Changes the currently authenticated user's meta data.")
     @ApiResponses(value = [
@@ -152,7 +153,7 @@ class AccountController(
         }
     }
 
-    @GetMapping("/permissions", produces = ["application/json"])
+    @GetMapping("/permissions", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Transactional(readOnly = true)
     @Operation(summary = "Get the all endpoint permissions.")

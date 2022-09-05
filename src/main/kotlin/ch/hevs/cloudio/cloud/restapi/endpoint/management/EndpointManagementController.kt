@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.annotation.Transactional
@@ -39,7 +40,7 @@ class EndpointManagementController(
     private val rabbitTemplate: RabbitTemplate,
     private val endpointGroupRepository: EndpointGroupRepository
 ) {
-    @GetMapping("", produces = ["application/json"])
+    @GetMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Transactional(readOnly = true)
     @Operation(summary = "List all endpoints accessible by the currently authenticated user.")
@@ -58,7 +59,7 @@ class EndpointManagementController(
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given friendly name.") friendlyName: String?,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given banned status.") banned: Boolean?,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given online status.") online: Boolean?
-    ) = permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm ->
+    ) = permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm -> // TODO: Maybe resolveEndpointPermission() would be better in this case.
         endpointRepository.findById(perm.endpointUUID).orElse(null)?.let {
             when {
                 !friendlyName.isNullOrEmpty() && it.friendlyName != friendlyName -> null
@@ -76,7 +77,7 @@ class EndpointManagementController(
     }
 
 
-    @GetMapping("/{uuid}", produces = ["application/json"])
+    @GetMapping("/{uuid}", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get detailed information for a given endpoint.")
@@ -124,7 +125,7 @@ class EndpointManagementController(
     }.friendlyName
 
 
-    @GetMapping("/{uuid}/banned", produces = ["application/json"])
+    @GetMapping("/{uuid}/banned", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Returns true if the endpoint is banned (Can not connect to broker) or false if not.")
@@ -142,7 +143,7 @@ class EndpointManagementController(
     }.banned
 
 
-    @GetMapping("/{uuid}/online", produces = ["application/json"])
+    @GetMapping("/{uuid}/online", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get online state of given endpoint.")
@@ -160,7 +161,7 @@ class EndpointManagementController(
     }.online
 
 
-    @GetMapping("/{uuid}/configuration", produces = ["application/json"])
+    @GetMapping("/{uuid}/configuration", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get configuration parameters of given endpoint.")
@@ -184,7 +185,7 @@ class EndpointManagementController(
         )
     }
 
-    @GetMapping("/{uuid}/configuration/properties", produces = ["application/json"])
+    @GetMapping("/{uuid}/configuration/properties", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get configuration properties of given endpoint.")
@@ -249,7 +250,7 @@ class EndpointManagementController(
     }.configuration.logLevel
 
 
-    @GetMapping("/{uuid}/metaData", produces = ["application/json"])
+    @GetMapping("/{uuid}/metaData", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     @Operation(summary = "Get metadata of given endpoint.")
@@ -271,7 +272,7 @@ class EndpointManagementController(
     }.metaData
 
 
-    @PostMapping("", produces = ["application/json"])
+    @PostMapping("", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Transactional
     @Authority.HttpEndpointCreation
@@ -316,7 +317,7 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}", consumes = ["application/json"])
+    @PutMapping("/{uuid}", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
@@ -375,7 +376,7 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/banned", consumes = ["application/json"])
+    @PutMapping("/{uuid}/banned", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
@@ -426,7 +427,7 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/configuration/logLevel", consumes = ["application/json"])
+    @PutMapping("/{uuid}/configuration/logLevel", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Change an endpoint's log level.")

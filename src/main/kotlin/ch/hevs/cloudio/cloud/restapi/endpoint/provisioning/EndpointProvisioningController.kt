@@ -135,7 +135,7 @@ class EndpointProvisioningController(
 
         when (endpointProvisionDataFormat ?:  EndpointProvisioningDataFormat.JSON) {
             EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/json"))
+                .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE))
                 .header("Endpoint", uuid.toString())
                 .body(EndpointProvisioningConfigurationEntity(
                     endpoint = uuid,

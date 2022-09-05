@@ -35,7 +35,7 @@ class UserManagementController(
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "List all users.")
     @ApiResponses(value = [
-        ApiResponse(description = "List of all users.", responseCode = "200", content = [Content(mediaType = "application/json", array = ArraySchema(schema = Schema(implementation = ListUserEntity::class)))]),
+        ApiResponse(description = "List of all users.", responseCode = "200", content = [Content(array = ArraySchema(schema = Schema(implementation = ListUserEntity::class)))]),
         ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
     ])
     fun getAllUsers() = userRepository.findAll().map { ListUserEntity(it) }
