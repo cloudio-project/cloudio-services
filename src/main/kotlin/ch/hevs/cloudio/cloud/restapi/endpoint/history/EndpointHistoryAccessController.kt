@@ -155,9 +155,10 @@ class EndpointHistoryAccessController(
             throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
-        return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.map {
+        return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
+        joinToString(prefix = "time${separator ?: ";"}value\n", separator = "\n") {
             "${it[0] as String}${separator ?: ";"}${it[1]}"
-        }?.joinToString { "\n" } ?: ""
+        }.orEmpty()
     }
 
     private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): QueryResult.Series? {
