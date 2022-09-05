@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.group
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -33,6 +34,7 @@ class EndpointGroupManagementController(
     @Operation(summary = "Create a new endpoint group.")
     @PostMapping("/groups")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Authority.HttpEndpointCreation
     @Transactional
     fun createGroup(@RequestBody body: EndpointGroupEntity, @Parameter(hidden = true) authentication: Authentication) {
         if (endpointGroupRepository.existsByGroupName(body.name)) {
