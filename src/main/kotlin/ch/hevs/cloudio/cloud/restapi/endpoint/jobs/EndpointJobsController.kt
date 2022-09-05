@@ -15,6 +15,7 @@ import org.apache.juli.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -30,7 +31,7 @@ class EndpointJobsController(
 ) {
     private val log = LogFactory.getLog(EndpointJobsController::class.java)
 
-    @PostMapping("/{uuid}/exec")
+    @PostMapping("/{uuid}/exec", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Runs the given command or script on an endpoint.")
