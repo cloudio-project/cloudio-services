@@ -13,7 +13,7 @@ services:
       SERVER_KEY: ${SERVER_KEY}
 
   influx:
-    image: influxdb:1.5-alpine
+    image: influxdb:1.8.10
     ports:
     - "8086:8086"
 
