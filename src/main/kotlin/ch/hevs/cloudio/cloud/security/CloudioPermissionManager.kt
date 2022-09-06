@@ -46,6 +46,7 @@ class CloudioPermissionManager(
     override fun hasPermission(authentication: Authentication, targetId: Serializable?, targetType: String?, permission: Any?) = when {
         targetType == "Endpoint" && targetId is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, targetId, permission)
         targetType == "Model" && targetId is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, targetId, permission)
+        targetType == "EndpointGroup" && targetId is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointGroupPermission(authentication.principal as CloudioUserDetails, targetId, permission)
         else -> {
             log.error("Unknown permission request: Authentication = $authentication, targetId = $targetId, permission = $permission")
             false
@@ -133,7 +134,7 @@ class CloudioPermissionManager(
         return p.fulfills(permission)
     }
 
-
+    fun hasEndpointGroupPermission(userDetails: CloudioUserDetails, groupName: String, permission: EndpointPermission) = resolveEndpointGroupPermission(userDetails, groupName).fulfills(permission)
 
     fun resolveEndpointPermission(userDetails: CloudioUserDetails, endpointUUID: UUID): EndpointPermission {
         var permission = EndpointPermission.DENY
@@ -177,6 +178,25 @@ class CloudioPermissionManager(
                         }
                     }
                 }
+            }
+        }
+
+        return permission
+    }
+
+    fun resolveEndpointGroupPermission(userDetails: CloudioUserDetails, endpointGroupName: String): EndpointPermission
+    {
+        var permission = EndpointPermission.DENY
+
+        endpointGroupRepository.findByGroupName(endpointGroupName).ifPresent { endpointGroup ->
+            userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(userDetails.id, endpointGroup.id).ifPresent {
+                permission = permission.higher(it.permission)
+            }
+        }
+
+        userDetails.groupMembershipIDs.forEach { userGroupId ->
+            userGroupEndpointGroupPermissionRepository.findByUserGroupID(userGroupId).forEach { userGroupEndpointGroupPermission ->
+                permission = permission.higher(userGroupEndpointGroupPermission.permission)
             }
         }
 
@@ -244,6 +264,30 @@ class CloudioPermissionManager(
                         permissions.add(UserEndpointPermission(userDetails.id, endpoint.uuid, userGroupEndpointGroupPermission.permission))
                     }
                 }
+            }
+        }
+
+        return permissions
+    }
+
+    fun resolveEndpointGroupPermissions(userDetails: CloudioUserDetails): Collection<UserEndpointGroupPermission>
+    {
+        val permissions = userEndpointGroupPermissionRepository.findByUserID(userDetails.id).toMutableList()
+
+        userGroupEndpointGroupPermissionRepository.findByUserGroupIDIn(userDetails.groupMembershipIDs).forEach { userGroupEndpointGroupPermission ->
+            val existingPermission = permissions.find{it.endpointGroupID == userGroupEndpointGroupPermission.endpointGroupID}
+            if (existingPermission != null){
+                existingPermission.permission = existingPermission.permission.higher(userGroupEndpointGroupPermission.permission)
+                if (existingPermission.permission.fulfills(EndpointPermission.WRITE)) {
+                    existingPermission.modelPermissions.clear()
+                } else {
+                    userGroupEndpointGroupPermission.modelPermissions.forEach { (key, permission) ->
+                        existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key] ?: EndpointModelElementPermission.DENY).higher(permission)
+                    }
+                }
+            }
+            else{
+                permissions.add(UserEndpointGroupPermission(userDetails.id, userGroupEndpointGroupPermission.endpointGroupID, userGroupEndpointGroupPermission.permission))
             }
         }
 

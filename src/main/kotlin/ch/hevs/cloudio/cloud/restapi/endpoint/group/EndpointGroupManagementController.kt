@@ -4,17 +4,17 @@ import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import javax.transaction.Transactional
-
-// TODO: Complete documentation.
 
 @RestController
 @Profile("rest-api")
@@ -24,12 +24,22 @@ class EndpointGroupManagementController(
         private var endpointGroupRepository: EndpointGroupRepository,
         private var endpointRepository: EndpointRepository,
         private var userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
-        private var userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository
+        private var userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository,
+        private var permissionManager: CloudioPermissionManager
 ) {
     @Operation(summary = "List all endpoint group names.")
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
-    fun getAllGroups() = endpointGroupRepository.findAll().map { it.groupName }
+    fun getAllGroups(
+            @Parameter(hidden = true) authentication: Authentication
+    ) = permissionManager.resolveEndpointGroupPermissions(authentication.userDetails()).mapNotNull { perm ->
+        endpointGroupRepository.findById(perm.endpointGroupID).orElse(null)?.let {
+            EndpointGroupListEntity(
+                name = it.groupName,
+                permission = perm.permission
+            )
+        }
+    }
 
     @Operation(summary = "Create a new endpoint group.")
     @PostMapping("/groups")
@@ -58,29 +68,32 @@ class EndpointGroupManagementController(
     }
 
     @Operation(summary = "Get endpoint group information.")
-    @GetMapping("/groups/{groupName}")
+    @GetMapping("/groups/{endpointGroupName}")
     @ResponseStatus(HttpStatus.OK)
     @Transactional
-    fun getGroupByGroupName(@PathVariable groupName: String) = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
-        CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
+    @PreAuthorize("hasPermission(#endpointGroupName, \"EndpointGroup\",T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
+    fun getGroupByGroupName(
+            @PathVariable endpointGroupName: String
+    ) = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+        CloudioHttpExceptions.NotFound("Group '$endpointGroupName' not found.")
     }.run {
         EndpointGroupEntity(
-                name = groupName,
+                name = endpointGroupName,
                 metaData = metaData
         )
     }
 
     @Operation(summary = "Modify endpoint group.")
-    @PutMapping("/groups/{groupName}")
+    @PutMapping("/groups/{endpointGroupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     fun updateGroupByGroupName(
-            @PathVariable groupName: String,
+            @PathVariable endpointGroupName: String,
             @RequestBody body: EndpointGroupEntity,
             @Parameter(hidden = true) authentication: Authentication
     )
     {
-        val endpointGroup = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
+        val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
         }
         userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id,
@@ -94,11 +107,11 @@ class EndpointGroupManagementController(
             throw CloudioHttpExceptions.Forbidden("User does not have the CONFIGURE permission on this endpoint group.")
         }
         )
-        if (groupName != body.name) {
+        if (endpointGroupName != body.name) {
             throw CloudioHttpExceptions.Conflict("Group name in URL and body do not match.")
         }
-        endpointGroupRepository.findByGroupName(groupName).orElseThrow {
-            CloudioHttpExceptions.NotFound("Group '$groupName' not found.")
+        endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+            CloudioHttpExceptions.NotFound("Group '$endpointGroupName' not found.")
         }.run {
             metaData = body.metaData.toMutableMap()
             endpointGroupRepository.save(this)
@@ -106,12 +119,12 @@ class EndpointGroupManagementController(
     }
 
     @Operation(summary = "Deletes endpoint group.")
-    @DeleteMapping("/groups/{groupName}")
+    @DeleteMapping("/groups/{endpointGroupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun deleteGroupByGroupName(@PathVariable groupName: String, @Parameter(hidden = true) authentication: Authentication)
+    fun deleteGroupByGroupName(@PathVariable endpointGroupName: String, @Parameter(hidden = true) authentication: Authentication)
     {
-        val endpointGroup = endpointGroupRepository.findByGroupName(groupName).orElseThrow {
+        val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
         }
         userEndpointGroupPermissionRepository.findByUserIDAndEndpointGroupID(authentication.userDetails().id,
@@ -134,6 +147,6 @@ class EndpointGroupManagementController(
 
         userEndpointGroupModelElementPermissionRepository.deleteByEndpointGroupID(endpointGroup.id)
 
-        endpointGroupRepository.deleteByGroupName(groupName)
+        endpointGroupRepository.deleteByGroupName(endpointGroupName)
     }
 }
