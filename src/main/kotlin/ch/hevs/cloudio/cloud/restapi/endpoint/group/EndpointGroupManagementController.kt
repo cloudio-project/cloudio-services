@@ -32,7 +32,7 @@ class EndpointGroupManagementController(
     @ResponseStatus(HttpStatus.OK)
     fun getAllGroups(
             @Parameter(hidden = true) authentication: Authentication
-    ) = permissionManager.resolveEndpointGroupPermissions(authentication.userDetails()).mapNotNull { perm ->
+    ) = permissionManager.resolveEndpointGroupsPermissions(authentication.userDetails()).mapNotNull { perm ->
         endpointGroupRepository.findById(perm.endpointGroupID).orElse(null)?.let {
             EndpointGroupListEntity(
                 name = it.groupName,
