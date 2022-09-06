@@ -9,6 +9,11 @@ import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
+import io.swagger.v3.oas.annotations.info.Info
+import io.swagger.v3.oas.annotations.info.License
+import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
@@ -21,7 +26,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
-import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.data.domain.AuditorAware
@@ -33,19 +37,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.web.cors.CorsConfigurationSource
-import springfox.documentation.builders.ApiInfoBuilder
-import springfox.documentation.builders.PathSelectors
-import springfox.documentation.builders.RequestHandlerSelectors
-import springfox.documentation.service.AuthorizationScope
-import springfox.documentation.service.BasicAuth
-import springfox.documentation.service.SecurityReference
-import springfox.documentation.service.SecurityScheme
-import springfox.documentation.spi.DocumentationType
-import springfox.documentation.spi.service.contexts.SecurityContext
-import springfox.documentation.spring.web.plugins.Docket
 import java.net.InetAddress
 import java.util.*
-import java.util.Collections.singletonList
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
 
@@ -53,20 +46,33 @@ import javax.net.ssl.TrustManagerFactory
 @ConfigurationPropertiesScan
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableScheduling
+@OpenAPIDefinition(
+    info = Info(
+        title = "cloud.iO API",
+        version = "v1",
+        description = "API Documentation for cloud.iO",
+        license = License(name = "MIT", url = "https://opensource.org/licenses/MIT")
+    )
+)
+@SecurityScheme(
+    name = "basicAuth",
+    type = SecuritySchemeType.HTTP,
+    scheme = "basic"
+)
 class CloudioApplication {
     @Bean
     fun passwordEncoder() = BCryptPasswordEncoder()
 
     @Bean
     fun jackson2ObjectMapperBuilderCustomizer() = Jackson2ObjectMapperBuilderCustomizer {
-        it.modulesToInstall(KotlinModule())
+        it.modulesToInstall(KotlinModule.Builder().build())
     }
 
     @Bean
     fun messageConverter() = object : SmartMessageConverter {
         private val simple = SimpleMessageConverter()
         private val json = Jackson2JsonMessageConverter().apply {
-            jacksonObjectMapper().registerModule(KotlinModule())
+            jacksonObjectMapper().registerModule(KotlinModule.Builder().build())
         }
 
         override fun toMessage(obj: Any, messageProperties: MessageProperties) = when (obj) {
@@ -144,7 +150,7 @@ class CloudioApplication {
                 connection.mode?.let { cacheMode = it }
                 connection.size?.let { connectionCacheSize = it }
             }
-            setConnectionNameStrategy { InetAddress.getLocalHost().getHostName() }
+            setConnectionNameStrategy { InetAddress.getLocalHost().hostName }
         }
 
     @Bean
@@ -160,39 +166,13 @@ class CloudioApplication {
             http.cors().and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers(
-                    "/v2/api-docs", "/v3/api-docs",
-                    "/swagger-resources/**", "/swagger-ui/**",
-                    "/api/v1/provision/*",
-                    "/messageformat/**"
+                    "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
+                    "/api/v1/provision/*", "/messageformat/**"
                 ).permitAll()
                 .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
                 .and().httpBasic()
                 .and().sessionManagement().disable()
         }
-    }
-
-    @Bean
-    fun cloudioApiV1Documentation(buildProperties: BuildProperties?) = Docket(DocumentationType.SWAGGER_2).apply {
-        select()
-            .apis(RequestHandlerSelectors.any())
-            .paths(PathSelectors.ant("/api/v1/**"))
-            .build()
-        apiInfo(ApiInfoBuilder().apply {
-            title("cloud.iO API")
-            description("API Documentation for cloud.iO")
-            license("MIT")
-            licenseUrl("https://opensource.org/licenses/MIT")
-            buildProperties?.let { version(it.version) }
-        }.build())
-            .securitySchemes(singletonList<SecurityScheme>(BasicAuth("Basic Auth")))
-            .securityContexts(
-                singletonList(
-                    SecurityContext.builder()
-                        .securityReferences(listOf(SecurityReference("Basic Auth", arrayOf(AuthorizationScope("global", "accessEverything")))))
-                        .forPaths(PathSelectors.regex("/api/v1.*"))
-                        .build()
-                )
-            )
     }
 
     @Bean

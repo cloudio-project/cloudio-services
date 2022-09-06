@@ -2,21 +2,20 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.management
 
 import ch.hevs.cloudio.cloud.model.LogLevel
 import com.fasterxml.jackson.annotation.JsonInclude
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import io.swagger.v3.oas.annotations.media.Schema
 
-@ApiModel(description = "Endpoint configuration.")
+@Schema(name = "EndpointConfiguration", description = "Endpoint configuration.")
 data class EndpointConfigurationEntity(
-        @ApiModelProperty("Configuration properties.")
+        @Schema(description = "Configuration properties.", example = "{\"ch.hevs.cloudio.endpoint.uuid\": \"041c0e1e-b6d4-4f47-92b4-9f63343dbd28\", \"ch.hevs.cloudio.endpoint.hostUri\": \"cloudio.hevs.ch\"}")
         val properties: MutableMap<String, String>,
 
-        @ApiModelProperty("TLS client certificate to use for endpoint authentication.", readOnly = true)
+        @Schema(description = "TLS client certificate to use for endpoint authentication.", readOnly = true, example = "-----BEGIN CERTIFICATE-----...")
         var clientCertificate: String,
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        @ApiModelProperty("TLS client private key used to authenticate the endpoint.", readOnly = true, required = false)
-        var privateKey: String,
+        @Schema(description = "TLS client private key used to authenticate the endpoint.", required = false, readOnly = true, example = "-----BEGIN RSA PRIVATE KEY-----...")
+        var privateKey: String?,
 
-        @ApiModelProperty("Log level threshold for endpoint's log output send to the cloud.")
+        @Schema(description = "Log level threshold for endpoint's log output send to the cloud.", example = "WARN")
         var logLevel: LogLevel
 )

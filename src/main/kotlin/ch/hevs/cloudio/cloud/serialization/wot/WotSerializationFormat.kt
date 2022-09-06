@@ -3,6 +3,8 @@ package ch.hevs.cloudio.cloud.serialization.wot
 import ch.hevs.cloudio.cloud.model.AttributeConstraint
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
+import org.springframework.http.MediaType
+import java.util.*
 
 
 object WotSerializationFormat {
@@ -64,7 +66,7 @@ object WotSerializationFormat {
                             href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
-                            contentType = "application/json"
+                            contentType = MediaType.APPLICATION_JSON_VALUE
                     ))
                 }
                 AttributeConstraint.Parameter,
@@ -73,7 +75,7 @@ object WotSerializationFormat {
                             href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "readproperty",
                             subprotocol = null,
-                            contentType = "application/json"
+                            contentType = MediaType.APPLICATION_JSON_VALUE
                     ))
                     /* TODO: Leaving out MQTT for the moment.
                     forms.add(Form(
@@ -86,7 +88,7 @@ object WotSerializationFormat {
                             href = "$host/api/v1/data/" + cloudioObjectTopic + "/" + cloudioAttribute.key,
                             op = "writeproperty",
                             subprotocol = null,
-                            contentType = "application/json"
+                            contentType = MediaType.APPLICATION_JSON_VALUE
                     ))
                 }
 
@@ -98,7 +100,7 @@ object WotSerializationFormat {
                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                             "timestamp" to DataSchema("number", null),
-                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                            "value" to DataSchema(cloudioAttribute.value.type.toString().lowercase(), null)
                     ),
                     forms = forms,
                     required = setOf("constraint", "type", "timestamp", "value"),
@@ -115,8 +117,8 @@ object WotSerializationFormat {
         val eventSet: MutableMap<String, EventAffordance> = mutableMapOf()
 
         for (innerCloudioObject in cloudioObject.objects) {
-            eventSet.putAll(buildEvents(cloudioObjectName + innerCloudioObject.key.capitalize(),
-                    cloudioNodeObjectTopic + "/" + innerCloudioObject.key.capitalize(),
+            eventSet.putAll(buildEvents(cloudioObjectName + innerCloudioObject.key.replaceFirstChar { it.uppercase() },
+                    cloudioNodeObjectTopic + "/" + innerCloudioObject.key.replaceFirstChar { it.uppercase() },
                     innerCloudioObject.value,
                     host, mqttHost))
         }
@@ -134,7 +136,7 @@ object WotSerializationFormat {
                                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                                             "timestamp" to DataSchema("number", null),
-                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().lowercase(), null)
                                     ),
                                     required = setOf("constraint", "type", "timestamp", "value"),
                                     enum = null
@@ -143,12 +145,12 @@ object WotSerializationFormat {
                                     href = "$host/api/v1/notifyAttributeChange/" + cloudioNodeObjectTopic.replace("/", ".") + "." + cloudioAttribute.key + "/15000",
                                     op = "subscribeevent",
                                     subprotocol = "longpoll",
-                                    contentType = "application/json"),
+                                    contentType = MediaType.APPLICATION_JSON_VALUE),
                                     Form(
                                             href = mqttHost + "/@set/" + cloudioNodeObjectTopic + "/" + cloudioAttribute.key,
                                             op = "subscribeevent",
                                             subprotocol = null,
-                                            contentType = "application/json"))))
+                                            contentType = MediaType.APPLICATION_JSON_VALUE))))
 
                 }
                 AttributeConstraint.Status,
@@ -159,7 +161,7 @@ object WotSerializationFormat {
                                             "constraint" to DataSchema("string", setOf(cloudioAttribute.value.constraint.name)),
                                             "type" to DataSchema("string", setOf(cloudioAttribute.value.type.name)),
                                             "timestamp" to DataSchema("number", null),
-                                            "value" to DataSchema(cloudioAttribute.value.type.toString().decapitalize(), null)
+                                            "value" to DataSchema(cloudioAttribute.value.type.toString().replaceFirstChar { it.lowercase(Locale.getDefault()) }, null)
                                     ),
                                     required = setOf("constraint", "type", "timestamp", "value"),
                                     enum = null
@@ -168,12 +170,12 @@ object WotSerializationFormat {
                                     href = "$host/api/v1/notifyAttributeChange/" + cloudioNodeObjectTopic.replace("/", ".") + "." + cloudioAttribute.key + "/15000",
                                     op = "subscribeevent",
                                     subprotocol = "longpoll",
-                                    contentType = "application/json"),
+                                    contentType = MediaType.APPLICATION_JSON_VALUE),
                                     Form(
                                             href = mqttHost + "/@update/" + cloudioNodeObjectTopic + "/" + cloudioAttribute.key,
                                             op = "subscribeevent",
                                             subprotocol = null,
-                                            contentType = "application/json"))))
+                                            contentType = MediaType.APPLICATION_JSON_VALUE))))
                 }
             }
         }

@@ -7,9 +7,13 @@ import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -22,36 +26,60 @@ import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Provisioning"], description = "Allows users or developers to provision new endpoints into the system.")
+@Tag(name = "Endpoint Provisioning", description = "Allows users or developers to provision new endpoints into the system.")
 @RequestMapping("/api/v1")
 class EndpointProvisioningController(
-        private val endpointRepository: EndpointRepository,
-        private val provisionTokenRepository: ProvisionTokenRepository,
-        private val certificateManager: CertificateManagerService
+    private val endpointRepository: EndpointRepository,
+    private val provisionTokenRepository: ProvisionTokenRepository,
+    private val certificateManager: CertificateManagerService
 ) {
     private val caCertificate by lazy {
         certificateManager.getCACertificate()
     }
 
-    @GetMapping("/ca-certificate", produces = ["text/plain"])
+    @GetMapping("/ca-certificate", produces = ["application/x-x509-user-cert"])
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Returns the certificate used by the certificate authority of the cloud.iO installation.")
+    @Operation(summary = "Returns the certificate used by the certificate authority of the cloud.iO installation.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "CA certificate used to sign and check endpoint client certificates.", responseCode = "200", content = [Content(
+                    schema = Schema(type = "string", example = "-----BEGIN CERTIFICATE-----...")
+                )]
+            )
+        ]
+    )
     fun getCaCertificate() = ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType("application/x-x509-user-cert"))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.crt\"")
-            .body(caCertificate)
+        .contentType(MediaType.parseMediaType("application/x-x509-user-cert"))
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"authority.crt\"")
+        .body(caCertificate)
 
-    @PostMapping("/endpoints/{uuid}/provisionToken", produces = ["text/plain"])
+    @PostMapping("/endpoints/{uuid}/provisionToken", produces = [MediaType.TEXT_PLAIN_VALUE])
     @ResponseStatus(HttpStatus.OK)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Prepare endpoint for provision and returns the token that can be used for provisioning.")
+    @Operation(summary = "Prepare endpoint for provision and returns the token that can be used for provisioning.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "Endpoint provisioning token generated.", responseCode = "200", content = [Content(
+                    schema = Schema(
+                        type = "string",
+                        example = "I9IIsxmv7BsBErjPAEUVkbniglWZnnn8KLFxDNNYMTb3ekGhhaY56rALx0WPH3mo"
+                    )
+                )]
+            ),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun prepareProvisionByUUID(
-            @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
-            @RequestBody @ApiParam("Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestBody @Parameter(description = "Additional provisioning options.", required = false) endpointProvisioningOptions: EndpointProvisioningOptionsEntity?
     ): String {
         // Get endpoint.
         val endpoint = endpointRepository.findById(uuid).orElseThrow {
@@ -69,38 +97,71 @@ class EndpointProvisioningController(
         // Add a token to the provision token database.
         val expires = Date()
         expires.time = System.currentTimeMillis() + 24 * 3600 * 1000
-        return provisionTokenRepository.save(ProvisionToken(
+        return provisionTokenRepository.save(
+            ProvisionToken(
                 endpointUUID = uuid,
                 expires = expires
-        )).token
+            )
+        ).token
     }
 
-    @GetMapping("/endpoints/{uuid}/provision")
+    @GetMapping("/endpoints/{uuid}/provision", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
-    @ApiOperation("Get endpoint configuration information for a given endpoint.")
+    @Operation(summary = "Get endpoint configuration information for a given endpoint.")
+    @ApiResponses(
+        value = [ApiResponse(
+            description = "Endpoint provisioning data.", responseCode = "200", content = [
+                Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = Schema(implementation = EndpointProvisioningConfigurationEntity::class)),
+                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration."))
+            ]
+        ),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun provisionByUUID(
-        @PathVariable @ApiParam("UUID of the endpoint.", required = true) uuid: UUID,
-        @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
-        @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?,
+        @Parameter(hidden = true) request: HttpServletRequest
     ): ResponseEntity<Any> = endpointRepository.findById(uuid).orElseThrow {
-        CloudioHttpExceptions.NotFound("Not found")
-    }.getProvisionEntity(endpointProvisionDataFormat, publicKey)
+        CloudioHttpExceptions.NotFound("Endpoint not found.")
+    }.getProvisionEntity(
+        when (request.getHeader("Accept")) {
+            "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
+            else -> EndpointProvisioningDataFormat.JSON
+        }, publicKey
+    )
 
-
-    @GetMapping("/provision/{token}")
+    @GetMapping("/provision/{token}", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive"])
     @ResponseStatus(HttpStatus.OK)
-    @ApiOperation("Get endpoint configuration information for a pending provision token.")
+    @Operation(summary = "Get endpoint configuration information for a pending provision token.")
+    @ApiResponses(
+        value = [ApiResponse(
+            description = "Endpoint provisioning data.", responseCode = "200", content = [
+                Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = Schema(implementation = EndpointProvisioningConfigurationEntity::class)),
+                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration."))
+            ]
+        ),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun provisionByToken(
-            @PathVariable @ApiParam("Provision token.", required = true) token: String,
-            @RequestParam @ApiParam("Provisioning data format.", required = false) endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
-            @RequestParam @ApiParam("Public key to use for certificate generation in PEM format.") publicKey: String?
+        @PathVariable @Parameter(description = "Provision token.", required = true) token: String,
+        @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?,
+        @Parameter(hidden = true) request: HttpServletRequest
     ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
         CloudioHttpExceptions.Forbidden("Forbidden")
     }.let {
         endpointRepository.findById(it.endpointUUID).orElseThrow {
-            CloudioHttpExceptions.NotFound("Not found")
-        }.getProvisionEntity(endpointProvisionDataFormat, publicKey, it)
+            CloudioHttpExceptions.NotFound("Endpoint not found")
+        }.getProvisionEntity(
+            when (request.getHeader("Accept")) {
+                "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
+                else -> EndpointProvisioningDataFormat.JSON
+            }, publicKey, it
+        )
     }
 
     private fun Endpoint.getProvisionEntity(
@@ -133,17 +194,20 @@ class EndpointProvisioningController(
             provisionTokenRepository.delete(token)
         }
 
-        when (endpointProvisionDataFormat ?:  EndpointProvisioningDataFormat.JSON) {
+        when (endpointProvisionDataFormat ?: EndpointProvisioningDataFormat.JSON) {
             EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/json"))
+                .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE))
                 .header("Endpoint", uuid.toString())
-                .body(EndpointProvisioningConfigurationEntity(
-                    endpoint = uuid,
-                    properties = configuration.properties,
-                    caCertificate = caCertificate,
-                    clientCertificate = configuration.clientCertificate,
-                    clientPrivateKey = if (configuration.privateKey.isNotEmpty()) configuration.privateKey else null
-                ))
+                .body(
+                    EndpointProvisioningConfigurationEntity(
+                        endpoint = uuid,
+                        properties = configuration.properties,
+                        caCertificate = caCertificate,
+                        clientCertificate = configuration.clientCertificate,
+                        clientPrivateKey = if (configuration.privateKey.isNotEmpty()) configuration.privateKey else null
+                    )
+                )
+
             EndpointProvisioningDataFormat.JAR_ARCHIVE -> {
                 if (configuration.privateKey.isEmpty()) {
                     CloudioHttpExceptions.BadRequest("Endpoint has no private key.")

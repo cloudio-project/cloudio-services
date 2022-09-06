@@ -1,24 +1,22 @@
 package ch.hevs.cloudio.cloud.restapi.account
 
 import ch.hevs.cloudio.cloud.security.Authority
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import io.swagger.v3.oas.annotations.media.Schema
 
-@ApiModel(description = "User account information.")
+@Schema(name = "Account", description = "User account information.")
 data class AccountEntity(
-        @ApiModelProperty(
-                "Username.", position = 0, readOnly = true, example = "d.vader")
+        @Schema(description = "Username.", readOnly = true, example = "john.doe")
         var name: String,
 
-        @ApiModelProperty("Email address.", position = 1, example = "d.vader@empire.gx")
+        @Schema(description ="Email address.", readOnly = true, example = "john.doe@theinternet.org")
         var email: String,
 
-        @ApiModelProperty("System-wide user authorities.", position = 2, readOnly = true, example = "[\"HTTP_ACCESS\", \"HTTP_ENDPOINT_CREATION\"]")
+        @Schema(description ="System-wide user authorities.", readOnly = true, example = "[\"HTTP_ACCESS\", \"HTTP_ENDPOINT_CREATION\"]")
         var authorities: Set<Authority>,
 
-        @ApiModelProperty("List of all groups the user is member of.", position = 3, readOnly = true, example = "[\"EvilEmpire\"]")
+        @Schema(description ="List of all groups the user is member of.", readOnly = true, example = "[\"Managers\"]")
         var groupMemberships: List<String>,
 
-        @ApiModelProperty("User account metadata.", position = 4, example = "{\"lightSaberColor\": \"red\", \"age\": 38}")
+        @Schema(description ="User account metadata.", readOnly = true, example = "{\"location\": \"Sion\", \"age\": 38}")
         var metadata: Map<String, Any>
 )

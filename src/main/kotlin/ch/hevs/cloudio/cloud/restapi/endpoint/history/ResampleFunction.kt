@@ -1,42 +1,45 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.history
 
+import io.swagger.v3.oas.annotations.media.Schema
+
+@Schema(description = "Function used to resample raw data in time-series database.", enumAsRef = true)
 enum class ResampleFunction {
-    // Returns the number of non-null field values.
+    @Schema(description = "Returns the number of non-null field values.")
     COUNT,
 
-    // Returns the list of unique field values.
+    @Schema(description = "Returns the list of unique field values.")
     DISTINCT,
 
-    // Returns the area under the curve for subsequent field values.
+    @Schema(description = "Returns the area under the curve for subsequent field values.")
     INTEGRAL,
 
-    // Returns the arithmetic mean (average) of field values.
+    @Schema(description = "Returns the arithmetic mean (average) of field values.")
     MEAN,
 
-    // Returns the middle value from a sorted list of field values.
+    @Schema(description = "Returns the middle value from a sorted list of field values.")
     MEDIAN,
 
-    // Returns the most frequent value in a list of field values.
+    @Schema(description = "Returns the most frequent value in a list of field values.")
     MODE,
 
-    // Returns the difference between the minimum and maximum field values.
+    @Schema(description = "Returns the difference between the minimum and maximum field values.")
     SPREAD,
 
-    // Returns the standard deviation of field values.
+    @Schema(description = "Returns the standard deviation of field values.")
     STDDEV,
 
-    // Returns the sum of field values.
+    @Schema(description = "Returns the sum of field values.")
     SUM,
 
-    // Returns the field value with the oldest timestamp.
+    @Schema(description = "Returns the field value with the oldest timestamp.")
     FIRST,
 
-    // Returns the field value with the most recent timestamp.
+    @Schema(description = "Returns the field value with the most recent timestamp.")
     LAST,
 
-    // Returns the greatest field value.
+    @Schema(description = "Returns the greatest field value.")
     MAX,
 
-    // Returns the lowest field value.
+    @Schema(description = "Returns the lowest field value.")
     MIN
 }

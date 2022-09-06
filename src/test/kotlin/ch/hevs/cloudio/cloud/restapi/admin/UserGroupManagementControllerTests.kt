@@ -69,7 +69,7 @@ class UserGroupManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createGroup() {
-        userGroupManagementController.createGroup(PostUserGroupEntity("Group1"))
+        userGroupManagementController.postGroup(PostUserGroupEntity("Group1"))
 
         transaction {
             groupRepository.findByGroupName("Group1").orElseThrow().apply {
@@ -83,7 +83,7 @@ class UserGroupManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun recreateExistingGroup() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userGroupManagementController.createGroup(PostUserGroupEntity("TestGroup"))
+            userGroupManagementController.postGroup(PostUserGroupEntity("TestGroup"))
         }
     }
 
@@ -91,7 +91,7 @@ class UserGroupManagementControllerTests {
     @WithMockUser("philip.fry", authorities = ["HTTP_ACCESS"])
     fun createGroupByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            userGroupManagementController.createGroup(PostUserGroupEntity("Group1"))
+            userGroupManagementController.postGroup(PostUserGroupEntity("Group1"))
         }
     }
 

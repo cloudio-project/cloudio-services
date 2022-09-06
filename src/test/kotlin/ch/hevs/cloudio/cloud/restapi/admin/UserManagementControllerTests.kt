@@ -67,7 +67,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteMinimalUser() {
-        userManagementController.createUser(PostUserEntity(
+        userManagementController.postUser(PostUserEntity(
                 name = "User1",
                 email = "no@thing.com",
                 password = "88888888"
@@ -99,7 +99,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAndDeleteCompleteUser() {
-        userManagementController.createUser(PostUserEntity(
+        userManagementController.postUser(PostUserEntity(
                 name = "User1",
                 email = "no@thing.com",
                 password = "tototititata",
@@ -134,7 +134,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun recreateExistingUser() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userManagementController.createUser(PostUserEntity(
+            userManagementController.postUser(PostUserEntity(
                     name = "TestUser",
                     email = "no@thing.com",
                     password = "88888888"
@@ -146,7 +146,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserWithInvalidEmail() {
         assertThrows<CloudioHttpExceptions.BadRequest> {
-            userManagementController.createUser(PostUserEntity(
+            userManagementController.postUser(PostUserEntity(
                     name = "TestUser2",
                     email = "nothing.com",
                     password = "88888888"
@@ -158,7 +158,7 @@ class UserManagementControllerTests {
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInNonExistingGroup() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userManagementController.createUser(PostUserEntity(
+            userManagementController.postUser(PostUserEntity(
                     name = "User1",
                     email = "no@thing.com",
                     password = "88888888",
@@ -170,7 +170,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createUserInExistingGroup() {
-        userManagementController.createUser(PostUserEntity(
+        userManagementController.postUser(PostUserEntity(
                 name = "User1",
                 email = "no@thing.com",
                 password = "88888888",
@@ -196,7 +196,7 @@ class UserManagementControllerTests {
     @Test
     @WithMockUser("admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun createAdminUser() {
-        userManagementController.createUser(PostUserEntity(
+        userManagementController.postUser(PostUserEntity(
                 name = "Admin1",
                 email = "no@thing.com",
                 password = "1234567812345678",
@@ -223,7 +223,7 @@ class UserManagementControllerTests {
     @WithMockUser("TestUser", authorities = ["HTTP_ACCESS"])
     fun createUserNotByAdmin() {
         assertThrows<AccessDeniedException> {
-            userManagementController.createUser(PostUserEntity(
+            userManagementController.postUser(PostUserEntity(
                     name = "User1",
                     email = "no@thing.com",
                     password = "88888888"

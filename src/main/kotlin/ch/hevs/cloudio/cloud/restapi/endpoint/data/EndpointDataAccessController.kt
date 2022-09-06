@@ -12,24 +12,26 @@ import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
-import org.springframework.amqp.core.AmqpAdmin
-import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
-import springfox.documentation.annotations.ApiIgnore
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @Profile("rest-api")
-@Api(tags = ["Endpoint Model Access"], description = "Allows an user to access data models of endpoints.")
+@Tag(name = "Endpoint Data Access", description = "Allows an user to access data of endpoints.")
 @RequestMapping("/api/v1/data")
 class EndpointDataAccessController(
     private val endpointRepository: EndpointRepository,
@@ -37,18 +39,24 @@ class EndpointDataAccessController(
     private val influxDB: InfluxDB,
     private val influxProperties: CloudioInfluxProperties,
     private val serializationFormats: Collection<SerializationFormat>,
-    private val rabbitTemplate: RabbitTemplate,
-    private val amqpAdmin: AmqpAdmin,
-    private val connectionFactory: ConnectionFactory
+    private val rabbitTemplate: RabbitTemplate
 ) {
     private val antMatcher = AntPathMatcher()
 
-    @ApiOperation("Read access to endpoint's data model.")
-    @GetMapping("/**")
+    @GetMapping("/**", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Read access to endpoint's data.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint data at the given path.", responseCode = "200", content = [Content(schema = Schema(type = "object"))]),
+            ApiResponse(description = "Invalid model identifier.", responseCode = "400", content = [Content()]),
+            ApiResponse(description = "Endpoint not found or model element not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
     fun getModelElement(
-        @ApiIgnore authentication: Authentication,
-        @ApiIgnore request: HttpServletRequest
+        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 
         // Extract model identifier and check it for validity.
@@ -88,24 +96,27 @@ class EndpointDataAccessController(
             }
         }
         // If the user only has partial access to the endpoint's model, filter the data model accordingly.
-        else{
-            val noDataStructure : Any?
+        else {
 
             //Endpoint permission is BROWSE
-            if(endpointPermission.fulfills(EndpointPermission.BROWSE)){
+            val noDataStructure: Any? = if (endpointPermission.fulfills(EndpointPermission.BROWSE)) {
                 //The user can see the whole endpoint structure
-                noDataStructure = data
+                data
             }
             //Endpoint permission is ACCESS
-            else{
+            else {
                 //Get the part of structure that the user can see
-                noDataStructure = permissionManager.filter(data, authentication.userDetails(),
-                        modelIdentifier, EndpointModelElementPermission.VIEW)
+                permissionManager.filter(
+                    data, authentication.userDetails(),
+                    modelIdentifier, EndpointModelElementPermission.VIEW
+                )
             }
 
             //Get the part of structure that must be filled with values
-            data = permissionManager.filter(data, authentication.userDetails(),
-                    modelIdentifier, EndpointModelElementPermission.READ)
+            data = permissionManager.filter(
+                data, authentication.userDetails(),
+                modelIdentifier, EndpointModelElementPermission.READ
+            )
 
             // Fill data from influxDB.
             when (data) {
@@ -118,24 +129,30 @@ class EndpointDataAccessController(
             //merge the filled structure with the empty one
             data = permissionManager.merge(data, noDataStructure)
 
-            if(data == null){
+            if (data == null) {
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
-
 
         // TODO: We should create an entity class to return.
         return data
     }
 
-    @ApiOperation("Write access to all endpoint's data model.")
-    @PutMapping("/**")
+    @PutMapping("/**", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Write access to all endpoint's data model.")
+    @ApiResponses(value = [
+        ApiResponse(description = "Endpoint data was written to the given path.", responseCode = "204", content = [Content()]),
+        ApiResponse(description = "Invalid model identifier, attribute is not a SetPoint, nor a Parameter or element is not an attribute.",
+            responseCode = "400", content = [Content()]),
+        ApiResponse(description = "Endpoint not found or model element not found.", responseCode = "404", content = [Content()]),
+        ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+        ApiResponse(description = "Invalid datatype or endpoint does not support any serialization format.", responseCode = "500", content = [Content()]),
+    ])
     fun putAttribute(
-        @RequestParam @ApiParam("Value to set.") value: String,
-        @ApiIgnore authentication: Authentication,
-        @ApiIgnore request: HttpServletRequest
+        @RequestParam @Parameter(description = "Value to set.") value: String,
+        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) request: HttpServletRequest
     ) {
 
         // Extract model identifier and check it for validity.
@@ -191,6 +208,7 @@ class EndpointDataAccessController(
                     )
                 )
             }
+
             else -> throw CloudioHttpExceptions.BadRequest("Only Attributes can be modified.")
         }
     }

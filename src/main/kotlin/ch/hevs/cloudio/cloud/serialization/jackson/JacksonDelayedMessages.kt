@@ -23,9 +23,9 @@ data class JacksonDelayedMessages(
                 data = data.get().let {
                     val id = ModelIdentifier(topic.get())
                     when (id.action) {
-                        ActionIdentifier.ATTRIBUTE_UPDATE, ActionIdentifier.ATTRIBUTE_DID_SET -> mapper.treeToValue<JacksonAttribute>(it)!!.toAttribute()
-                        ActionIdentifier.TRANSACTION -> mapper.treeToValue<JacksonTransaction>(it)!!.toTransaction()
-                        ActionIdentifier.LOG_OUTPUT -> mapper.treeToValue<JacksonLogMessage>(it)!!.toLogMessage()
+                        ActionIdentifier.ATTRIBUTE_UPDATE, ActionIdentifier.ATTRIBUTE_DID_SET -> mapper.treeToValue<JacksonAttribute>(it).toAttribute()
+                        ActionIdentifier.TRANSACTION -> mapper.treeToValue<JacksonTransaction>(it).toTransaction()
+                        ActionIdentifier.LOG_OUTPUT -> mapper.treeToValue<JacksonLogMessage>(it).toLogMessage()
                         else -> throw SerializationException()
                     }
                 }

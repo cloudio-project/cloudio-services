@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   rabbitmq:
-    image: cloudio/cloudio-rabbitmq:latest
+    image: cloudio/cloudio-rabbitmq:3.9.22-1
     ports:
     - "8883:8883"
     - "5671:5671"
@@ -13,12 +13,12 @@ services:
       SERVER_KEY: ${SERVER_KEY}
 
   influx:
-    image: influxdb:1.5-alpine
+    image: influxdb:1.8.10
     ports:
     - "8086:8086"
 
   database:
-    image: postgres:12.2-alpine
+    image: postgres:14.5-alpine
     ports:
     - "5432:5432"
     environment:

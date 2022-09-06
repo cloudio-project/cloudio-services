@@ -1,11 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.3.3.RELEASE"
-    id("io.spring.dependency-management") version "1.0.10.RELEASE"
-    kotlin("jvm") version "1.3.72"
-    kotlin("plugin.spring") version "1.3.72"
-    id("com.google.cloud.tools.jib") version "3.1.4"
+    id("org.springframework.boot") version "2.7.3"
+    id("io.spring.dependency-management") version "1.0.13.RELEASE"
+    kotlin("jvm") version "1.6.21"
+    kotlin("plugin.spring") version "1.6.21"
+    id("com.google.cloud.tools.jib") version "3.2.1"
 }
 
 open class GitTools(p: String) {
@@ -42,31 +42,35 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("io.springfox:springfox-boot-starter:3.0.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
-    implementation("org.postgresql:postgresql")
-    implementation("com.vladmihalcea:hibernate-types-52:2.9.13")
-    implementation("org.influxdb:influxdb-java")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.66")
-
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
-
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    implementation("org.springdoc:springdoc-openapi-ui:1.6.11")
+    implementation("org.springdoc:springdoc-openapi-kotlin:1.6.11")
+
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
+
+    implementation("org.postgresql:postgresql")
+    implementation("com.vladmihalcea:hibernate-types-52:2.18.0")
+    implementation("org.influxdb:influxdb-java")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.6.21")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.72")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
-    testImplementation("org.skyscreamer:jsonassert:1.5.0")
-    testImplementation("co.nstant.in:cbor:0.9")}
+    testImplementation("org.skyscreamer:jsonassert:1.5.1")
+    testImplementation("co.nstant.in:cbor:0.9")
+}
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
