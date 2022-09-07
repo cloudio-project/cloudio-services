@@ -150,6 +150,7 @@ class EndpointProvisioningController(
     fun provisionByToken(
         @PathVariable @Parameter(description = "Provision token.", required = true) token: String,
         @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?,
+        @RequestParam @Parameter(description = "Name of the properties file. If not specified, the file will named according to the UUID of the endpoint.") propertiesFileName: String?,
         @Parameter(hidden = true) request: HttpServletRequest
     ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
         CloudioHttpExceptions.Forbidden("Forbidden")
@@ -160,14 +161,15 @@ class EndpointProvisioningController(
             when (request.getHeader("Accept")) {
                 "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
                 else -> EndpointProvisioningDataFormat.JSON
-            }, publicKey, it
+            }, publicKey, propertiesFileName, it
         )
     }
 
     private fun Endpoint.getProvisionEntity(
         endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
         publicKey: String?,
-        token: ProvisionToken? = null
+        propertiesFileName: String? = null,
+        token: ProvisionToken? = null,
     ): ResponseEntity<Any> = this.run {
         if (configuration.clientCertificate.isNotEmpty() && publicKey != null) {
             configuration.clientCertificate = ""
@@ -218,11 +220,12 @@ class EndpointProvisioningController(
                 val zip = ZipOutputStream(output)
 
                 // Write properties file.
-                zip.putNextEntry(ZipEntry("cloud.io/$uuid.properties"))
+                zip.putNextEntry(ZipEntry("${propertiesFileName ?: uuid.toString()}.properties"))
                 Properties().apply {
                     configuration.properties.forEach { prop ->
                         setProperty(prop.key, prop.value)
                     }
+                    setProperty("ch.hevs.cloudio.endpoint.uuid", uuid.toString())
                     setProperty("ch.hevs.cloudio.endpoint.ssl.clientPassword", password)
                     setProperty("ch.hevs.cloudio.endpoint.ssl.authorityPassword", password)
                 }.store(zip, "")
@@ -231,7 +234,7 @@ class EndpointProvisioningController(
                 // Add certificate authority keystore.
                 val caCertificate = caCertificate.toX509Certificate()
 
-                zip.putNextEntry(ZipEntry("cloud.io/authority.jks"))
+                zip.putNextEntry(ZipEntry("authority.jks"))
                 zip.writeJKSTruststore(password, caCertificate)
                 zip.closeEntry()
 
@@ -239,7 +242,7 @@ class EndpointProvisioningController(
                 val certificate = configuration.clientCertificate.toX509Certificate()
                 val privateKey = configuration.privateKey.toPrivateKey()
 
-                zip.putNextEntry(ZipEntry("cloud.io/$uuid.p12"))
+                zip.putNextEntry(ZipEntry("$uuid.p12"))
                 zip.writePKCS12Keystore(password, certificate, privateKey)
                 zip.closeEntry()
 
