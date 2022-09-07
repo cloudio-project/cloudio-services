@@ -6,7 +6,7 @@ import java.util.*
 
 @Schema(name = "EndpointGroupListEntry", description = "Endpoint group overview used in endpoint group listing.")
 data class EndpointGroupListEntity(
-        @Schema(description = "The endpoint group name", readOnly = true)
+        @Schema(description = "The endpoint group name", readOnly = true, example = "BuildingAutomation")
         val name: String,
 
         @Schema(description = "The permission the currently authenticated user has for this endpoint group.", readOnly = true, example = "OWN")
