@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.group
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.endpoint.management.EndpointListEntity
 import ch.hevs.cloudio.cloud.security.Authority
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
@@ -73,13 +74,23 @@ class EndpointGroupManagementController(
     @Transactional
     @PreAuthorize("hasPermission(#endpointGroupName, \"EndpointGroup\",T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     fun getGroupByGroupName(
-            @PathVariable endpointGroupName: String
+            @PathVariable endpointGroupName: String,
+            @Parameter(hidden = true) authentication: Authentication
     ) = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
         CloudioHttpExceptions.NotFound("Group '$endpointGroupName' not found.")
     }.run {
         EndpointGroupEntity(
                 name = endpointGroupName,
-                metaData = metaData
+                metaData = metaData,
+                endpoints = endpointRepository.findByGroupMembershipsContains(this).map {
+                    EndpointListEntity(
+                            uuid = it.uuid,
+                            friendlyName = it.friendlyName,
+                            banned = it.banned,
+                            online = it.online,
+                            permission = permissionManager.resolveEndpointPermission(authentication.userDetails(), it.uuid)
+                    )
+                }
         )
     }
 
