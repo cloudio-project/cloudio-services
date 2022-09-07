@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.dao.UserGroup
 import ch.hevs.cloudio.cloud.dao.UserGroupRepository
 import ch.hevs.cloudio.cloud.dao.UserRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.restapi.admin.user.ListUserEntity
 import ch.hevs.cloudio.cloud.security.Authority
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -71,8 +72,12 @@ class UserGroupManagementController(
         @PathVariable @Parameter(description = "Name of the group to get details.") groupName: String
     ) = userGroupRepository.findByGroupName(groupName).orElseThrow {
         CloudioHttpExceptions.NotFound("User group '$groupName' not found.")
-    }.let {
-        UserGroupEntity(it)
+    }.let { userGroup ->
+        UserGroupEntity(
+                name = userGroup.groupName,
+                metaData = userGroup.metaData,
+                users = userRepository.findByGroupMembershipsContains(userGroup).map {ListUserEntity(it)}
+        )
     }
 
     @PutMapping("/groups/{groupName}", consumes = [MediaType.APPLICATION_JSON_VALUE])
