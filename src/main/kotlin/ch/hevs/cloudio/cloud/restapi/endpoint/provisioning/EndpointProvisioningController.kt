@@ -105,7 +105,7 @@ class EndpointProvisioningController(
         ).token
     }
 
-    @GetMapping("/endpoints/{uuid}/provision", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive"])
+    @GetMapping("/endpoints/{uuid}/provision", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive", "application/zip"])
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Get endpoint configuration information for a given endpoint.")
@@ -129,6 +129,7 @@ class EndpointProvisioningController(
     }.getProvisionEntity(
         when (request.getHeader("Accept")) {
             "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
+            "application/zip" -> EndpointProvisioningDataFormat.ZIP_ARCHIVE
             else -> EndpointProvisioningDataFormat.JSON
         }, publicKey
     )
@@ -140,7 +141,8 @@ class EndpointProvisioningController(
         value = [ApiResponse(
             description = "Endpoint provisioning data.", responseCode = "200", content = [
                 Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = Schema(implementation = EndpointProvisioningConfigurationEntity::class)),
-                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration."))
+                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration.")),
+                Content(mediaType = "application/zip", schema = Schema(description = "ZIP Archive containing the endpoint configuration."))
             ]
         ),
             ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
@@ -160,6 +162,7 @@ class EndpointProvisioningController(
         }.getProvisionEntity(
             when (request.getHeader("Accept")) {
                 "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
+                "application/zip" -> EndpointProvisioningDataFormat.ZIP_ARCHIVE
                 else -> EndpointProvisioningDataFormat.JSON
             }, publicKey, propertiesFileName, it
         )
@@ -254,6 +257,53 @@ class EndpointProvisioningController(
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${this.uuid}.jar\"")
                     .header("Endpoint", this.uuid.toString())
                     .body(output.toByteArray())
+            }
+            EndpointProvisioningDataFormat.ZIP_ARCHIVE -> {
+                if (configuration.privateKey.isEmpty()) {
+                    CloudioHttpExceptions.BadRequest("Endpoint has no private key.")
+                }
+
+                val output = ByteArrayOutputStream()
+                val zip = ZipOutputStream(output)
+
+                // Write properties file.
+                zip.putNextEntry(ZipEntry("${propertiesFileName ?: uuid.toString()}.properties"))
+                Properties().apply {
+                    configuration.properties.forEach { prop ->
+                        setProperty(prop.key, prop.value)
+                    }
+                    setProperty("ch.hevs.cloudio.endpoint.uuid", uuid.toString())
+                }.store(zip, "")
+                zip.closeEntry()
+
+                // Add certificate authority keystore.
+                val caCertificate = caCertificate.toByteArray()
+
+                zip.putNextEntry(ZipEntry("ca-cert.pem"))
+                zip.write(caCertificate)
+                zip.closeEntry()
+
+                // Add client pem file.
+                val certificate = configuration.clientCertificate.toByteArray()
+
+                zip.putNextEntry(ZipEntry("${uuid}-client-cert.pem"))
+                zip.write(certificate)
+                zip.closeEntry()
+
+                if (configuration.privateKey.isNotEmpty()){
+                    zip.putNextEntry(ZipEntry("${uuid}-private-key.pem"))
+                    zip.write(configuration.privateKey.toByteArray())
+                    zip.closeEntry()
+                }
+
+                zip.flush()
+                zip.close()
+
+                ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("application/zip"))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${this.uuid}.zip\"")
+                        .header("Endpoint", this.uuid.toString())
+                        .body(output.toByteArray())
             }
         }
     }
