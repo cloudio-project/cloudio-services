@@ -401,7 +401,7 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/configuration/properties/{key}", consumes = ["text/plain"])
+    @PutMapping("/{uuid}/configuration/properties/{key}", consumes = [])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
@@ -416,7 +416,7 @@ class EndpointManagementController(
     fun putEndpointConfigurationPropertyByUUIDAndPropertyName(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
         @PathVariable @Parameter(description = "Name of the property to change.", required = true, schema = Schema(type = "string", example = "ch.hevs.cloudio.endpoint.hostUri")) key: String,
-        @RequestParam @Parameter(description = "Value to set the property to.", required = true, schema = Schema(type = "string", example = "cloudio.hevs.ch")) value: String
+        @RequestParam @Parameter(description = "Value to set the property to change.", required = true, schema = Schema(type = "string", example = "cloudio.hevs.ch")) value: String
     ) {
         endpointRepository.findById(uuid).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
@@ -426,6 +426,29 @@ class EndpointManagementController(
         }
     }
 
+    @PostMapping("/{uuid}/configuration/properties", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
+    @Operation(summary = "Update endpoint's configuration parameters, the passed parameters are merged with the existing ones.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint configuration parameters modified.", responseCode = "204", content = [Content()]),
+            ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
+    fun postEndpointConfigurationPropertiesByUUID(
+        @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
+        @RequestBody @Parameter(description = "Parameters to add to exising set of parameters", required = true, schema = Schema(type = "object", example = "{\"ch.hevs.cloudio.endpoint.persistence\": \"none\", \"ch.hevs.cloudio.endpoint.messageFormat\": \"cbor\"}")) parameters: Map<String,String>
+    ) {
+        endpointRepository.findById(uuid).orElseThrow {
+            CloudioHttpExceptions.NotFound("Endpoint not found.")
+        }.let {
+            it.configuration.properties.putAll(parameters)
+            endpointRepository.save(it)
+        }
+    }
 
     @PutMapping("/{uuid}/configuration/logLevel", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
