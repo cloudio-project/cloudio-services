@@ -401,7 +401,7 @@ class EndpointManagementController(
     }
 
 
-    @PutMapping("/{uuid}/configuration/properties/{key}", consumes = ["text/plain"])
+    @PutMapping("/{uuid}/configuration/properties/{key}", consumes = [])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
@@ -416,7 +416,7 @@ class EndpointManagementController(
     fun putEndpointConfigurationPropertyByUUIDAndPropertyName(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID,
         @PathVariable @Parameter(description = "Name of the property to change.", required = true, schema = Schema(type = "string", example = "ch.hevs.cloudio.endpoint.hostUri")) key: String,
-        @RequestParam @Parameter(description = "Value to set the property to.", required = true, schema = Schema(type = "string", example = "cloudio.hevs.ch")) value: String
+        @RequestParam @Parameter(description = "Value to set the property to change.", required = true, schema = Schema(type = "string", example = "cloudio.hevs.ch")) value: String
     ) {
         endpointRepository.findById(uuid).orElseThrow {
             CloudioHttpExceptions.NotFound("Endpoint not found.")
@@ -425,7 +425,6 @@ class EndpointManagementController(
             endpointRepository.save(it)
         }
     }
-
 
     @PutMapping("/{uuid}/configuration/logLevel", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
