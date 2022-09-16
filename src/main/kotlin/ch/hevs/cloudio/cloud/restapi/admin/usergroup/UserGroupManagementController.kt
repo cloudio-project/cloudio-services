@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -24,6 +25,7 @@ import javax.transaction.Transactional
 @Profile("rest-api")
 @Tag(name = "User Management")
 @RequestMapping("/api/v1/admin")
+@SecurityRequirement(name = "basicAuth")
 @Authority.HttpAdmin
 class UserGroupManagementController(
         private var userGroupRepository: UserGroupRepository,

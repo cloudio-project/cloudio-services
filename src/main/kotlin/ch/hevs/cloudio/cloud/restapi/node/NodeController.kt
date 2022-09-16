@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Profile
@@ -25,6 +26,7 @@ import java.net.InetAddress
 @Tag(name = "Node info", description = "Information about the cloud.iO service node.")
 @RestController
 @RequestMapping("api/v1/node")
+@SecurityRequirement(name = "basicAuth")
 class NodeController(
     private val buildProperties: BuildProperties
 ) {
