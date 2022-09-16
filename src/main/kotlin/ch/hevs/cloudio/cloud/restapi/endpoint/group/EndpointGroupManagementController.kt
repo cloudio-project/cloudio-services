@@ -10,6 +10,7 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -22,7 +23,10 @@ import javax.transaction.Transactional
 @Profile("rest-api")
 @Tag(name = "Endpoint Group Management", description = "Allows a user to manage endpoint groups.")
 @RequestMapping("/api/v1/endpoints")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirements(value = [
+    SecurityRequirement(name = "basicAuth"),
+    SecurityRequirement(name = "tokenAuth")
+])
 class EndpointGroupManagementController(
         private var endpointGroupRepository: EndpointGroupRepository,
         private var endpointRepository: EndpointRepository,

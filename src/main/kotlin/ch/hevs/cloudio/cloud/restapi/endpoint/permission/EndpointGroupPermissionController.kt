@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -24,7 +25,10 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Tag(name = "Endpoint Permissions")
 @RequestMapping("/api/v1/endpoints/groups")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirements(value = [
+    SecurityRequirement(name = "basicAuth"),
+    SecurityRequirement(name = "tokenAuth")
+])
 class EndpointGroupPermissionController(
     private val userRepository: UserRepository,
     private val userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,

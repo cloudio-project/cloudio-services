@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.juli.logging.LogFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -25,7 +26,10 @@ import java.util.*
 @Profile("rest-api")
 @Tag(name = "Endpoint remote job execution", description = "Run job (command or script) remotely on endpoints.")
 @RequestMapping("/api/v1/endpoints")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirements(value = [
+    SecurityRequirement(name = "basicAuth"),
+    SecurityRequirement(name = "tokenAuth")
+])
 class EndpointJobsController(
         private val endpointRepository: EndpointRepository,
         private val serializationFormats: Collection<SerializationFormat>,

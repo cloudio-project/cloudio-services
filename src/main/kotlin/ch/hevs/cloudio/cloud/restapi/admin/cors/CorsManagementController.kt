@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -22,7 +23,10 @@ import org.springframework.web.bind.annotation.*
 @Profile("rest-api")
 @Tag(name = "Cors Management", description = "Allows an admin user to manage cors allowed origins.")
 @RequestMapping("/api/v1/admin")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirements(value = [
+    SecurityRequirement(name = "basicAuth"),
+    SecurityRequirement(name = "tokenAuth")
+])
 @Authority.HttpAdmin
 class CorsManagementController (
         private val corsRepository: CorsRepository
