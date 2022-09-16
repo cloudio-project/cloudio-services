@@ -85,6 +85,8 @@ tasks.bootRun {
         tasks.bootRun.configure {
             val adminPassword: String? by project
 
+            environment("cloudio.initialAdminPassword", adminPassword ?: "admin")
+
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
             environment("cloudio.cert-manager.caPrivateKey", file("cloudio-dev-environment/certificates/ca.key").readText())
