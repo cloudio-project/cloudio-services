@@ -2,11 +2,10 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.provisioning
 
 import ch.hevs.cloudio.cloud.dao.Endpoint
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
-import ch.hevs.cloudio.cloud.dao.ProvisionToken
-import ch.hevs.cloudio.cloud.dao.ProvisionTokenRepository
 import ch.hevs.cloudio.cloud.extension.*
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.AccessTokenManager
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -34,14 +33,16 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Tag(name = "Endpoint Provisioning", description = "Allows users or developers to provision new endpoints into the system.")
 @RequestMapping("/api/v1")
-@SecurityRequirements(value = [
-    SecurityRequirement(name = "basicAuth"),
-    SecurityRequirement(name = "tokenAuth")
-])
+@SecurityRequirements(
+    value = [
+        SecurityRequirement(name = "basicAuth"),
+        SecurityRequirement(name = "tokenAuth")
+    ]
+)
 class EndpointProvisioningController(
     private val endpointRepository: EndpointRepository,
-    private val provisionTokenRepository: ProvisionTokenRepository,
-    private val certificateManager: CertificateManagerService
+    private val certificateManager: CertificateManagerService,
+    private val accessTokenManager: AccessTokenManager
 ) {
     private val caCertificate by lazy {
         certificateManager.getCACertificate()
@@ -97,18 +98,7 @@ class EndpointProvisioningController(
             endpoint.configuration.properties.putAll(this)
         }
 
-        // Remove pending tokens for this endpoint.
-        provisionTokenRepository.deleteByEndpointUUID(uuid)
-
-        // Add a token to the provision token database.
-        val expires = Date()
-        expires.time = System.currentTimeMillis() + 24 * 3600 * 1000
-        return provisionTokenRepository.save(
-            ProvisionToken(
-                endpointUUID = uuid,
-                expires = expires
-            )
-        ).token
+        return accessTokenManager.generateProvisionToken(uuid, 24 * 2600 * 1000)
     }
 
     @GetMapping("/endpoints/{uuid}/provision", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive", "application/zip"])
@@ -140,7 +130,7 @@ class EndpointProvisioningController(
         }, publicKey
     )
 
-    @GetMapping("/provision/{token}", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive"])
+    @GetMapping("/provision/{token}", produces = [MediaType.APPLICATION_JSON_VALUE, "application/java-archive", "application/zip"])
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get endpoint configuration information for a pending provision token.")
     @ApiResponses(
@@ -160,25 +150,26 @@ class EndpointProvisioningController(
         @RequestParam @Parameter(description = "Public key to use for certificate generation in PEM format.") publicKey: String?,
         @RequestParam @Parameter(description = "Name of the properties file. If not specified, the file will named according to the UUID of the endpoint.") propertiesFileName: String?,
         @Parameter(hidden = true) request: HttpServletRequest
-    ): ResponseEntity<Any> = provisionTokenRepository.findByToken(token).orElseThrow {
-        CloudioHttpExceptions.Forbidden("Forbidden")
-    }.let {
-        endpointRepository.findById(it.endpointUUID).orElseThrow {
-            CloudioHttpExceptions.NotFound("Endpoint not found")
-        }.getProvisionEntity(
-            when (request.getHeader("Accept")) {
-                "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
-                "application/zip" -> EndpointProvisioningDataFormat.ZIP_ARCHIVE
-                else -> EndpointProvisioningDataFormat.JSON
-            }, publicKey, propertiesFileName, it
-        )
+    ): ResponseEntity<Any> = accessTokenManager.validate(token).let { result ->
+        when (result) {
+            is AccessTokenManager.ValidProvisioningToken -> endpointRepository.findById(result.endpointUUID).orElseThrow {
+                CloudioHttpExceptions.NotFound("Endpoint not found")
+            }.getProvisionEntity(
+                when (request.getHeader("Accept")) {
+                    "application/java-archive" -> EndpointProvisioningDataFormat.JAR_ARCHIVE
+                    "application/zip" -> EndpointProvisioningDataFormat.ZIP_ARCHIVE
+                    else -> EndpointProvisioningDataFormat.JSON
+                }, publicKey, propertiesFileName
+            )
+
+            else -> throw CloudioHttpExceptions.Forbidden("Forbidden")
+        }
     }
 
     private fun Endpoint.getProvisionEntity(
         endpointProvisionDataFormat: EndpointProvisioningDataFormat?,
         publicKey: String?,
-        propertiesFileName: String? = null,
-        token: ProvisionToken? = null,
+        propertiesFileName: String? = null
     ): ResponseEntity<Any> = this.run {
         if (configuration.clientCertificate.isNotEmpty() && publicKey != null) {
             configuration.clientCertificate = ""
@@ -201,9 +192,6 @@ class EndpointProvisioningController(
         }
 
         endpointRepository.save(this)
-        if (token != null) {
-            provisionTokenRepository.delete(token)
-        }
 
         when (endpointProvisionDataFormat ?: EndpointProvisioningDataFormat.JSON) {
             EndpointProvisioningDataFormat.JSON -> ResponseEntity.ok()
@@ -264,6 +252,7 @@ class EndpointProvisioningController(
                     .header("Endpoint", this.uuid.toString())
                     .body(output.toByteArray())
             }
+
             EndpointProvisioningDataFormat.ZIP_ARCHIVE -> {
                 if (configuration.privateKey.isEmpty()) {
                     CloudioHttpExceptions.BadRequest("Endpoint has no private key.")
@@ -296,7 +285,7 @@ class EndpointProvisioningController(
                 zip.write(certificate)
                 zip.closeEntry()
 
-                if (configuration.privateKey.isNotEmpty()){
+                if (configuration.privateKey.isNotEmpty()) {
                     zip.putNextEntry(ZipEntry("${uuid}-private-key.pem"))
                     zip.write(configuration.privateKey.toByteArray())
                     zip.closeEntry()
@@ -306,10 +295,10 @@ class EndpointProvisioningController(
                 zip.close()
 
                 ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType("application/zip"))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${this.uuid}.zip\"")
-                        .header("Endpoint", this.uuid.toString())
-                        .body(output.toByteArray())
+                    .contentType(MediaType.parseMediaType("application/zip"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${this.uuid}.zip\"")
+                    .header("Endpoint", this.uuid.toString())
+                    .body(output.toByteArray())
             }
         }
     }

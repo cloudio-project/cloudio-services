@@ -29,8 +29,8 @@ class AccessTokenFilter(
                             }
 
                             is AccessTokenManager.ValidEndpointPermissionToken ->
-                                SecurityContextHolder.getContext().authentication = AnonymousAuthenticationToken(result.id, result, listOf(Authority.HTTP_ACCESS).map { SimpleGrantedAuthority(it.name) })
-                            
+                                SecurityContextHolder.getContext().authentication = AnonymousAuthenticationToken(result.hashCode().toString(), result, listOf(Authority.HTTP_ACCESS).map { SimpleGrantedAuthority(it.name) })
+
                             is AccessTokenManager.InvalidToken -> {}
                         }
                     }

@@ -11,8 +11,9 @@ import javax.annotation.PostConstruct
 class AccessTokenManager {
     sealed interface ValidationResult
     object InvalidToken: ValidationResult
+    class ValidProvisioningToken(val endpointUUID: UUID): ValidationResult
     class ValidUserToken(val userId: Long): ValidationResult
-    class ValidEndpointPermissionToken(val endpointUUID: UUID, val permission: EndpointPermission, val id: String): ValidationResult
+    data class ValidEndpointPermissionToken(val endpointUUID: UUID, val permission: EndpointPermission): ValidationResult
     private val log = LogFactory.getLog(AccessTokenManager::class.java)
 
     @Value("\${cloudio.jwt.secret:#{null}}")
@@ -32,9 +33,17 @@ class AccessTokenManager {
         }
     }
 
+    fun generateProvisionToken(endpointUUID: UUID, expirationDuration: Long = tokenExpirationDuration): String = Jwts.builder()
+        .setSubject("provision")
+        .claim("endpoint", endpointUUID.toString())
+        .setIssuer("cloud.iO")
+        .setIssuedAt(Date())
+        .setExpiration(Date(System.currentTimeMillis() + expirationDuration))
+        .signWith(SignatureAlgorithm.HS512, secretKey)
+        .compact()
+
     fun generateUserAccessToken(user: CloudioUserDetails): String = Jwts.builder()
         .setSubject("user")
-        .setId(UUID.randomUUID().toString())
         .claim("uid", user.id.toString())
         .setIssuer("cloud.iO")
         .setIssuedAt(Date())
@@ -44,7 +53,6 @@ class AccessTokenManager {
 
     fun generateEndpointPermissionAccessToken(endpointUUID: UUID, permission: EndpointPermission): String = Jwts.builder()
         .setSubject("endpoint")
-        .setId(UUID.randomUUID().toString())
         .claim("uuid", endpointUUID.toString())
         .claim("perm", permission)
         .setIssuer("cloud.iO")
@@ -57,12 +65,13 @@ class AccessTokenManager {
         try {
             return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).let { claims ->
                 when (claims.body.subject) {
+                    "provision" -> ValidProvisioningToken(UUID.fromString(claims.body["endpoint"] as String))
                     "user" -> ValidUserToken((claims.body["uid"] as String).toLong())
                     "endpoint" -> {
                         EndpointPermission.valueOf(claims.body["perm"] as String).let { permission ->
                             when(permission) {
                                 EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE ->
-                                    ValidEndpointPermissionToken(UUID.fromString(claims.body["uuid"] as String), permission, claims.body.id)
+                                    ValidEndpointPermissionToken(UUID.fromString(claims.body["uuid"] as String), permission)
                                 else -> {
                                     log.warn("Token for endpoint access contains invalid permission")
                                     InvalidToken
@@ -77,17 +86,17 @@ class AccessTokenManager {
                 }
             }
         } catch (exception: ExpiredJwtException) {
-            log.warn("JWT expired", exception)
+            log.warn("JWT expired")
         } catch (exception: IllegalArgumentException) {
-            log.warn("Token is null, empty or only whitespace or endpoint token contains invalid UUID", exception)
+            log.warn("Token is null, empty or only whitespace or endpoint token contains invalid UUID")
         } catch (exception: MalformedJwtException) {
-            log.warn("JWT is invalid", exception)
+            log.warn("JWT is invalid")
         } catch (exception: UnsupportedJwtException) {
-            log.warn("JWT is not supported", exception)
+            log.warn("JWT is not supported")
         } catch (exception: SignatureException) {
-            log.warn("Signature validation failed", exception)
+            log.warn("Signature validation failed")
         } catch (exception: NumberFormatException) {
-            log.warn("Invalid user ID in token.", exception)
+            log.warn("Invalid user ID in token")
         }
 
         return InvalidToken
