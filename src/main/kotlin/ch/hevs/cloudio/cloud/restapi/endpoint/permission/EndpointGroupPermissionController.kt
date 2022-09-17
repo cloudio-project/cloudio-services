@@ -156,7 +156,7 @@ class EndpointGroupPermissionController(
             EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE -> endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
                 throw CloudioHttpExceptions.NotFound("User Group not found.")
             }.let { endpointGroup ->
-                accessTokenManager.generateEndpointGroupPermissionAccessToken(it.userDetails(), endpointGroup.id, permission, expires)
+                accessTokenManager.generateEndpointGroupPermissionAccessToken(it.userDetails(), endpointGroup.groupName, permission, expires)
             }
             else -> throw CloudioHttpExceptions.BadRequest("Token can only be generated for READ, WRITE and CONFIGURE permission.")
         }

@@ -40,6 +40,7 @@ import java.net.InetAddress
 import java.util.*
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
+import javax.servlet.http.HttpServletResponse
 
 
 @SpringBootApplication
@@ -175,7 +176,7 @@ class CloudioApplication {
                     "/api/v1/provision/*", "/messageformat/**", "/api/v1/auth/login"
                 ).permitAll()
                 .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
-                .and().httpBasic()
+                .and().httpBasic().authenticationEntryPoint { _, response, authException -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.message) }
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             http.addFilterBefore(accessTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
         }
