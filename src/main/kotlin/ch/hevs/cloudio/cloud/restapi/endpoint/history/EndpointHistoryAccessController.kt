@@ -6,10 +6,7 @@ import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.security.AccessTokenManager
-import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
-import ch.hevs.cloudio.cloud.security.CloudioUserDetails
-import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
+import ch.hevs.cloudio.cloud.security.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -38,15 +35,18 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Tag(name = "Endpoint History Access", description = "Allows an user to access time series data of endpoints.")
 @RequestMapping("/api/v1/history")
-@SecurityRequirements(value = [
-    SecurityRequirement(name = "basicAuth"),
-    SecurityRequirement(name = "tokenAuth")
-])
+@SecurityRequirements(
+    value = [
+        SecurityRequirement(name = "basicAuth"),
+        SecurityRequirement(name = "tokenAuth")
+    ]
+)
 class EndpointHistoryAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
     private val influx: InfluxDB,
-    private val influxProperties: CloudioInfluxProperties
+    private val influxProperties: CloudioInfluxProperties,
+    private val userDetailsService: CloudioUserDetailsService
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -67,7 +67,7 @@ class EndpointHistoryAccessController(
         ]
     )
     fun getModelElement(
-        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
+        @Parameter(hidden = true) @CurrentSecurityContext context: SecurityContext,
         @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no start date (all data).", required = false) from: String?,
         @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no end date (all data).", required = false) to: String?,
         @RequestParam @Parameter(
@@ -103,8 +103,9 @@ class EndpointHistoryAccessController(
             authentication.principal is CloudioUserDetails &&
                     !permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ) ->
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
-            authentication.principal is AccessTokenManager.ValidEndpointPermissionToken &&
-                    (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).endpointUUID != modelIdentifier.endpoint ->
+
+            (authentication.principal is AccessTokenManager.ValidEndpointPermissionToken || authentication.principal is AccessTokenManager.ValidEndpointGroupPermissionToken) &&
+                    !permissionManager.hasPermission(authentication, modelIdentifier.endpoint, EndpointPermission.READ) ->
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
@@ -133,7 +134,7 @@ class EndpointHistoryAccessController(
         ]
     )
     fun getModelElementAsCSV(
-        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
+        @Parameter(hidden = true) @CurrentSecurityContext context: SecurityContext,
         @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no start date (all data).", required = false) from: String?,
         @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no end date (all data).", required = false) to: String?,
         @RequestParam @Parameter(
@@ -170,18 +171,26 @@ class EndpointHistoryAccessController(
             authentication.principal is CloudioUserDetails &&
                     !permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ) ->
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
-            authentication.principal is AccessTokenManager.ValidEndpointPermissionToken &&
-                    (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).endpointUUID != modelIdentifier.endpoint ->
+
+            (authentication.principal is AccessTokenManager.ValidEndpointPermissionToken || authentication.principal is AccessTokenManager.ValidEndpointGroupPermissionToken) &&
+                    !permissionManager.hasPermission(authentication, modelIdentifier.endpoint, EndpointPermission.READ) ->
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
-        return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
-        joinToString(separator = "\n") {
+        return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.joinToString(separator = "\n") {
             "${it[0] as String}${separator ?: ";"}${it[1]}"
         }.orEmpty()
     }
 
-    private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): QueryResult.Series? {
+    private fun queryInflux(
+        modelIdentifier: ModelIdentifier,
+        from: String?,
+        to: String?,
+        resampleInterval: String?,
+        resampleFunction: ResampleFunction?,
+        fillValue: FillValue?,
+        max: Int?
+    ): QueryResult.Series? {
         val result = influx.query(Query(
             "SELECT time, ${
                 if (resampleInterval != null) {

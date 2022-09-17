@@ -24,7 +24,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.annotation.CurrentSecurityContext
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.util.AntPathMatcher
@@ -35,10 +34,12 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Tag(name = "Endpoint Data Access", description = "Allows an user to access data of endpoints.")
 @RequestMapping("/api/v1/data")
-@SecurityRequirements(value = [
-    SecurityRequirement(name = "basicAuth"),
-    SecurityRequirement(name = "tokenAuth")
-])
+@SecurityRequirements(
+    value = [
+        SecurityRequirement(name = "basicAuth"),
+        SecurityRequirement(name = "tokenAuth")
+    ]
+)
 class EndpointDataAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
@@ -61,7 +62,7 @@ class EndpointDataAccessController(
         ]
     )
     fun getModelElement(
-        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
+        @Parameter(hidden = true) @CurrentSecurityContext context: SecurityContext,
         @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 
@@ -78,12 +79,14 @@ class EndpointDataAccessController(
 
         // Resolve the access level the user has to the endpoint and fail if the user has no access to the endpoint.
         val authentication = context.authentication
-        val endpointPermission = when(authentication.principal) {
+        val endpointPermission = when (authentication.principal) {
             is CloudioUserDetails -> permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
-            is AccessTokenManager.ValidEndpointPermissionToken -> (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).let {
-                if (it.endpointUUID != modelIdentifier.endpoint) throw CloudioHttpExceptions.Forbidden("Forbidden.")
-                it.permission
-            }
+            is AccessTokenManager.ValidEndpointPermissionToken, is AccessTokenManager.ValidEndpointGroupPermissionToken ->
+                if (permissionManager.hasPermission(authentication, modelIdentifier.endpoint, EndpointPermission.READ)) {
+                    EndpointPermission.READ
+                } else {
+                    EndpointPermission.DENY
+                }
             else -> EndpointPermission.DENY
         }
         if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
@@ -155,17 +158,21 @@ class EndpointDataAccessController(
     @PutMapping("/**", consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Write access to all endpoint's data model.")
-    @ApiResponses(value = [
-        ApiResponse(description = "Endpoint data was written to the given path.", responseCode = "204", content = [Content()]),
-        ApiResponse(description = "Invalid model identifier, attribute is not a SetPoint, nor a Parameter or element is not an attribute.",
-            responseCode = "400", content = [Content()]),
-        ApiResponse(description = "Endpoint not found or model element not found.", responseCode = "404", content = [Content()]),
-        ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
-        ApiResponse(description = "Invalid datatype or endpoint does not support any serialization format.", responseCode = "500", content = [Content()]),
-    ])
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Endpoint data was written to the given path.", responseCode = "204", content = [Content()]),
+            ApiResponse(
+                description = "Invalid model identifier, attribute is not a SetPoint, nor a Parameter or element is not an attribute.",
+                responseCode = "400", content = [Content()]
+            ),
+            ApiResponse(description = "Endpoint not found or model element not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()]),
+            ApiResponse(description = "Invalid datatype or endpoint does not support any serialization format.", responseCode = "500", content = [Content()]),
+        ]
+    )
     fun putAttribute(
         @RequestParam @Parameter(description = "Value to set.") value: String,
-        @Parameter(hidden = true) authentication: Authentication, // TODO: Handle token based auth
+        @Parameter(hidden = true) @CurrentSecurityContext context: SecurityContext,
         @Parameter(hidden = true) request: HttpServletRequest
     ) {
 
@@ -178,7 +185,21 @@ class EndpointDataAccessController(
         modelIdentifier.action = ActionIdentifier.ATTRIBUTE_SET
 
         // Resolve the access level the user has to the element.
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.WRITE)) {
+        val authentication = context.authentication
+        val endpointPermission = when (authentication.principal) {
+            is CloudioUserDetails -> permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
+            is AccessTokenManager.ValidEndpointPermissionToken, is AccessTokenManager.ValidEndpointGroupPermissionToken ->
+                if (permissionManager.hasPermission(authentication, modelIdentifier.endpoint, EndpointPermission.WRITE)) {
+                    EndpointPermission.WRITE
+                } else {
+                    EndpointPermission.DENY
+                }
+
+            else -> EndpointPermission.DENY
+        }
+        if (!endpointPermission.fulfills(EndpointPermission.WRITE) &&
+            !permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.WRITE)
+        ) {
             throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 

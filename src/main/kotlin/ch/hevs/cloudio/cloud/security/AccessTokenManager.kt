@@ -3,17 +3,23 @@ package ch.hevs.cloudio.cloud.security
 import io.jsonwebtoken.*
 import org.apache.juli.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.annotation.PostConstruct
 
 @Service
-class AccessTokenManager {
+class AccessTokenManager(
+    private val userDetailsService: CloudioUserDetailsService,
+    private val permissionManager: CloudioPermissionManager
+) {
     sealed interface ValidationResult
     object InvalidToken: ValidationResult
     class ValidProvisioningToken(val endpointUUID: UUID): ValidationResult
-    class ValidUserToken(val userId: Long): ValidationResult
+    class ValidUserToken(val userDetails: CloudioUserDetails): ValidationResult
     data class ValidEndpointPermissionToken(val endpointUUID: UUID, val permission: EndpointPermission): ValidationResult
+    data class ValidEndpointGroupPermissionToken(val groupName: String, val permission: EndpointPermission): ValidationResult
+
     private val log = LogFactory.getLog(AccessTokenManager::class.java)
 
     @Value("\${cloudio.jwt.secret:#{null}}")
@@ -36,7 +42,6 @@ class AccessTokenManager {
     fun generateProvisionToken(endpointUUID: UUID, expirationDuration: Long = tokenExpirationDuration): String = Jwts.builder()
         .setSubject("provision")
         .claim("endpoint", endpointUUID.toString())
-        .setIssuer("cloud.iO")
         .setIssuedAt(Date())
         .setExpiration(Date(System.currentTimeMillis() + expirationDuration))
         .signWith(SignatureAlgorithm.HS512, secretKey)
@@ -45,19 +50,28 @@ class AccessTokenManager {
     fun generateUserAccessToken(user: CloudioUserDetails): String = Jwts.builder()
         .setSubject("user")
         .claim("uid", user.id.toString())
-        .setIssuer("cloud.iO")
         .setIssuedAt(Date())
         .setExpiration(Date(System.currentTimeMillis() + tokenExpirationDuration))
         .signWith(SignatureAlgorithm.HS512, secretKey)
         .compact()
 
-    fun generateEndpointPermissionAccessToken(endpointUUID: UUID, permission: EndpointPermission): String = Jwts.builder()
+    fun generateEndpointPermissionAccessToken(user: CloudioUserDetails, endpointUUID: UUID, permission: EndpointPermission, expires: Date = Date(System.currentTimeMillis() + tokenExpirationDuration)): String = Jwts.builder()
         .setSubject("endpoint")
         .claim("uuid", endpointUUID.toString())
         .claim("perm", permission)
-        .setIssuer("cloud.iO")
+        .setIssuer(user.id.toString())
         .setIssuedAt(Date())
-        .setExpiration(Date(System.currentTimeMillis() + tokenExpirationDuration))
+        .setExpiration(expires)
+        .signWith(SignatureAlgorithm.HS512, secretKey)
+        .compact()
+
+    fun generateEndpointGroupPermissionAccessToken(user: CloudioUserDetails, groupName: String, permission: EndpointPermission, expires: Date = Date(System.currentTimeMillis() + tokenExpirationDuration)): String = Jwts.builder()
+        .setSubject("endpoint-group")
+        .claim("group", groupName)
+        .claim("perm", permission)
+        .setIssuer(user.id.toString())
+        .setIssuedAt(Date())
+        .setExpiration(expires)
         .signWith(SignatureAlgorithm.HS512, secretKey)
         .compact()
 
@@ -66,16 +80,37 @@ class AccessTokenManager {
             return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).let { claims ->
                 when (claims.body.subject) {
                     "provision" -> ValidProvisioningToken(UUID.fromString(claims.body["endpoint"] as String))
-                    "user" -> ValidUserToken((claims.body["uid"] as String).toLong())
+
+                    "user" -> ValidUserToken(userDetailsService.loadUserByID((claims.body["uid"] as String).toLong()))
+
                     "endpoint" -> {
-                        EndpointPermission.valueOf(claims.body["perm"] as String).let { permission ->
-                            when(permission) {
-                                EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE ->
-                                    ValidEndpointPermissionToken(UUID.fromString(claims.body["uuid"] as String), permission)
-                                else -> {
-                                    log.warn("Token for endpoint access contains invalid permission")
-                                    InvalidToken
-                                }
+                        val endpointUUID = UUID.fromString(claims.body["uuid"] as String)
+                        val permission = EndpointPermission.valueOf(claims.body["perm"] as String)
+                        val userDetails = userDetailsService.loadUserByID(claims.body.issuer.toLong())
+
+                        when {
+                            permissionManager.hasEndpointPermission(userDetails, endpointUUID, EndpointPermission.GRANT) &&
+                                    setOf(EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE).contains(permission) ->
+                                ValidEndpointPermissionToken(UUID.fromString(claims.body["uuid"] as String), permission)
+                            else -> {
+                                log.warn("Token for endpoint access contains invalid permission or issues has no GRANT permission anymore")
+                                InvalidToken
+                            }
+                        }
+                    }
+
+                    "endpoint-group" -> {
+                        val endpointGroupName = claims.body["group"] as String
+                        val permission = EndpointPermission.valueOf(claims.body["perm"] as String)
+                        val userDetails = userDetailsService.loadUserByID(claims.body.issuer.toLong())
+
+                        when {
+                            permissionManager.hasEndpointGroupPermission(userDetails, endpointGroupName, EndpointPermission.GRANT) &&
+                                    setOf(EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE).contains(permission) ->
+                                ValidEndpointGroupPermissionToken(endpointGroupName, permission)
+                            else -> {
+                                log.warn("Token for endpoint access contains invalid permission or issues has no GRANT permission anymore")
+                                InvalidToken
                             }
                         }
                     }
@@ -97,6 +132,8 @@ class AccessTokenManager {
             log.warn("Signature validation failed")
         } catch (exception: NumberFormatException) {
             log.warn("Invalid user ID in token")
+        }  catch (exception: UsernameNotFoundException) {
+            log.warn("User not found")
         }
 
         return InvalidToken

@@ -1,6 +1,7 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.permission
 
 import ch.hevs.cloudio.cloud.dao.*
+import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.AccessTokenManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -119,13 +121,15 @@ class EndpointPermissionController(
     )
     fun getAccessTokenByUUID(
         @PathVariable @Parameter(description = "UUID of endpoint.", required = true) uuid: UUID,
-        @RequestParam @Parameter(
-            description = "Permission to grant.",
-            schema = Schema(allowableValues = ["READ", "WRITE", "CONFIGURE"])
-        ) permission: EndpointPermission) = when(permission) {
-            EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE -> accessTokenManager.generateEndpointPermissionAccessToken(uuid, permission)
+        @RequestParam @Parameter(description = "Permission to grant.", schema = Schema(allowableValues = ["READ", "WRITE", "CONFIGURE"])) permission: EndpointPermission,
+        @RequestParam @Parameter(description = "Expiration date and time for the token in ISO-8601 format (yyyy-MM-dd HH:mm:ss).", schema = Schema(type = "string", example = "2042-01-01 07:15:00")) expires: Date,
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = authentication?.let {
+        when (permission) {
+            EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE -> accessTokenManager.generateEndpointPermissionAccessToken(it.userDetails(), uuid, permission, expires)
             else -> throw CloudioHttpExceptions.BadRequest("Token can only be generated for READ, WRITE and CONFIGURE permission.")
         }
+    } ?: throw CloudioHttpExceptions.Forbidden("User not found.")
 
     @PutMapping("/{uuid}/grant/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)

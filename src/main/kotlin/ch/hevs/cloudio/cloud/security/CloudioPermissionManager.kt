@@ -11,14 +11,14 @@ import java.util.*
 
 @Service
 class CloudioPermissionManager(
-        private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-        private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
-        private val endpointGroupRepository: EndpointGroupRepository,
-        private val userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
-        private val endpointRepository: EndpointRepository,
-        private val userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository,
-        private val userGroupEndpointGroupPermissionRepository: UserGroupEndpointGroupPermissionRepository,
-        private val userGroupEndpointGroupModelElementPermissionRepository: UserGroupEndpointGroupPermissionRepository
+    private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
+    private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
+    private val endpointGroupRepository: EndpointGroupRepository,
+    private val userEndpointGroupPermissionRepository: UserEndpointGroupPermissionRepository,
+    private val endpointRepository: EndpointRepository,
+    private val userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository,
+    private val userGroupEndpointGroupPermissionRepository: UserGroupEndpointGroupPermissionRepository,
+    private val userGroupEndpointGroupModelElementPermissionRepository: UserGroupEndpointGroupPermissionRepository // The fact that this is not used lets me suspect that there might be a bug...
 ) : PermissionEvaluator {
     private val log = LogFactory.getLog(CloudioPermissionManager::class.java)
 
@@ -28,7 +28,16 @@ class CloudioPermissionManager(
 
         subject is UUID && permission is EndpointPermission && authentication.principal is AccessTokenManager.ValidEndpointPermissionToken ->
             (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).let { token ->
-                subject == token.endpointUUID && token.permission.fulfills(permission)
+                token.permission.fulfills(permission) && subject == token.endpointUUID
+            }
+
+        subject is UUID && permission is EndpointPermission && authentication.principal is AccessTokenManager.ValidEndpointGroupPermissionToken ->
+            (authentication.principal as AccessTokenManager.ValidEndpointGroupPermissionToken).let { token ->
+                token.permission.fulfills(permission) && endpointGroupRepository.findByGroupName(token.groupName).let { group ->
+                    group.isPresent && endpointRepository.findByGroupMembershipsContains(group.get()).any {
+                        subject == it.uuid
+                    }
+                }
             }
 
         subject is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> try {
@@ -55,9 +64,17 @@ class CloudioPermissionManager(
     }
 
     override fun hasPermission(authentication: Authentication, targetId: Serializable?, targetType: String?, permission: Any?) = when {
-        targetType == "Endpoint" && targetId is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, targetId, permission)
-        targetType == "Model" && targetId is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, targetId, permission)
-        targetType == "EndpointGroup" && targetId is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointGroupPermission(authentication.principal as CloudioUserDetails, targetId, permission)
+        targetType == "Endpoint" && targetId is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails ->
+            hasEndpointPermission(authentication.principal as CloudioUserDetails, targetId, permission)
+
+        targetType == "Model" && targetId is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails ->
+            hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, targetId, permission
+        )
+
+        targetType == "EndpointGroup" && targetId is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails ->
+            hasEndpointGroupPermission(authentication.principal as CloudioUserDetails, targetId, permission
+        )
+
         else -> {
             log.error("Unknown permission request: Authentication = $authentication, targetId = $targetId, permission = $permission")
             false
@@ -82,8 +99,8 @@ class CloudioPermissionManager(
         return hasEndpointModelElementPermission(userDetails, modelID, permission, endpointPermission, permissionList)
     }
 
-    private fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission
-                                                  , endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Boolean {
+    private fun hasEndpointModelElementPermission(userDetails: CloudioUserDetails, modelID: ModelIdentifier, permission: EndpointModelElementPermission,
+        endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Boolean {
         // Ensure that the model ID is correct.
         if (!modelID.valid) {
             log.warn("Permission $permission to \"$modelID \"rejected for user \"${userDetails.username}\": Invalid model identifier.")
@@ -103,10 +120,12 @@ class CloudioPermissionManager(
                 log.debug("Permission VIEW to \"$modelID\" granted for user \"${userDetails.username}\": BROWSE+ permission on endpoint.")
                 return true
             }
+
             EndpointModelElementPermission.READ -> if (endpointPermission.fulfills(EndpointPermission.READ)) {
                 log.debug("Permission READ to \"$modelID\" granted for user \"${userDetails.username}\" READ+ permission on endpoint.")
                 return true
             }
+
             EndpointModelElementPermission.WRITE -> if (endpointPermission.fulfills(EndpointPermission.WRITE)) {
                 log.debug("Permission WRITE to \"$modelID\" granted for user \"${userDetails.username}\" WRITE+ permission on endpoint.")
                 return true
@@ -118,7 +137,7 @@ class CloudioPermissionManager(
         var temp = modelID.toString()
 
         //if a @ is the first letter, delete the first element
-        if(temp.first().equals('@', true)){
+        if (temp.first().equals('@', true)) {
             //drop the @something and the "/"
             temp = temp.dropWhile { !it.equals('/', ignoreCase = true) }
             temp = temp.drop(1)
@@ -130,9 +149,9 @@ class CloudioPermissionManager(
 
         //the higher level permission is selected
         var p = EndpointModelElementPermission.DENY
-        for (i in 1..modelID.count()){
-            permissionList.forEach(){
-                if(it.key == temp && it.value.fulfills(p)){
+        for (i in 1..modelID.count()) {
+            permissionList.forEach() {
+                if (it.key == temp && it.value.fulfills(p)) {
                     p = it.value
                 }
             }
@@ -169,7 +188,7 @@ class CloudioPermissionManager(
             userEndpointGroupPermissionRepository.findByUserID(userDetails.id).forEach { userEndpointGroupPermission ->
                 endpointGroupRepository.findById(userEndpointGroupPermission.endpointGroupID).ifPresent { endpointGroup ->
                     endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach {
-                        if(it.uuid == endpointUUID){
+                        if (it.uuid == endpointUUID) {
                             permission = permission.higher(userEndpointGroupPermission.permission)
                         }
                     }
@@ -178,12 +197,12 @@ class CloudioPermissionManager(
         }
 
         //check user group on endpoint group
-        if (!permission.fulfills(EndpointPermission.GRANT)){
+        if (!permission.fulfills(EndpointPermission.GRANT)) {
             userDetails.groupMembershipIDs.forEach { userGroupID ->
                 userGroupEndpointGroupPermissionRepository.findByUserGroupID(userGroupID).forEach { userGroupEndpointGroupPermission ->
                     endpointGroupRepository.findById(userGroupEndpointGroupPermission.endpointGroupID).ifPresent { endpointGroup ->
                         endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach {
-                            if(it.uuid == endpointUUID){
+                            if (it.uuid == endpointUUID) {
                                 permission = permission.higher(userGroupEndpointGroupPermission.permission)
                             }
                         }
@@ -195,8 +214,7 @@ class CloudioPermissionManager(
         return permission
     }
 
-    fun resolveEndpointGroupPermission(userDetails: CloudioUserDetails, endpointGroupName: String): EndpointPermission
-    {
+    fun resolveEndpointGroupPermission(userDetails: CloudioUserDetails, endpointGroupName: String): EndpointPermission {
         var permission = EndpointPermission.DENY
 
         endpointGroupRepository.findByGroupName(endpointGroupName).ifPresent { endpointGroup ->
@@ -228,7 +246,7 @@ class CloudioPermissionManager(
                 } else {
                     groupPermission.modelPermissions.forEach { (key, permission) ->
                         existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key]
-                                ?: EndpointModelElementPermission.DENY).higher(permission)
+                            ?: EndpointModelElementPermission.DENY).higher(permission)
                     }
                 }
             } else {
@@ -239,9 +257,9 @@ class CloudioPermissionManager(
         // Add higher permissions from endpoint groups
         resolveEndpointGroupsPermissions(userDetails).forEach { userEndpointGroupPermission ->
             endpointGroupRepository.findById(userEndpointGroupPermission.endpointGroupID).ifPresent { endpointGroup ->
-                endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach{ endpoint ->
+                endpointRepository.findByGroupMembershipsContains(endpointGroup).forEach { endpoint ->
                     val existingPermission = permissions.find { it.endpointUUID == endpoint.uuid }
-                    if(existingPermission != null){
+                    if (existingPermission != null) {
                         existingPermission.permission = existingPermission.permission.higher(userEndpointGroupPermission.permission)
                         if (existingPermission.permission.fulfills(EndpointPermission.WRITE)) {
                             existingPermission.modelPermissions.clear()
@@ -250,8 +268,7 @@ class CloudioPermissionManager(
                                 existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key] ?: EndpointModelElementPermission.DENY).higher(permission)
                             }
                         }
-                    }
-                    else{
+                    } else {
                         permissions.add(UserEndpointPermission(userDetails.id, endpoint.uuid, userEndpointGroupPermission.permission))
                     }
                 }
@@ -261,13 +278,12 @@ class CloudioPermissionManager(
         return permissions
     }
 
-    fun resolveEndpointGroupsPermissions(userDetails: CloudioUserDetails): Collection<UserEndpointGroupPermission>
-    {
+    fun resolveEndpointGroupsPermissions(userDetails: CloudioUserDetails): Collection<UserEndpointGroupPermission> {
         val permissions = userEndpointGroupPermissionRepository.findByUserID(userDetails.id).toMutableList()
 
         userGroupEndpointGroupPermissionRepository.findByUserGroupIDIn(userDetails.groupMembershipIDs).forEach { userGroupEndpointGroupPermission ->
-            val existingPermission = permissions.find{it.endpointGroupID == userGroupEndpointGroupPermission.endpointGroupID}
-            if (existingPermission != null){
+            val existingPermission = permissions.find { it.endpointGroupID == userGroupEndpointGroupPermission.endpointGroupID }
+            if (existingPermission != null) {
                 existingPermission.permission = existingPermission.permission.higher(userGroupEndpointGroupPermission.permission)
                 if (existingPermission.permission.fulfills(EndpointPermission.WRITE)) {
                     existingPermission.modelPermissions.clear()
@@ -276,8 +292,7 @@ class CloudioPermissionManager(
                         existingPermission.modelPermissions[key] = (existingPermission.modelPermissions[key] ?: EndpointModelElementPermission.DENY).higher(permission)
                     }
                 }
-            }
-            else{
+            } else {
                 permissions.add(UserEndpointGroupPermission(userDetails.id, userGroupEndpointGroupPermission.endpointGroupID, userGroupEndpointGroupPermission.permission))
             }
         }
@@ -285,7 +300,7 @@ class CloudioPermissionManager(
         return permissions
     }
 
-    fun getAllEndpointModelElementPermissions(userDetails:CloudioUserDetails, endpointUUID:UUID): MutableList<Map.Entry<String, EndpointModelElementPermission>> {
+    fun getAllEndpointModelElementPermissions(userDetails: CloudioUserDetails, endpointUUID: UUID): MutableList<Map.Entry<String, EndpointModelElementPermission>> {
         val allPermissionsList = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
         var addedPermissions = mutableMapOf<String, EndpointModelElementPermission>()
 
@@ -303,16 +318,15 @@ class CloudioPermissionManager(
                 userGroupEndpointPermission.modelPermissions.forEach { modelPermission ->
                     //add the groups permissions
                     //if a permission for an element already exists, keep the highest permissions level
-                    if(!addedPermissions.containsKey(modelPermission.key)){
+                    if (!addedPermissions.containsKey(modelPermission.key)) {
                         allPermissionsList.add(modelPermission)
-                        addedPermissions[modelPermission.key]=modelPermission.value
-                    }
-                    else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                        addedPermissions[modelPermission.key] = modelPermission.value
+                    } else if (modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value) {
                         allPermissionsList.forEach {
-                            if(it.key == modelPermission.key){
+                            if (it.key == modelPermission.key) {
                                 allPermissionsList.remove(it)
                                 allPermissionsList.add(modelPermission)
-                                addedPermissions[modelPermission.key]=modelPermission.value
+                                addedPermissions[modelPermission.key] = modelPermission.value
                             }
                         }
                     }
@@ -324,17 +338,16 @@ class CloudioPermissionManager(
         endpointRepository.findById(endpointUUID).ifPresent { endpoint ->
             endpoint.groupMemberships.forEach { endpointGroup ->
                 userEndpointGroupModelElementPermissionRepository.findByUserIDAndEndpointGroupID(userDetails.id, endpointGroup.id).ifPresent { userEndpointGroupPermission ->
-                    userEndpointGroupPermission.modelPermissions.forEach{ modelPermission ->
-                        if(!addedPermissions.containsKey(modelPermission.key)){
+                    userEndpointGroupPermission.modelPermissions.forEach { modelPermission ->
+                        if (!addedPermissions.containsKey(modelPermission.key)) {
                             allPermissionsList.add(modelPermission)
-                            addedPermissions[modelPermission.key]=modelPermission.value
-                        }
-                        else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                            addedPermissions[modelPermission.key] = modelPermission.value
+                        } else if (modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value) {
                             allPermissionsList.forEach {
-                                if(it.key == modelPermission.key){
+                                if (it.key == modelPermission.key) {
                                     allPermissionsList.remove(it)
                                     allPermissionsList.add(modelPermission)
-                                    addedPermissions[modelPermission.key]=modelPermission.value
+                                    addedPermissions[modelPermission.key] = modelPermission.value
                                 }
                             }
                         }
@@ -347,17 +360,16 @@ class CloudioPermissionManager(
         endpointRepository.findById(endpointUUID).ifPresent { endpoint ->
             endpoint.groupMemberships.forEach { endpointGroup ->
                 userGroupEndpointGroupPermissionRepository.findByUserGroupIDIn(userDetails.groupMembershipIDs).forEach { userGroupEndpointGroupPermission ->
-                    userGroupEndpointGroupPermission.modelPermissions.forEach{ modelPermission ->
-                        if(!addedPermissions.containsKey(modelPermission.key)){
+                    userGroupEndpointGroupPermission.modelPermissions.forEach { modelPermission ->
+                        if (!addedPermissions.containsKey(modelPermission.key)) {
                             allPermissionsList.add(modelPermission)
-                            addedPermissions[modelPermission.key]=modelPermission.value
-                        }
-                        else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                            addedPermissions[modelPermission.key] = modelPermission.value
+                        } else if (modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value) {
                             allPermissionsList.forEach {
-                                if(it.key == modelPermission.key){
+                                if (it.key == modelPermission.key) {
                                     allPermissionsList.remove(it)
                                     allPermissionsList.add(modelPermission)
-                                    addedPermissions[modelPermission.key]=modelPermission.value
+                                    addedPermissions[modelPermission.key] = modelPermission.value
                                 }
                             }
                         }
@@ -367,7 +379,7 @@ class CloudioPermissionManager(
         }
 
         allPermissionsList.forEach {
-            if(it.key.endsWith("/#")){
+            if (it.key.endsWith("/#")) {
                 it.key.dropLast(2)
             }
         }
@@ -381,36 +393,46 @@ class CloudioPermissionManager(
     /**
      * filter the given structure on the given EndpointModelElementPermission
      */
-    fun filter(data: Any, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
-               permission: EndpointModelElementPermission): Any? {
+    fun filter(data: Any, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier, permission: EndpointModelElementPermission): Any? {
 
         val permissionList = getAllEndpointModelElementPermissions(cloudioUserDetails, modelIdentifier.endpoint)
         val endpointPermission = resolveEndpointPermission(cloudioUserDetails, modelIdentifier.endpoint)
 
         when (data) {
             is EndpointDataModel -> {
-                return filterEndpoint(data, cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)
+                return filterEndpoint(
+                    data, cloudioUserDetails,
+                    modelIdentifier, permission, endpointPermission, permissionList
+                )
             }
+
             is Node -> {
-                return filterNode(data, cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)
+                return filterNode(
+                    data, cloudioUserDetails,
+                    modelIdentifier, permission, endpointPermission, permissionList
+                )
             }
+
             is CloudioObject -> {
-                return filterObject(data, cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)
+                return filterObject(
+                    data, cloudioUserDetails,
+                    modelIdentifier, permission, endpointPermission, permissionList
+                )
             }
+
             is Attribute -> {
-                return filterAttribute(data, cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)
+                return filterAttribute(
+                    data, cloudioUserDetails,
+                    modelIdentifier, permission, endpointPermission, permissionList
+                )
             }
         }
 
         return null
     }
 
-    private fun filterEndpoint(endpoint: EndpointDataModel, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
-                       permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): EndpointDataModel? {
+    private fun filterEndpoint(endpoint: EndpointDataModel, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier, permission: EndpointModelElementPermission,
+                               endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): EndpointDataModel? {
         val e = EndpointDataModel()
         e.messageFormatVersion = endpoint.messageFormatVersion
         e.supportedFormats = endpoint.supportedFormats
@@ -432,11 +454,14 @@ class CloudioPermissionManager(
     }
 
 
-    private fun filterNode(node: Node, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
-                   permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Node? {
+    private fun filterNode(node: Node, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier, permission: EndpointModelElementPermission, endpointPermission: EndpointPermission,
+                           permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Node? {
 
-        if (hasEndpointModelElementPermission(cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)) {
+        if (hasEndpointModelElementPermission(
+                cloudioUserDetails,
+                modelIdentifier, permission, endpointPermission, permissionList
+            )
+        ) {
             return node
         }
         val n = Node()
@@ -445,7 +470,7 @@ class CloudioPermissionManager(
 
         node.objects.forEach {
             val objId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
-            val temp = filterObject(it.value,  cloudioUserDetails, objId, permission, endpointPermission, permissionList)
+            val temp = filterObject(it.value, cloudioUserDetails, objId, permission, endpointPermission, permissionList)
             if (temp is CloudioObject) {
                 n.objects[it.key] = temp
             }
@@ -458,11 +483,14 @@ class CloudioPermissionManager(
         return null
     }
 
-    private fun filterObject(obj: CloudioObject, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
-                     permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): CloudioObject? {
+    private fun filterObject(obj: CloudioObject, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier, permission: EndpointModelElementPermission,
+                             endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): CloudioObject? {
 
-        if (hasEndpointModelElementPermission(cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)) {
+        if (hasEndpointModelElementPermission(
+                cloudioUserDetails,
+                modelIdentifier, permission, endpointPermission, permissionList
+            )
+        ) {
             return obj
         }
 
@@ -471,7 +499,7 @@ class CloudioPermissionManager(
 
         obj.objects.forEach {
             val objId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
-            val temp = filterObject(it.value,  cloudioUserDetails, objId, permission, endpointPermission, permissionList)
+            val temp = filterObject(it.value, cloudioUserDetails, objId, permission, endpointPermission, permissionList)
             if (temp is CloudioObject) {
                 o.objects[it.key] = temp
             }
@@ -479,7 +507,7 @@ class CloudioPermissionManager(
 
         obj.attributes.forEach {
             val attrId = ModelIdentifier(modelIdentifier.toString() + "/" + it.key)
-            val temp = filterAttribute(it.value,  cloudioUserDetails, attrId, permission, endpointPermission, permissionList)
+            val temp = filterAttribute(it.value, cloudioUserDetails, attrId, permission, endpointPermission, permissionList)
             if (temp is Attribute) {
                 o.attributes[it.key] = temp
             }
@@ -492,11 +520,14 @@ class CloudioPermissionManager(
         return null
     }
 
-    private fun filterAttribute(attribute: Attribute, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier,
-                        permission: EndpointModelElementPermission, endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Attribute? {
+    private fun filterAttribute(attribute: Attribute, cloudioUserDetails: CloudioUserDetails, modelIdentifier: ModelIdentifier, permission: EndpointModelElementPermission,
+                                endpointPermission: EndpointPermission, permissionList: MutableList<Map.Entry<String, EndpointModelElementPermission>>): Attribute? {
 
-        if (hasEndpointModelElementPermission(cloudioUserDetails,
-                        modelIdentifier, permission, endpointPermission, permissionList)) {
+        if (hasEndpointModelElementPermission(
+                cloudioUserDetails,
+                modelIdentifier, permission, endpointPermission, permissionList
+            )
+        ) {
             return attribute
         }
 
@@ -508,29 +539,32 @@ class CloudioPermissionManager(
      * if an element does not exist in data, add it from noDataStructure
      */
     fun merge(data: Any?, noDataStructure: Any?): Any? {
-        if(data == null){
+        if (data == null) {
             return noDataStructure
         }
-        if(noDataStructure == null){
+        if (noDataStructure == null) {
             return data
         }
 
         when (data) {
             is EndpointDataModel -> {
-                if (noDataStructure is EndpointDataModel){
+                if (noDataStructure is EndpointDataModel) {
                     return mergeEndpoint(data, noDataStructure)
                 }
             }
+
             is Node -> {
-                if (noDataStructure is Node){
+                if (noDataStructure is Node) {
                     return mergeNode(data, noDataStructure)
                 }
             }
+
             is CloudioObject -> {
-                if (noDataStructure is CloudioObject){
+                if (noDataStructure is CloudioObject) {
                     return mergeObject(data, noDataStructure)
                 }
             }
+
             is Attribute -> {
                 return data
             }

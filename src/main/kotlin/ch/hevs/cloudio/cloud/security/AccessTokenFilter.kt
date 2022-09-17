@@ -14,25 +14,33 @@ import javax.servlet.http.HttpServletResponse
 @Component
 class AccessTokenFilter(
     private val accessTokenManager: AccessTokenManager,
-    private val userDetailsService: CloudioUserDetailsService
-): OncePerRequestFilter() {
+) : OncePerRequestFilter() {
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         request.getHeader("Authorization").let { header ->
             if (header != null && header.isNotEmpty() && header.startsWith("Bearer")) {
                 header.split(" ").getOrNull(1)?.trim()?.let { token ->
                     accessTokenManager.validate(token).let { result ->
-                        when(result) {
-                            is AccessTokenManager.ValidUserToken -> userDetailsService.loadUserByID(result.userId).let { userDetails ->
-                                SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities).apply {
-                                    details = WebAuthenticationDetailsSource().buildDetails(request)
-                                }
+                        try {
+                            when (result) {
+                                is AccessTokenManager.ValidUserToken -> SecurityContextHolder.getContext().authentication =
+                                    UsernamePasswordAuthenticationToken(result.userDetails, null, result.userDetails.authorities).apply {
+                                        details = WebAuthenticationDetailsSource().buildDetails(request)
+                                    }
+
+                                is AccessTokenManager.ValidEndpointPermissionToken -> SecurityContextHolder.getContext().authentication =
+                                            AnonymousAuthenticationToken(result.hashCode().toString(), result, listOf(Authority.HTTP_ACCESS).map { SimpleGrantedAuthority(it.name) }).apply {
+                                                details = WebAuthenticationDetailsSource().buildDetails(request)
+                                            }
+
+
+                                is AccessTokenManager.ValidEndpointGroupPermissionToken -> SecurityContextHolder.getContext().authentication =
+                                            AnonymousAuthenticationToken(result.hashCode().toString(), result, listOf(Authority.HTTP_ACCESS).map { SimpleGrantedAuthority(it.name) }).apply {
+                                                details = WebAuthenticationDetailsSource().buildDetails(request)
+                                            }
+
+                                else -> {}
                             }
-
-                            is AccessTokenManager.ValidEndpointPermissionToken ->
-                                SecurityContextHolder.getContext().authentication = AnonymousAuthenticationToken(result.hashCode().toString(), result, listOf(Authority.HTTP_ACCESS).map { SimpleGrantedAuthority(it.name) })
-
-                            is AccessTokenManager.InvalidToken -> {}
-                        }
+                        } catch (_: Exception) { }
                     }
                 }
             }

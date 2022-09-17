@@ -3,6 +3,7 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.permission
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.AccessTokenManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
@@ -16,9 +17,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 
 @RestController
@@ -36,7 +40,8 @@ class EndpointGroupPermissionController(
     private val userEndpointGroupModelElementPermissionRepository: UserEndpointGroupPermissionRepository,
     private val userGroupRepository: UserGroupRepository,
     private val userGroupEndpointGroupPermissionRepository: UserGroupEndpointGroupPermissionRepository,
-    private val userGroupEndpointGroupModelElementPermissionRepository: UserGroupEndpointGroupPermissionRepository
+    private val userGroupEndpointGroupModelElementPermissionRepository: UserGroupEndpointGroupPermissionRepository,
+    private val accessTokenManager: AccessTokenManager
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -118,6 +123,45 @@ class EndpointGroupPermissionController(
             throw CloudioHttpExceptions.Forbidden("Either userName or groupName has to be provided.")
         }
     }
+
+    @GetMapping("/{endpointGroupName}/token", produces = [MediaType.TEXT_PLAIN_VALUE])
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasPermission(#endpointGroupName, \"EndpointGroup\",T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
+    @Operation(summary = "Generate an access token for the given endpoint group.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                description = "Access token generated.", responseCode = "200", content = [Content(
+                    schema = Schema(
+                        type = "string",
+                        example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmRwb2ludCIsInV1aWQiOiI4ZGQwZjgzNS1jZjQwLTRiM2YtYjRmYi0xMDhiMDBjYmI2ZWMiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUyNjIzOTAyMn0.dPzU5suQ_UKpbeQcXbtIbPahZK04tEa4DOxdE1zc3ew"
+                    )
+                )]
+            ),
+            ApiResponse(description = "Token can only be generated for READ, WRITE and CONFIGURE permission.", responseCode = "400", content = [Content()]),
+            ApiResponse(description = "User Group not found.", responseCode = "404", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
+    fun getAccessTokenByGroupName(
+        @PathVariable @Parameter(description = "Name of the endpoint group.", required = true) endpointGroupName: String,
+        @RequestParam @Parameter(description = "Permission to grant.", schema = Schema(allowableValues = ["READ", "WRITE", "CONFIGURE"])) permission: EndpointPermission,
+        @RequestParam @Parameter(
+            description = "Expiration date and time for the token in ISO-8601 format (yyyy-MM-dd HH:mm:ss).",
+            schema = Schema(type = "string", example = "2042-01-01 07:15:00")
+        ) expires: Date,
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = authentication?.let {
+        when (permission) {
+            EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE -> endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+                throw CloudioHttpExceptions.NotFound("User Group not found.")
+            }.let { endpointGroup ->
+                accessTokenManager.generateEndpointGroupPermissionAccessToken(it.userDetails(), endpointGroup.id, permission, expires)
+            }
+            else -> throw CloudioHttpExceptions.BadRequest("Token can only be generated for READ, WRITE and CONFIGURE permission.")
+        }
+    } ?: throw CloudioHttpExceptions.Forbidden("User not found.")
+
 
     @PutMapping("/{endpointGroupName}/grant/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
