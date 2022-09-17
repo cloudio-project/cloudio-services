@@ -2,6 +2,7 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.permission
 
 import ch.hevs.cloudio.cloud.dao.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.AccessTokenManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
@@ -33,7 +35,8 @@ class EndpointPermissionController(
     private val userRepository: UserRepository,
     private val userGroupRepository: UserGroupRepository,
     private val userEndpointPermissionRepository: UserEndpointPermissionRepository,
-    private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository
+    private val userGroupEndpointPermissionRepository: UserGroupEndpointPermissionRepository,
+    private val accessTokenManager: AccessTokenManager
 ) {
     private val antMatcher = AntPathMatcher()
 
@@ -101,6 +104,28 @@ class EndpointPermissionController(
 
         else -> throw CloudioHttpExceptions.BadRequest("Either userName or groupName has to be provided.")
     }
+
+    @GetMapping("/{uuid}/token", produces = [MediaType.TEXT_PLAIN_VALUE])
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).GRANT)")
+    @Operation(summary = "Generate an access token for the given endpoint.")
+    @ApiResponses(
+        value = [
+            ApiResponse(description = "Access token generated.", responseCode = "200", content = [Content(schema = Schema(type = "string",
+                example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlbmRwb2ludCIsInV1aWQiOiI4ZGQwZjgzNS1jZjQwLTRiM2YtYjRmYi0xMDhiMDBjYmI2ZWMiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUyNjIzOTAyMn0.dPzU5suQ_UKpbeQcXbtIbPahZK04tEa4DOxdE1zc3ew"))]),
+            ApiResponse(description = "Token can only be generated for READ, WRITE and CONFIGURE permission.", responseCode = "400", content = [Content()]),
+            ApiResponse(description = "Forbidden.", responseCode = "403", content = [Content()])
+        ]
+    )
+    fun getAccessTokenByUUID(
+        @PathVariable @Parameter(description = "UUID of endpoint.", required = true) uuid: UUID,
+        @RequestParam @Parameter(
+            description = "Permission to grant.",
+            schema = Schema(allowableValues = ["READ", "WRITE", "CONFIGURE"])
+        ) permission: EndpointPermission) = when(permission) {
+            EndpointPermission.READ, EndpointPermission.WRITE, EndpointPermission.CONFIGURE -> accessTokenManager.generateEndpointPermissionAccessToken(uuid, permission)
+            else -> throw CloudioHttpExceptions.BadRequest("Token can only be generated for READ, WRITE and CONFIGURE permission.")
+        }
 
     @PutMapping("/{uuid}/grant/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)

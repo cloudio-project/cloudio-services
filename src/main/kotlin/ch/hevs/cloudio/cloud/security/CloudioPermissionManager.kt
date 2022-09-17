@@ -23,20 +23,31 @@ class CloudioPermissionManager(
     private val log = LogFactory.getLog(CloudioPermissionManager::class.java)
 
     override fun hasPermission(authentication: Authentication, subject: Any?, permission: Any?) = when {
-        subject is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> hasEndpointPermission(authentication.principal as CloudioUserDetails, subject, permission)
+        subject is UUID && permission is EndpointPermission && authentication.principal is CloudioUserDetails ->
+            hasEndpointPermission(authentication.principal as CloudioUserDetails, subject, permission)
+
+        subject is UUID && permission is EndpointPermission && authentication.principal is AccessTokenManager.ValidEndpointPermissionToken ->
+            (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).let { token ->
+                subject == token.endpointUUID && token.permission.fulfills(permission)
+            }
+
         subject is String && permission is EndpointPermission && authentication.principal is CloudioUserDetails -> try {
             hasEndpointPermission(authentication.principal as CloudioUserDetails, UUID.fromString(subject), permission)
         } catch (e: Exception) {
             log.error("Invalid endpoint UUID: Authentication = $authentication, subject = $subject, permission = $permission")
             false
         }
-        subject is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, subject, permission)
+
+        subject is ModelIdentifier && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails ->
+            hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, subject, permission)
+
         subject is String && permission is EndpointModelElementPermission && authentication.principal is CloudioUserDetails -> ModelIdentifier(subject).let {
             if (it.valid) hasEndpointModelElementPermission(authentication.principal as CloudioUserDetails, it, permission) else {
                 log.error("Invalid model identifier: Authentication = $authentication, subject = $subject, permission = $permission")
                 false
             }
         }
+
         else -> {
             log.error("Unknown permission request: Authentication = $authentication, subject = $subject, permission = $permission")
             false

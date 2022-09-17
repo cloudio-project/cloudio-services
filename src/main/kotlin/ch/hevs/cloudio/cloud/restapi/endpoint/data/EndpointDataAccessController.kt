@@ -7,9 +7,7 @@ import ch.hevs.cloudio.cloud.extension.fillFromInfluxDB
 import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.model.*
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
-import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
-import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
-import ch.hevs.cloudio.cloud.security.EndpointPermission
+import ch.hevs.cloudio.cloud.security.*
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
 import io.swagger.v3.oas.annotations.Operation
@@ -27,6 +25,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.annotation.CurrentSecurityContext
+import org.springframework.security.core.context.SecurityContext
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletRequest
@@ -61,7 +61,7 @@ class EndpointDataAccessController(
         ]
     )
     fun getModelElement(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
         @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 
@@ -77,7 +77,15 @@ class EndpointDataAccessController(
         }
 
         // Resolve the access level the user has to the endpoint and fail if the user has no access to the endpoint.
-        val endpointPermission = permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
+        val authentication = context.authentication
+        val endpointPermission = when(authentication.principal) {
+            is CloudioUserDetails -> permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
+            is AccessTokenManager.ValidEndpointPermissionToken -> (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).let {
+                if (it.endpointUUID != modelIdentifier.endpoint) throw CloudioHttpExceptions.Forbidden("Forbidden.")
+                it.permission
+            }
+            else -> EndpointPermission.DENY
+        }
         if (!endpointPermission.fulfills(EndpointPermission.ACCESS)) {
             throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
@@ -157,7 +165,7 @@ class EndpointDataAccessController(
     ])
     fun putAttribute(
         @RequestParam @Parameter(description = "Value to set.") value: String,
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication, // TODO: Handle token based auth
         @Parameter(hidden = true) request: HttpServletRequest
     ) {
 

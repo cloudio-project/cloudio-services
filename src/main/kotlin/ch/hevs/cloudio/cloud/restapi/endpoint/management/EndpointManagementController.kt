@@ -61,11 +61,12 @@ class EndpointManagementController(
         ]
     )
     fun getAllAccessibleEndpoints(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication?,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given friendly name.") friendlyName: String?,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given banned status.") banned: Boolean?,
         @RequestParam(required = false) @Parameter(description = "If given the list is filtered by the given online status.") online: Boolean?
-    ) = permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm -> // TODO: Maybe resolveEndpointPermission() would be better in this case.
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else permissionManager.resolvePermissions(authentication.userDetails()).mapNotNull { perm -> // TODO: Maybe resolveEndpointPermission() would be better in this case.
         endpointRepository.findById(perm.endpointUUID).orElse(null)?.let {
             when {
                 !friendlyName.isNullOrEmpty() && it.friendlyName != friendlyName -> null
@@ -291,8 +292,9 @@ class EndpointManagementController(
     )
     fun postEndpointByFriendlyName(
         @RequestParam @Parameter(description = "Name of the endpoint.", schema = Schema(type = "string", defaultValue = "New endpoint", example = "My endpoint")) friendlyName: String = "New Endpoint",
-        @Parameter(hidden = true) authentication: Authentication
-    ) = authentication.userDetails().let { user ->
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else authentication.userDetails().let { user ->
         val endpoint = endpointRepository.save(
             Endpoint(
                 friendlyName = friendlyName

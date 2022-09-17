@@ -57,7 +57,7 @@ class EndpointWOTAccessController(private val endpointRepository: EndpointReposi
         ]
     )
     fun getModelElement(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication,   // TODO: Handle token based auth
         @Parameter(hidden = true) request: HttpServletRequest
     ): Any {
 

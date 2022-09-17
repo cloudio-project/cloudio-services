@@ -6,7 +6,9 @@ import ch.hevs.cloudio.cloud.extension.userDetails
 import ch.hevs.cloudio.cloud.model.ActionIdentifier
 import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import ch.hevs.cloudio.cloud.security.AccessTokenManager
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
+import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -24,7 +26,8 @@ import org.influxdb.dto.QueryResult
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.security.core.Authentication
+import org.springframework.security.core.annotation.CurrentSecurityContext
+import org.springframework.security.core.context.SecurityContext
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.*
 import java.text.SimpleDateFormat
@@ -64,7 +67,7 @@ class EndpointHistoryAccessController(
         ]
     )
     fun getModelElement(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
         @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no start date (all data).", required = false) from: String?,
         @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no end date (all data).", required = false) to: String?,
         @RequestParam @Parameter(
@@ -95,8 +98,14 @@ class EndpointHistoryAccessController(
         }
 
         //  Check if user has access to the attribute.
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        val authentication = context.authentication
+        when {
+            authentication.principal is CloudioUserDetails &&
+                    !permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ) ->
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            authentication.principal is AccessTokenManager.ValidEndpointPermissionToken &&
+                    (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).endpointUUID != modelIdentifier.endpoint ->
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.map {
@@ -124,7 +133,7 @@ class EndpointHistoryAccessController(
         ]
     )
     fun getModelElementAsCSV(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) @CurrentSecurityContext context : SecurityContext,
         @RequestParam @Parameter(description = "Optional start date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no start date (all data).", required = false) from: String?,
         @RequestParam @Parameter(description = "Optional end date (UTC) in the format 'yyyy-MM-ddTHH:mm:ss'. Default is to no end date (all data).", required = false) to: String?,
         @RequestParam @Parameter(
@@ -156,8 +165,14 @@ class EndpointHistoryAccessController(
         }
 
         //  Check if user has access to the attribute.
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        val authentication = context.authentication
+        when {
+            authentication.principal is CloudioUserDetails &&
+                    !permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ) ->
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            authentication.principal is AccessTokenManager.ValidEndpointPermissionToken &&
+                    (authentication.principal as AccessTokenManager.ValidEndpointPermissionToken).endpointUUID != modelIdentifier.endpoint ->
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
         }
 
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.

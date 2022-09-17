@@ -49,8 +49,9 @@ class AccountController(
         ]
     )
     fun getMyAccount(
-        @Parameter(hidden = true) authentication: Authentication
-    ) = userRepository.findById(authentication.userDetails().id).orElseThrow {
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else userRepository.findById(authentication.userDetails().id).orElseThrow {
         CloudioHttpExceptions.NotFound("User not found.")
     }.run {
         AccountEntity(
@@ -76,8 +77,10 @@ class AccountController(
     fun putMyPassword(
         @RequestParam @Parameter(description = "Existing password.") existingPassword: String,
         @RequestParam @Parameter(description = "New password.") newPassword: String,
-        @Parameter(hidden = true) authentication: Authentication
+        @Parameter(hidden = true) authentication: Authentication?
     ) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         userRepository.findById(authentication.userDetails().id).orElseThrow {
             CloudioHttpExceptions.NotFound("User not found.")
         }.let {
@@ -100,8 +103,9 @@ class AccountController(
         ]
     )
     fun getMyEmailAddress(
-        @Parameter(hidden = true) authentication: Authentication
-    ) = userRepository.findById(authentication.userDetails().id).orElseThrow {
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else userRepository.findById(authentication.userDetails().id).orElseThrow {
         CloudioHttpExceptions.NotFound("User not found.")
     }.emailAddress.toString()
 
@@ -117,9 +121,11 @@ class AccountController(
         ]
     )
     fun putMyEmailAddress(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication?,
         @RequestParam @Parameter(description = "Email address to assign to user.", example = "john.doe@theinternet.org") email: String
     ) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         userRepository.findById(authentication.userDetails().id).orElseThrow {
             CloudioHttpExceptions.NotFound("User not found.")
         }.let {
@@ -143,8 +149,9 @@ class AccountController(
         ]
     )
     fun getMyMetaData(
-        @Parameter(hidden = true) authentication: Authentication
-    ) = userRepository.findById(authentication.userDetails().id).orElseThrow {
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else userRepository.findById(authentication.userDetails().id).orElseThrow {
         CloudioHttpExceptions.NotFound("User not found.")
     }.metaData
 
@@ -159,10 +166,12 @@ class AccountController(
         ]
     )
     fun putMyMetaData(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication?,
         @RequestBody @Parameter(description = "User's metadata.", schema = Schema(type = "object", example = "{\"location\": \"Sion\", \"position\": \"Manager\"}"))
         body: Map<String, Any>
     ) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         userRepository.findById(authentication.userDetails().id).orElseThrow {
             CloudioHttpExceptions.NotFound("User not found.")
         }.let {
@@ -182,8 +191,9 @@ class AccountController(
         ]
     )
     fun getMyEndpointPermissions(
-        @Parameter(hidden = true) authentication: Authentication
-    ) = permissionManager.resolvePermissions(authentication.userDetails()).map {
+        @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else permissionManager.resolvePermissions(authentication.userDetails()).map {
         EndpointPermissionEntity(
             endpoint = it.endpointUUID,
             permission = it.permission,

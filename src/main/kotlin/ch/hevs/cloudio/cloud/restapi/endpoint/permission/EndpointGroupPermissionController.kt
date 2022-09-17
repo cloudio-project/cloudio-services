@@ -52,7 +52,7 @@ class EndpointGroupPermissionController(
         ]
     )
     fun grantPermissionByEndpointGroup(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication?,
         @PathVariable @Parameter(description = "The endpoint group name.", required = true) endpointGroupName: String,
         @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
         @RequestParam @Parameter(description = "User group name to grant the permission to.", required = false) userGroupName: String?,
@@ -61,6 +61,8 @@ class EndpointGroupPermissionController(
             schema = Schema(allowableValues = ["DENY", "ACCESS", "BROWSE", "READ", "WRITE", "CONFIGURE", "GRANT"])
         ) permission: EndpointPermission
     ) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         if (permission == EndpointPermission.OWN) {
             throw CloudioHttpExceptions.Forbidden("OWN permission can not be granted.")
         }
@@ -129,13 +131,15 @@ class EndpointGroupPermissionController(
         ]
     )
     fun grantModelPermissionByUUID(
-        @Parameter(hidden = true) authentication: Authentication,
+        @Parameter(hidden = true) authentication: Authentication?,
         @PathVariable @Parameter(description = "The endpoint group name.", required = true) endpointGroupName: String,
         @RequestParam @Parameter(description = "User name to grant the permission to.", required = false) userName: String?,
         @RequestParam @Parameter(description = "Group name to grant the permission to.", required = false) userGroupName: String?,
         @RequestParam @Parameter(description = "Permission to grant.") permission: EndpointModelElementPermission,
         @Parameter(hidden = true) request: HttpServletRequest
     ) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
         }
