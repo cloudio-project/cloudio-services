@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.influxdb.dto.Query
@@ -25,6 +26,7 @@ import java.util.*
 @Profile("rest-api")
 @Tag(name = "Endpoint Log Access", description = "Access log output of an endpoint.")
 @RequestMapping("/api/v1/endpoints")
+@SecurityRequirement(name = "basicAuth")
 class EndpointLogController(
     private val influx: InfluxDB,
     private val influxProperties: CloudioInfluxProperties

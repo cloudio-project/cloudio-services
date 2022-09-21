@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.influxdb.InfluxDB
 import org.springframework.context.annotation.Profile
@@ -33,6 +34,7 @@ import javax.servlet.http.HttpServletRequest
 @Profile("rest-api")
 @Tag(name = "Endpoint Data Access")
 @RequestMapping("/api/v1/wot")
+@SecurityRequirement(name = "basicAuth")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
                                   private val influxDB: InfluxDB,

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*
 @Profile("rest-api")
 @Tag(name = "Account Management", description = "Allows users to access and modify their account information.")
 @RequestMapping("/api/v1/account")
+@SecurityRequirement(name = "basicAuth")
 class AccountController(
     private val userRepository: UserRepository,
     private val permissionManager: CloudioPermissionManager,

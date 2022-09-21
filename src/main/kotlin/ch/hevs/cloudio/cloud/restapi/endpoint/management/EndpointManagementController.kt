@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
@@ -31,6 +32,7 @@ import java.util.*
 @Profile("rest-api")
 @Tag(name = "Endpoint Management", description = "Allows users to list and manage their endpoints.")
 @RequestMapping("/api/v1/endpoints")
+@SecurityRequirement(name = "basicAuth")
 class EndpointManagementController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
