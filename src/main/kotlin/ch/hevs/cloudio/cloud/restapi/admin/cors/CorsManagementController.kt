@@ -4,6 +4,7 @@ import ch.hevs.cloudio.cloud.cors.CorsOrigin
 import ch.hevs.cloudio.cloud.cors.CorsRepository
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.Authority
+import ch.hevs.cloudio.cloud.services.WebSocketConfig
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
@@ -25,7 +26,8 @@ import org.springframework.web.bind.annotation.*
 @SecurityRequirement(name = "basicAuth")
 @Authority.HttpAdmin
 class CorsManagementController (
-        private val corsRepository: CorsRepository
+        private val corsRepository: CorsRepository,
+        private val webSocketConfig: WebSocketConfig
 ){
     @GetMapping("/cors", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.OK)
@@ -54,6 +56,7 @@ class CorsManagementController (
         corsRepository.save(
             CorsOrigin(origin)
         )
+        webSocketConfig.updateAllowedOrigins()
     }
 
     @DeleteMapping("/cors")
@@ -70,5 +73,6 @@ class CorsManagementController (
             throw CloudioHttpExceptions.NotFound("Origin '${origin}' not found.")
         }
         corsRepository.deleteByOrigin(origin)
+        webSocketConfig.updateAllowedOrigins()
     }
 }
