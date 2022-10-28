@@ -8,6 +8,7 @@ import ch.hevs.cloudio.cloud.model.ModelIdentifier
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
+import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -90,9 +91,14 @@ class EndpointHistoryAccessController(
             throw CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
-        //  Check if user has access to the attribute.
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        // Check if user has READ access on the endpoint
+        if(!permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
+                        .fulfills(EndpointPermission.READ))
+        {
+            //  Check if user has access to the attribute.
+            if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            }
         }
 
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.map {
@@ -151,9 +157,14 @@ class EndpointHistoryAccessController(
             throw CloudioHttpExceptions.NotFound("Endpoint not found.")
         }
 
-        //  Check if user has access to the attribute.
-        if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
-            throw CloudioHttpExceptions.Forbidden("Forbidden.")
+        // Check if user has READ access on the endpoint
+        if(!permissionManager.resolveEndpointPermission(authentication.userDetails(), modelIdentifier.endpoint)
+                        .fulfills(EndpointPermission.READ))
+        {
+            //  Check if user has access to the attribute.
+            if (!permissionManager.hasEndpointModelElementPermission(authentication.userDetails(), modelIdentifier, EndpointModelElementPermission.READ)) {
+                throw CloudioHttpExceptions.Forbidden("Forbidden.")
+            }
         }
 
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
