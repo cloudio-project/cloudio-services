@@ -273,15 +273,11 @@ class CloudioPermissionManager(
     }
 
     fun getAllEndpointModelElementPermissions(userDetails:CloudioUserDetails, endpointUUID:UUID): MutableMap<String, EndpointModelElementPermission> {
-        val allPermissionsList = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
-        var addedPermissions = mutableMapOf<String, EndpointModelElementPermission>()
+        var permissionsMap = mutableMapOf<String, EndpointModelElementPermission>()
 
         //add all user permissions related to this endpoint to the list
         userEndpointPermissionRepository.findByUserIDAndEndpointUUID(userDetails.id, endpointUUID).ifPresent {
-            it.modelPermissions.forEach {
-                allPermissionsList.add(it)
-            }
-            addedPermissions = it.modelPermissions
+            permissionsMap = it.modelPermissions
         }
 
         //add all group permissions related to this endpoint to the list
@@ -290,22 +286,11 @@ class CloudioPermissionManager(
                 userGroupEndpointPermission.modelPermissions.forEach { modelPermission ->
                     //add the groups permissions
                     //if a permission for an element already exists, keep the highest permissions level
-                    if(!addedPermissions.containsKey(modelPermission.key)){
-                        allPermissionsList.add(modelPermission)
-                        addedPermissions[modelPermission.key]=modelPermission.value
+                    if(!permissionsMap.containsKey(modelPermission.key)){
+                        permissionsMap[modelPermission.key]=modelPermission.value
                     }
-                    else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
-                        val toRemove = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
-                        val toAdd = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
-                        allPermissionsList.forEach {
-                            if(it.key == modelPermission.key){
-                                toRemove.add(it)
-                                toAdd.add(modelPermission)
-                                addedPermissions[modelPermission.key]=modelPermission.value
-                            }
-                        }
-                        allPermissionsList.removeAll(toRemove)
-                        allPermissionsList.addAll(toAdd)
+                    else if(modelPermission.value.higher(permissionsMap.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                        permissionsMap[modelPermission.key]=modelPermission.value
                     }
                 }
             }
@@ -316,22 +301,11 @@ class CloudioPermissionManager(
             endpoint.groupMemberships.forEach { endpointGroup ->
                 userEndpointGroupModelElementPermissionRepository.findByUserIDAndEndpointGroupID(userDetails.id, endpointGroup.id).ifPresent { userEndpointGroupPermission ->
                     userEndpointGroupPermission.modelPermissions.forEach{ modelPermission ->
-                        if(!addedPermissions.containsKey(modelPermission.key)){
-                            allPermissionsList.add(modelPermission)
-                            addedPermissions[modelPermission.key]=modelPermission.value
+                        if(!permissionsMap.containsKey(modelPermission.key)){
+                            permissionsMap[modelPermission.key]=modelPermission.value
                         }
-                        else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
-                            val toRemove = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
-                            val toAdd = mutableListOf<Map.Entry<String, EndpointModelElementPermission>>()
-                            allPermissionsList.forEach {
-                                if(it.key == modelPermission.key){
-                                    toRemove.add(it)
-                                    toAdd.add(modelPermission)
-                                    addedPermissions[modelPermission.key]=modelPermission.value
-                                }
-                            }
-                            allPermissionsList.removeAll(toRemove)
-                            allPermissionsList.addAll(toAdd)
+                        else if(modelPermission.value.higher(permissionsMap.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                            permissionsMap[modelPermission.key]=modelPermission.value
                         }
                     }
                 }
@@ -343,40 +317,24 @@ class CloudioPermissionManager(
             endpoint.groupMemberships.forEach { endpointGroup ->
                 userGroupEndpointGroupPermissionRepository.findByUserGroupIDIn(userDetails.groupMembershipIDs).forEach { userGroupEndpointGroupPermission ->
                     userGroupEndpointGroupPermission.modelPermissions.forEach{ modelPermission ->
-                        if(!addedPermissions.containsKey(modelPermission.key)){
-                            allPermissionsList.add(modelPermission)
-                            addedPermissions[modelPermission.key]=modelPermission.value
+                        if(!permissionsMap.containsKey(modelPermission.key)){
+                            permissionsMap[modelPermission.key]=modelPermission.value
                         }
-                        else if(modelPermission.value.higher(addedPermissions.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
-                            allPermissionsList.forEach {
-                                if(it.key == modelPermission.key){
-                                    allPermissionsList.remove(it)
-                                    allPermissionsList.add(modelPermission)
-                                    addedPermissions[modelPermission.key]=modelPermission.value
-                                }
-                            }
+                        else if(modelPermission.value.higher(permissionsMap.getOrDefault(modelPermission.key, EndpointModelElementPermission.DENY)) == modelPermission.value){
+                            permissionsMap[modelPermission.key]=modelPermission.value
                         }
                     }
                 }
             }
         }
 
-        addedPermissions.keys.forEach{
+        permissionsMap.keys.forEach{
             if(it.endsWith("/#")){
                 it.dropLast(2)
             }
         }
 
-        allPermissionsList.forEach {
-            if(it.key.endsWith("/#")){
-                it.key.dropLast(2)
-            }
-        }
-
-        //sort by the count of '/' in the key
-        allPermissionsList.sortBy { it.key.filter { it == '/' }.count() }
-
-        return addedPermissions
+        return permissionsMap
     }
 
     /**
