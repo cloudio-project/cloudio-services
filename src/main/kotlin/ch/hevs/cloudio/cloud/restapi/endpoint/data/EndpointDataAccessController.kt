@@ -155,7 +155,7 @@ class EndpointDataAccessController(
         return data
     }
 
-    @PutMapping("/**", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/**")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Write access to all endpoint's data model.")
     @ApiResponses(

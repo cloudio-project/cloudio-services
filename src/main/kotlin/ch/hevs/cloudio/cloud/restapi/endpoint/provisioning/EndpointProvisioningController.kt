@@ -109,7 +109,8 @@ class EndpointProvisioningController(
         value = [ApiResponse(
             description = "Endpoint provisioning data.", responseCode = "200", content = [
                 Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = Schema(implementation = EndpointProvisioningConfigurationEntity::class)),
-                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration."))
+                Content(mediaType = "application/java-archive", schema = Schema(description = "JAR Archive containing the endpoint configuration.")),
+                Content(mediaType = "application/zip", schema = Schema(description = "ZIP Archive containing the endpoint configuration."))
             ]
         ),
             ApiResponse(description = "Endpoint not found.", responseCode = "404", content = [Content()]),
