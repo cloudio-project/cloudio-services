@@ -17,6 +17,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionTemplate
 import java.util.*
 
 @Service
@@ -25,7 +26,8 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                             private val permissionManager: CloudioPermissionManager,
                             private val endpointRepository: EndpointRepository,
                             private val passwordEncoder: PasswordEncoder,
-                            private val rabbitProperties: RabbitProperties) {
+                            private val rabbitProperties: RabbitProperties,
+                            private val transactionTemplate: TransactionTemplate) {
     private val log = LogFactory.getLog(BrokerSecurityService::class.java)
 
     @RabbitListener(bindings = [
@@ -131,11 +133,13 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
                                     "deny"
                                 }
                             } else {
-                                if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
-                                    "allow"
-                                } else {
-                                    log.info("Access to topic \"$modelIdentifier\" refused for user - Insufficient permission.")
-                                    "deny"
+                                    transactionTemplate.execute {
+                                    if (permissionManager.hasEndpointModelElementPermission(userDetails, modelIdentifier, permission.toEndpointModelElementPermission())) {
+                                        "allow"
+                                    } else {
+                                        log.info("Access to topic \"$modelIdentifier\" refused for user - Insufficient permission.")
+                                        "deny"
+                                    }
                                 }
                             }
                         }
