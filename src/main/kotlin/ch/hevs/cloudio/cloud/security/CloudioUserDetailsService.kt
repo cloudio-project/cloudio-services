@@ -23,11 +23,19 @@ class CloudioUserDetailsService(
 
     @Transactional
     override fun loadUserByUsername(userName: String): UserDetails = userRepository.findByUserName(userName).orElseThrow {
-        UsernameNotFoundException("User \"$userName\"not found.")
+        UsernameNotFoundException("User \"$userName\" not found.")
     }.let { user ->
         CloudioUserDetails(user.id, user.userName, user.password, user.banned, user.authorities.map(Authority::name).map { authority ->
         SimpleGrantedAuthority(authority)
     }, user.groupMemberships.map { it.id }) }
+
+    @Transactional
+    fun loadUserByID(id: Long): CloudioUserDetails = userRepository.findById(id).orElseThrow {
+        UsernameNotFoundException("User with ID $id not found.")
+    }.let { user ->
+        CloudioUserDetails(user.id, user.userName, user.password, user.banned, user.authorities.map(Authority::name).map { authority ->
+            SimpleGrantedAuthority(authority)
+        }, user.groupMemberships.map { it.id }) }
 
 
     @Value(value = "\${cloudio.initialAdminPassword:#{null}}")

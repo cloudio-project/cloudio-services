@@ -63,6 +63,8 @@ dependencies {
     implementation("org.influxdb:influxdb-java")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 
+    implementation("io.jsonwebtoken:jjwt:0.9.1")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.6.21")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -86,6 +88,7 @@ tasks.bootRun {
             val adminPassword: String? by project
 
             environment("cloudio.initialAdminPassword", adminPassword ?: "admin")
+            environment("cloudio.jwt.secret", "56mY2Gqw1BVRErXp71HLLyLfGqSjwxMQ1d9F89yPU1GCOPD_p3VrMoOrikxhaiD16vp-iavbXkXeo2WbXio4Qw")
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())

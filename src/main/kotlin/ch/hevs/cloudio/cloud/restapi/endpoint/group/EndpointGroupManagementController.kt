@@ -10,6 +10,7 @@ import ch.hevs.cloudio.cloud.security.EndpointPermission
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -22,7 +23,10 @@ import javax.transaction.Transactional
 @Profile("rest-api")
 @Tag(name = "Endpoint Group Management", description = "Allows a user to manage endpoint groups.")
 @RequestMapping("/api/v1/endpoints")
-@SecurityRequirement(name = "basicAuth")
+@SecurityRequirements(value = [
+    SecurityRequirement(name = "basicAuth"),
+    SecurityRequirement(name = "tokenAuth")
+])
 class EndpointGroupManagementController(
         private var endpointGroupRepository: EndpointGroupRepository,
         private var endpointRepository: EndpointRepository,
@@ -34,8 +38,9 @@ class EndpointGroupManagementController(
     @GetMapping("/groups")
     @ResponseStatus(HttpStatus.OK)
     fun getAllGroups(
-            @Parameter(hidden = true) authentication: Authentication
-    ) = permissionManager.resolveEndpointGroupsPermissions(authentication.userDetails()).mapNotNull { perm ->
+            @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else permissionManager.resolveEndpointGroupsPermissions(authentication.userDetails()).mapNotNull { perm ->
         endpointGroupRepository.findById(perm.endpointGroupID).orElse(null)?.let {
             EndpointGroupListEntity(
                 name = it.groupName,
@@ -49,7 +54,9 @@ class EndpointGroupManagementController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Authority.HttpEndpointCreation
     @Transactional
-    fun createGroup(@RequestBody body: EndpointGroupEntity, @Parameter(hidden = true) authentication: Authentication) {
+    fun createGroup(@RequestBody body: EndpointGroupEntity, @Parameter(hidden = true) authentication: Authentication?) {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         if (endpointGroupRepository.existsByGroupName(body.name)) {
             throw CloudioHttpExceptions.Conflict("Group '${body.name}' exists.")
         }
@@ -77,8 +84,9 @@ class EndpointGroupManagementController(
     @PreAuthorize("hasPermission(#endpointGroupName, \"EndpointGroup\",T(ch.hevs.cloudio.cloud.security.EndpointPermission).ACCESS)")
     fun getGroupByGroupName(
             @PathVariable endpointGroupName: String,
-            @Parameter(hidden = true) authentication: Authentication
-    ) = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
+            @Parameter(hidden = true) authentication: Authentication?
+    ) = if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+    else endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
         CloudioHttpExceptions.NotFound("Group '$endpointGroupName' not found.")
     }.run {
         EndpointGroupEntity(
@@ -103,9 +111,11 @@ class EndpointGroupManagementController(
     fun updateGroupByGroupName(
             @PathVariable endpointGroupName: String,
             @RequestBody body: EndpointGroupEntity,
-            @Parameter(hidden = true) authentication: Authentication
+            @Parameter(hidden = true) authentication: Authentication?
     )
     {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
         }
@@ -135,8 +145,13 @@ class EndpointGroupManagementController(
     @DeleteMapping("/groups/{endpointGroupName}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Transactional
-    fun deleteGroupByGroupName(@PathVariable endpointGroupName: String, @Parameter(hidden = true) authentication: Authentication)
+    fun deleteGroupByGroupName(
+        @PathVariable endpointGroupName: String,
+        @Parameter(hidden = true) authentication: Authentication?
+    )
     {
+        if (authentication == null) throw CloudioHttpExceptions.Forbidden("No user.")
+
         val endpointGroup = endpointGroupRepository.findByGroupName(endpointGroupName).orElseThrow {
             throw CloudioHttpExceptions.NotFound("Endpoint group not found.")
         }

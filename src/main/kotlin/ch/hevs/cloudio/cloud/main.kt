@@ -2,10 +2,7 @@ package ch.hevs.cloudio.cloud
 
 import ch.hevs.cloudio.cloud.cors.CorsRepository
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
-import ch.hevs.cloudio.cloud.security.Authority
-import ch.hevs.cloudio.cloud.security.CloudioCorsConfigurationSource
-import ch.hevs.cloudio.cloud.security.CloudioUserDetails
-import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
+import ch.hevs.cloudio.cloud.security.*
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rabbitmq.client.DefaultSaslConfig
@@ -34,13 +31,17 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfigurationSource
 import java.net.InetAddress
 import java.util.*
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
+import javax.servlet.http.HttpServletResponse
+
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
@@ -58,6 +59,11 @@ import javax.net.ssl.TrustManagerFactory
     name = "basicAuth",
     type = SecuritySchemeType.HTTP,
     scheme = "basic"
+)
+@SecurityScheme(
+    name = "tokenAuth",
+    type = SecuritySchemeType.HTTP,
+    scheme = "bearer"
 )
 class CloudioApplication {
     @Bean
@@ -157,7 +163,7 @@ class CloudioApplication {
     fun corsConfigurationSource(repo: CorsRepository): CorsConfigurationSource = CloudioCorsConfigurationSource(repo)
 
     @Bean
-    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
+    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService, accessTokenFilter: AccessTokenFilter) = object : WebSecurityConfigurerAdapter() {
         override fun configure(auth: AuthenticationManagerBuilder) {
             auth.userDetailsService(cloudioUserDetailsService)
         }
@@ -167,11 +173,12 @@ class CloudioApplication {
                 .csrf().disable()
                 .authorizeRequests().antMatchers(
                     "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                    "/api/v1/provision/*", "/messageformat/**"
+                    "/api/v1/provision/*", "/messageformat/**", "/api/v1/auth/login"
                 ).permitAll()
                 .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
-                .and().httpBasic()
-                .and().sessionManagement().disable()
+                .and().httpBasic().authenticationEntryPoint { _, response, authException -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.message) }
+                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            http.addFilterBefore(accessTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
         }
     }
 
