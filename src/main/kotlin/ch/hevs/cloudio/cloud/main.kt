@@ -8,6 +8,9 @@ import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxDBClientFactory
+import com.influxdb.client.InfluxDBClientOptions
 import com.rabbitmq.client.DefaultSaslConfig
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
@@ -188,6 +191,11 @@ class CloudioApplication {
         } else {
             Optional.empty()
         }
+    }
+
+    @Bean
+    fun influxDBClient(): InfluxDBClient? {
+        return InfluxDBClientFactory.create("http://localhost:8086", "token", "cloudio-org", "cloudio-bucket");
     }
 }
 

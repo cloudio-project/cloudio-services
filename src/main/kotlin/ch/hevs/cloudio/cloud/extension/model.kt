@@ -69,16 +69,16 @@ fun Attribute.fillFromInfluxDB(influx: InfluxDBClient, database: String, topic: 
     queryApi.query(InfluxQLQuery("SELECT value from \"${topic.replace('/', '.')}\" ORDER BY desc LIMIT 1", database)).results[0].series.let {
         var dt: Date? = null
         try {
-            dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(it[0].values[0].toString())
+            dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(it[0].values[0].values[0].toString())
         } catch (exception: ParseException) {
             try {
-                dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it[0].values[0].toString())
+                dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it[0].values[0].values[0].toString())
             } catch (exception: ParseException) {
                 exception.printStackTrace()
             }
         }
         if (dt != null) {
-            this.value = it[0].values[1]
+            this.value = it[0].values[0].values[1]
             this.timestamp = dt.time.toDouble()
         }
     }

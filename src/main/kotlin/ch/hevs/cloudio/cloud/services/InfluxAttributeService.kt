@@ -4,11 +4,11 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractAttributeService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
+import com.influxdb.client.*
 import org.apache.commons.logging.LogFactory
-import org.influxdb.BatchOptions
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Point
-import org.influxdb.dto.Query
+import com.influxdb.client.domain.InfluxQLQuery
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
@@ -17,18 +17,21 @@ import javax.annotation.PostConstruct
 @Service
 @Profile("update-influx", "default")
 class InfluxAttributeService(
-        private val influx: InfluxDB,
+        private val influx: InfluxDBClient,
         private val influxProperties: CloudioInfluxProperties
 ) : AbstractAttributeService() {
     private val log = LogFactory.getLog(InfluxAttributeService::class.java)
-
+    private lateinit var writeApi: WriteApi
     @PostConstruct
     fun initialize() {
+        //TODO update to influx 2.x
+        var queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
         // Create database if needed
-        if (influx.query(Query("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.firstOrNull() == influxProperties.database} != false)
-            influx.query(Query("CREATE DATABASE ${influxProperties.database}", ""))
+        if (queryApi.query(InfluxQLQuery("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.values.firstOrNull() == influxProperties.database} != false)
+            queryApi.query(InfluxQLQuery("CREATE DATABASE ${influxProperties.database}", ""))
 
-        influx.enableBatch(BatchOptions.DEFAULTS.actions(influxProperties.batchSize).flushDuration(influxProperties.batchIntervalMs))
+        writeApi = influx.makeWriteApi(WriteOptions.builder().batchSize(influxProperties.batchSize).flushInterval(influxProperties.batchIntervalMs).build())
+
     }
 
     override fun attributeUpdated(attributeId: String, attribute: Attribute) {
@@ -36,9 +39,9 @@ class InfluxAttributeService(
             // create the influxDB point
             val point = Point
                     .measurement(attributeId)
-                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                    .tag("constraint", attribute.constraint.toString())
-                    .tag("type", attribute.type.toString())
+                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                    .addTag("constraint", attribute.constraint.toString())
+                    .addTag("type", attribute.type.toString())
 
             try {
                 // complete the point depending on attribute type
@@ -55,11 +58,8 @@ class InfluxAttributeService(
                     else -> {
                     }
                 }
-                //write the actual point in influx
-                val myPoint = point.build()
-
                 //if batch enabled, save point in set, either send it
-                influx.write(influxProperties.database, "autogen", myPoint)
+                writeApi.writePoint(influxProperties.database, "autogen", point)
 
             } catch (e: ClassCastException) {
                 log.error("The attribute $attributeId has been updated with wrong data type")
