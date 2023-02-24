@@ -18,9 +18,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
-import org.influxdb.dto.QueryResult
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxQLQueryApi
+import com.influxdb.client.domain.InfluxQLQuery
+import com.influxdb.query.InfluxQLQueryResult
+//import org.influxdb.InfluxDB
+//import org.influxdb.dto.Query
+//import org.influxdb.dto.QueryResult
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -39,7 +43,7 @@ import javax.servlet.http.HttpServletRequest
 class EndpointHistoryAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
-    private val influx: InfluxDB,
+    private val influx: InfluxDBClient,
     private val influxProperties: CloudioInfluxProperties
 ) {
     private val antMatcher = AntPathMatcher()
@@ -100,11 +104,11 @@ class EndpointHistoryAccessController(
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
+        //TODO update to influx 2.x changed it[0] to it.values[0]
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.map {
             DataPointEntity(
-                time = it[0] as String,
-                value = it[1]
+                time = it.values[0] as String,
+                value = it.values[1]
             )
         } ?: emptyList()
     }
@@ -166,15 +170,19 @@ class EndpointHistoryAccessController(
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
+        //TODO update to influx 2.x it[0] to it.values[0]
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
         joinToString(separator = "\n") {
-            "${it[0] as String}${separator ?: ";"}${it[1]}"
+            "${it.values[0] as String}${separator ?: ";"}${it.values[1]}"
         }.orEmpty()
     }
 
-    private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): QueryResult.Series? {
-        val result = influx.query(Query(
+    private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): InfluxQLQueryResult.Series? {
+        //TODO update to influx 2.x
+
+        var queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
+
+        val result = queryApi.query(InfluxQLQuery(
             "SELECT time, ${
                 if (resampleInterval != null) {
                     (resampleFunction ?: ResampleFunction.MEAN).toString() + "(value)"
@@ -189,9 +197,28 @@ class EndpointHistoryAccessController(
                     "LIMIT ${max ?: 1000}",
             influxProperties.database))
 
+        /*
+        val result = influx.query(Query(
+            "SELECT time, ${
+                if (resampleInterval != null) {
+                    (resampleFunction ?: ResampleFunction.MEAN).toString() + "(value)"
+                } else {
+                    "value"
+                }
+            } FROM \"${modelIdentifier.toInfluxSeriesName()}\" " +
+                    (from?.let { "WHERE time >= '${it.toDate().toRFC3339()}' " } ?: "") +
+                    (to?.let { "AND time <= '${it.toDate().toRFC3339()}' " } ?: "") +
+                    (resampleInterval?.let { "GROUP BY time($resampleInterval) fill(${(fillValue ?: FillValue.NONE).id}) " } ?: "") +
+                    "ORDER BY time ASC " +
+                    "LIMIT ${max ?: 1000}",
+            influxProperties.database))
+         */
+
+        /* //TODO update to influx 2.x.hasError() doesn't exist anymore
         if (result.hasError()) {
             throw CloudioHttpExceptions.InternalServerError("InfluxDB error: ${result.error}")
         }
+        */
 
         return result.results.firstOrNull()?.series?.firstOrNull()
     }

@@ -4,8 +4,9 @@ import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.CloudioObject
 import ch.hevs.cloudio.cloud.model.EndpointDataModel
 import ch.hevs.cloudio.cloud.model.Node
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxQLQueryApi
+import com.influxdb.client.domain.InfluxQLQuery
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,19 +41,19 @@ fun CloudioObject.findObject(path: Stack<String>): CloudioObject? = when {
     else -> null
 }
 
-fun EndpointDataModel.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, endpointUuid: UUID) {
+fun EndpointDataModel.fillAttributesFromInfluxDB(influx: InfluxDBClient, database: String, endpointUuid: UUID) {
     this.nodes.forEach {
         it.value.fillAttributesFromInfluxDB(influx, database, "${endpointUuid}/${it.key}")
     }
 }
 
-fun Node.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, topic: String) {
+fun Node.fillAttributesFromInfluxDB(influx: InfluxDBClient, database: String, topic: String) {
     this.objects.forEach {
         it.value.fillAttributesFromInfluxDB(influx, database, "$topic/${it.key}")
     }
 }
 
-fun CloudioObject.fillAttributesFromInfluxDB(influx: InfluxDB, database: String, topic: String) {
+fun CloudioObject.fillAttributesFromInfluxDB(influx: InfluxDBClient, database: String, topic: String) {
     this.attributes.forEach {
         it.value.fillFromInfluxDB(influx, database, "$topic/${it.key}")
     }
@@ -61,7 +62,28 @@ fun CloudioObject.fillAttributesFromInfluxDB(influx: InfluxDB, database: String,
     }
 }
 
-fun Attribute.fillFromInfluxDB(influx: InfluxDB, database: String, topic: String) {
+fun Attribute.fillFromInfluxDB(influx: InfluxDBClient, database: String, topic: String) {
+    //TODO update to influx 2.x
+    var queryApi: InfluxQLQueryApi  = influx.influxQLQueryApi
+
+    queryApi.query(InfluxQLQuery("SELECT value from \"${topic.replace('/', '.')}\" ORDER BY desc LIMIT 1", database)).results[0].series.let {
+        var dt: Date? = null
+        try {
+            dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(it[0].values[0].toString())
+        } catch (exception: ParseException) {
+            try {
+                dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it[0].values[0].toString())
+            } catch (exception: ParseException) {
+                exception.printStackTrace()
+            }
+        }
+        if (dt != null) {
+            this.value = it[0].values[1]
+            this.timestamp = dt.time.toDouble()
+        }
+    }
+
+    /*
     influx.query(Query("SELECT value from \"${topic.replace('/', '.')}\" ORDER BY desc LIMIT 1", database)).results[0].series?.let {
         var dt: Date? = null
         try {
@@ -78,4 +100,5 @@ fun Attribute.fillFromInfluxDB(influx: InfluxDB, database: String, topic: String
             this.timestamp = dt.time.toDouble()
         }
     }
+    */
 }

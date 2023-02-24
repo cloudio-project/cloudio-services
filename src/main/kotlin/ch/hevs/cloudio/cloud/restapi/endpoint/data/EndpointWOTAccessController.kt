@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.influxdb.InfluxDB
+import com.influxdb.client.InfluxDBClient
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest
 @SecurityRequirement(name = "basicAuth")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
-                                  private val influxDB: InfluxDB,
+                                  private val influxDB: InfluxDBClient,//TODO update to influx 2.x
                                   private val influxProperties: CloudioInfluxProperties) {
     private val antMatcher = AntPathMatcher()
 

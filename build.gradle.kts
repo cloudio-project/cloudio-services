@@ -60,7 +60,7 @@ dependencies {
 
     implementation("org.postgresql:postgresql")
     implementation("com.vladmihalcea:hibernate-types-52:2.18.0")
-    implementation("org.influxdb:influxdb-java")
+    implementation("com.influxdb:influxdb-client-java:6.7.0")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.6.21")
