@@ -39,7 +39,7 @@ class InfluxAttributeService(
             // create the influxDB point
             val point = Point
                     .measurement(attributeId)
-                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                    .time((attribute.timestamp!! * 1000.0).toLong(), WritePrecision.MS)
                     .addTag("constraint", attribute.constraint.toString())
                     .addTag("type", attribute.type.toString())
 
@@ -59,7 +59,7 @@ class InfluxAttributeService(
                     }
                 }
                 //if batch enabled, save point in set, either send it
-                writeApi.writePoint(influxProperties.database, "autogen", point)
+                writeApi.writePoint(influxProperties.database, influxProperties.organization, point)
 
             } catch (e: ClassCastException) {
                 log.error("The attribute $attributeId has been updated with wrong data type")

@@ -21,7 +21,7 @@ class InfluxLogService(
     override fun logMessage(endpointUUID: UUID, message: LogMessage) {
         val writeApi: WriteApiBlocking = influx.writeApiBlocking
         writeApi.writePoint(
-            influxProperties.database, "autogen", Point
+            influxProperties.database, influxProperties.organization, Point
                 .measurement("$endpointUUID.logs")
                 .time((message.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
                 .addField("level", message.level.ordinal)

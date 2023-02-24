@@ -99,7 +99,7 @@ class DelayedService(
                 }
 
                 //if batch enabled, save point in set, either send it
-                writeApi.writePoint(influxProperties.database, "autogen", point)
+                writeApi.writePoint(influxProperties.database, influxProperties.organization, point)
 
             } catch (e: ClassCastException) {
                 log.error("The attribute $modelIdentifier has been updated with wrong data type")
@@ -118,7 +118,7 @@ class DelayedService(
     fun handleLogMessage(endpointUuid: String, logMessage: LogMessage) {
         //TODO update to influx 2.x
         val writeApi: WriteApiBlocking = influx.writeApiBlocking
-        writeApi.writePoint(influxProperties.database, "autogen", Point
+        writeApi.writePoint(influxProperties.database, influxProperties.organization, Point
                 .measurement("$endpointUuid.logs")
                 .time((logMessage.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
                 .addField("level", logMessage.level.ordinal)
