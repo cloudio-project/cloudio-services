@@ -85,7 +85,7 @@ tasks.bootRun {
         tasks.bootRun.configure {
             val adminPassword: String? by project
 
-            environment("cloudio.initialAdminPassword", adminPassword ?: "admin")
+            environment("cloudio.initialAdminPassword", adminPassword ?: "admin_password")
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
@@ -104,7 +104,7 @@ tasks.bootRun {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "admin_password")
             environment("jpa.hibernate.ddl-auto" ,"update")
         }
     }
@@ -126,7 +126,7 @@ tasks.test {
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
-            environment("cloudio.influx.database", "cloudiotest")
+            environment("cloudio.influx.database", "cloudio-bucket")
 
             // MongoDB.
             environment("spring.data.mongodb.host", "localhost")
@@ -135,7 +135,7 @@ tasks.test {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudiotest")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "admin_password")
             environment("jpa.hibernate.ddl-auto" ,"create")
 
         }

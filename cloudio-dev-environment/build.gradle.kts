@@ -16,7 +16,7 @@ tasks.register<Exec>("createDevServices") {
     workingDir = file(".")
     doFirst {
         val adminPassword: String? by project
-        environment["ADMIN_PASSWORD"] = adminPassword ?: "admin"
+        environment["ADMIN_PASSWORD"] = adminPassword ?: "admin_password"
         environment["CA_CERT"] = file("certificates/ca.cer").readText()
         environment["SERVER_CERT"] = file("certificates/server.cer").readText()
         environment["SERVER_KEY"] = file("certificates/server.key").readText()
