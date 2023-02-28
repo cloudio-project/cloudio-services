@@ -78,7 +78,7 @@ class DelayedService(
             //TODO update to influx 2.x
             val point = Point
                     .measurement(modelIdentifier.toInfluxSeriesName())
-                    .time((attribute.timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                    .time((attribute.timestamp!! * 1000.0).toLong(), WritePrecision.MS)
                     .addTag("constraint", attribute.constraint.toString())
                     .addTag("type", attribute.type.toString())
 
@@ -120,7 +120,7 @@ class DelayedService(
         val writeApi: WriteApiBlocking = influx.writeApiBlocking
         writeApi.writePoint(influxProperties.database, influxProperties.organization, Point
                 .measurement("$endpointUuid.logs")
-                .time((logMessage.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                .time((logMessage.timestamp * 1000.0).toLong(), WritePrecision.MS)
                 .addField("level", logMessage.level.ordinal)
                 .addField("message", logMessage.message)
                 .addField("loggerName", logMessage.loggerName)

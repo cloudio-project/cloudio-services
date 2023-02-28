@@ -81,7 +81,7 @@ class InfluxLifecycleService(
             // create the influxDB point
             val point = Point
                 .measurement(attributeId)
-                .time((timestamp!! * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                .time((timestamp!! * 1000.0).toLong(), WritePrecision.MS)
                 .addTag("constraint", constraint.toString())
                 .addTag("type", type.toString())
 

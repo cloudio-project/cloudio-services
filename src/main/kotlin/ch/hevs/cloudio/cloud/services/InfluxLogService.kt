@@ -23,7 +23,7 @@ class InfluxLogService(
         writeApi.writePoint(
             influxProperties.database, influxProperties.organization, Point
                 .measurement("$endpointUUID.logs")
-                .time((message.timestamp * (1000.0) * 1000.0).toLong(), WritePrecision.MS)
+                .time((message.timestamp * 1000.0).toLong(), WritePrecision.MS)
                 .addField("level", message.level.ordinal)
                 .addField("message", message.message)
                 .addField("loggerName", message.loggerName)
