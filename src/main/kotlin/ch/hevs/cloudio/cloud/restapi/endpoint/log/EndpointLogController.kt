@@ -83,7 +83,7 @@ class EndpointLogController(
         return result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
             LogMessageEntity(
                 time = it.values[0] as String,
-                level = LogLevel.values()[(it.values[1] as Double).toInt()],
+                level = LogLevel.values()[Integer.parseInt(it.values[1] as String)],
                 message = it.values[2] as String,
                 loggerName = it.values[3] as String,
                 logSource = it.values[4] as String
