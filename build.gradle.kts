@@ -84,8 +84,10 @@ tasks.bootRun {
     doFirst {
         tasks.bootRun.configure {
             val adminPassword: String? by project
+            val influxToken: String? by project
 
             environment("cloudio.initialAdminPassword", adminPassword ?: "admin_password")
+            environment("cloudio.influx.token", influxToken?:"influx_token")
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
@@ -115,6 +117,7 @@ tasks.test {
     doFirst {
         tasks.test.configure {
             val adminPassword: String? by project
+            val influxToken: String? by project
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
@@ -127,6 +130,7 @@ tasks.test {
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
             environment("cloudio.influx.database", "cloudio-bucket")
+            environment("cloudio.influx.token", influxToken?:"influx_token")
 
             // MongoDB.
             environment("spring.data.mongodb.host", "localhost")
