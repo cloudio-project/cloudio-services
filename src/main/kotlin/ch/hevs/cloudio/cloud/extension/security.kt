@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication
 import java.io.OutputStream
 import java.io.StringReader
 import java.io.StringWriter
-import java.lang.RuntimeException
 import java.math.BigInteger
 import java.security.KeyStore
 import java.security.PrivateKey

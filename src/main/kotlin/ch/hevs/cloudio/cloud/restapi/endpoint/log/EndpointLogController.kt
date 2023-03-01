@@ -3,6 +3,9 @@ package ch.hevs.cloudio.cloud.restapi.endpoint.log
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.LogLevel
 import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxQLQueryApi
+import com.influxdb.client.domain.InfluxQLQuery
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -12,9 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import com.influxdb.client.InfluxDBClient
-import com.influxdb.client.InfluxQLQueryApi
-import com.influxdb.client.domain.InfluxQLQuery
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -51,19 +51,7 @@ class EndpointLogController(
         @RequestParam @Parameter(description = "Maximal number of log entries to return.", required = false, schema = Schema(defaultValue = "1000")) max: Int?
     ): List<LogMessageEntity> {
 
-        //TODO update to influx 2.x
-        /*
-        val result = influx.query(Query(
-            "SELECT time, level, message, logSource, loggerName FROM \"$uuid.logs\" " +
-                    "WHERE level <= ${(threshold ?: LogLevel.WARN).ordinal} " +
-                    (from?.let { "AND time >= '${it.toDate().toRFC3339()}' " } ?: "") +
-                    (to?.let { "AND time <= '${it.toDate().toRFC3339()}' " } ?: "") +
-                    "ORDER BY time DESC " +
-                    "LIMIT ${max ?: 1000}",
-            influxProperties.database))
-
-         */
-        var queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
+        val queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
 
         val result = queryApi.query(InfluxQLQuery(
                 "SELECT time, level, message, logSource, loggerName FROM \"$uuid.logs\" " +
@@ -79,7 +67,6 @@ class EndpointLogController(
         }
          */
 
-        //TODO update to influx 2.x changed it[0] to it.values[0]
         return result.results.firstOrNull()?.series?.firstOrNull()?.values?.map {
             LogMessageEntity(
                 time = it.values[0] as String,

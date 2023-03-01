@@ -3,15 +3,14 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
-import org.apache.commons.logging.LogFactory
 import com.influxdb.client.InfluxDBClient
 import com.influxdb.client.WriteApiBlocking
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("lifecycle-influx", "default")
@@ -22,7 +21,6 @@ class InfluxLifecycleService(
     private val log = LogFactory.getLog(InfluxLifecycleService::class.java)
 
     override fun endpointIsOnline(endpointUUID: UUID, dataModel: EndpointDataModel) {
-        //TODO update to influx 2.x
         val writeApi: WriteApiBlocking = influx.writeApiBlocking
         writeApi.writePoint(
             influxProperties.database, influxProperties.organization, Point

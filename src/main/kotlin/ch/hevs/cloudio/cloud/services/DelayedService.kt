@@ -75,7 +75,6 @@ class DelayedService(
 
         if (attribute.timestamp != null) {
             // create the influxDB point
-            //TODO update to influx 2.x
             val point = Point
                     .measurement(modelIdentifier.toInfluxSeriesName())
                     .time((attribute.timestamp!! * 1000.0).toLong(), WritePrecision.MS)
@@ -116,7 +115,6 @@ class DelayedService(
     }
 
     fun handleLogMessage(endpointUuid: String, logMessage: LogMessage) {
-        //TODO update to influx 2.x
         val writeApi: WriteApiBlocking = influx.writeApiBlocking
         writeApi.writePoint(influxProperties.database, influxProperties.organization, Point
                 .measurement("$endpointUuid.logs")

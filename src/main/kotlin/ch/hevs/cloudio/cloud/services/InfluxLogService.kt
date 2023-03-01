@@ -10,7 +10,6 @@ import com.influxdb.client.write.Point
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("logs-influx", "default")

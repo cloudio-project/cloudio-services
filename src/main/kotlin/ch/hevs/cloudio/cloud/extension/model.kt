@@ -9,7 +9,6 @@ import com.influxdb.client.InfluxQLQueryApi
 import com.influxdb.client.domain.InfluxQLQuery
 import com.influxdb.query.InfluxQLQueryResult
 import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.*
 
 fun EndpointDataModel.findAttribute(path: Stack<String>): Attribute? = if (path.size > 1) {
@@ -64,7 +63,6 @@ fun CloudioObject.fillAttributesFromInfluxDB(influx: InfluxDBClient, database: S
 }
 
 fun Attribute.fillFromInfluxDB(influx: InfluxDBClient, database: String, topic: String) {
-    //TODO update to influx 2.x
     val queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
 
     val myQuery: InfluxQLQueryResult? = queryApi.query(
@@ -91,23 +89,4 @@ fun Attribute.fillFromInfluxDB(influx: InfluxDBClient, database: String, topic: 
             }
         }
     }
-
-    /*
-    influx.query(Query("SELECT value from \"${topic.replace('/', '.')}\" ORDER BY desc LIMIT 1", database)).results[0].series?.let {
-        var dt: Date? = null
-        try {
-            dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(it[0].values[0][0].toString())
-        } catch (exception: ParseException) {
-            try {
-                dt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it[0].values[0][0].toString())
-            } catch (exception: ParseException) {
-                exception.printStackTrace()
-            }
-        }
-        if (dt != null) {
-            this.value = it[0].values[0][1]
-            this.timestamp = dt.time.toDouble()
-        }
-    }
-    */
 }

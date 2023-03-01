@@ -4,14 +4,16 @@ import ch.hevs.cloudio.cloud.abstractservices.AbstractAttributeService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.Attribute
 import ch.hevs.cloudio.cloud.model.AttributeType
-import com.influxdb.client.*
-import org.apache.commons.logging.LogFactory
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxQLQueryApi
+import com.influxdb.client.WriteApi
+import com.influxdb.client.WriteOptions
 import com.influxdb.client.domain.InfluxQLQuery
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
+import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 
 @Service
@@ -24,7 +26,6 @@ class InfluxAttributeService(
     private lateinit var writeApi: WriteApi
     @PostConstruct
     fun initialize() {
-        //TODO update to influx 2.x
         var queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
         // Create database if needed
         if (queryApi.query(InfluxQLQuery("SHOW DATABASES", "")).results.firstOrNull()?.series?.firstOrNull()?.values?.none { it.values.firstOrNull() == influxProperties.database} != false)

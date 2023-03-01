@@ -12,6 +12,7 @@ import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.SerializationFormat
 import ch.hevs.cloudio.cloud.serialization.fromIdentifiers
+import com.influxdb.client.InfluxDBClient
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -20,7 +21,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import com.influxdb.client.InfluxDBClient
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletRequest
 class EndpointDataAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
-    private val influxDB: InfluxDBClient,//TODO update to influx 2.x
+    private val influxDB: InfluxDBClient,
     private val influxProperties: CloudioInfluxProperties,
     private val serializationFormats: Collection<SerializationFormat>,
     private val rabbitTemplate: RabbitTemplate

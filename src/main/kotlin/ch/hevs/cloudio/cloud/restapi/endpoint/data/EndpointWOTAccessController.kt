@@ -11,6 +11,7 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointPermission
 import ch.hevs.cloudio.cloud.serialization.wot.WotSerializationFormat
+import com.influxdb.client.InfluxDBClient
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -19,7 +20,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import com.influxdb.client.InfluxDBClient
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest
 @SecurityRequirement(name = "basicAuth")
 class EndpointWOTAccessController(private val endpointRepository: EndpointRepository,
                                   private val permissionManager: CloudioPermissionManager,
-                                  private val influxDB: InfluxDBClient,//TODO update to influx 2.x
+                                  private val influxDB: InfluxDBClient,
                                   private val influxProperties: CloudioInfluxProperties) {
     private val antMatcher = AntPathMatcher()
 
