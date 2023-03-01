@@ -193,12 +193,6 @@ class EndpointHistoryAccessController(
                     "LIMIT ${max ?: 1000}",
             influxProperties.database))
 
-        /* //TODO update to influx 2.x.hasError() doesn't exist anymore
-        if (result.hasError()) {
-            throw CloudioHttpExceptions.InternalServerError("InfluxDB error: ${result.error}")
-        }
-        */
-
         return result.results.firstOrNull()?.series?.firstOrNull()
     }
 
