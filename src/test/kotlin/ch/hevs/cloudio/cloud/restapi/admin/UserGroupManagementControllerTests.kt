@@ -126,7 +126,7 @@ class UserGroupManagementControllerTests {
     @WithMockUser("Admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyNonExistentGroup() {
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userGroupManagementController.updateGroupByGroupName("TestGroup2", UserGroupEntity("TestGroup2", mapOf("test" to true)))
+            userGroupManagementController.updateGroupByGroupName("TestGroup2", UserGroupEntity("TestGroup2", mapOf("test" to true), emptyList()))
         }
     }
 
@@ -134,7 +134,7 @@ class UserGroupManagementControllerTests {
     @WithMockUser("Admin", authorities = ["HTTP_ACCESS", "HTTP_ADMIN"])
     fun modifyWhereNamesDoNotMatch() {
         assertThrows<CloudioHttpExceptions.Conflict> {
-            userGroupManagementController.updateGroupByGroupName("TestGroup", UserGroupEntity("TestGroup2", emptyMap()))
+            userGroupManagementController.updateGroupByGroupName("TestGroup", UserGroupEntity("TestGroup2", emptyMap(), emptyList()))
         }
     }
 
@@ -142,7 +142,7 @@ class UserGroupManagementControllerTests {
     @WithMockUser("sepp.blatter", authorities = ["HTTP_ACCESS"])
     fun modifyByNonAdmin() {
         assertThrows<AccessDeniedException> {
-            userGroupManagementController.updateGroupByGroupName("TestGroup", UserGroupEntity("TestGroup", mapOf("test" to true)))
+            userGroupManagementController.updateGroupByGroupName("TestGroup", UserGroupEntity("TestGroup", mapOf("test" to true), emptyList()))
         }
     }
 
@@ -228,7 +228,7 @@ class UserGroupManagementControllerTests {
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
-            userGroupManagementController.updateGroupByGroupName(randomCharacters, UserGroupEntity(randomCharacters, emptyMap()))
+            userGroupManagementController.updateGroupByGroupName(randomCharacters, UserGroupEntity(randomCharacters, emptyMap(), emptyList()))
         }
 
         assertThrows<CloudioHttpExceptions.NotFound> {
