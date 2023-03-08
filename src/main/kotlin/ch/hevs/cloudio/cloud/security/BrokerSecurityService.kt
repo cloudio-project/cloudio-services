@@ -54,7 +54,7 @@ class BrokerSecurityService(private val userDetailsService: CloudioUserDetailsSe
         val body = when (action) {
             "login" -> {
                 val password = message.messageProperties.headers["password"]?.toString()
-                if (password != null) {   // Authentication with password --> User.
+                if (password != null && password != "none") {   // Authentication with password --> User.
                     authenticateUser(id, password)
                 } else {   // Authentication with certificates --> Endpoint.
                     authenticateEndpoint(id)

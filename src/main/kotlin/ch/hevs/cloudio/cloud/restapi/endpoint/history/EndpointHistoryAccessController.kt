@@ -1,5 +1,8 @@
 package ch.hevs.cloudio.cloud.restapi.endpoint.history
 
+//import org.influxdb.InfluxDB
+//import org.influxdb.dto.Query
+//import org.influxdb.dto.QueryResult
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.dao.EndpointRepository
 import ch.hevs.cloudio.cloud.extension.userDetails
@@ -9,6 +12,10 @@ import ch.hevs.cloudio.cloud.restapi.CloudioHttpExceptions
 import ch.hevs.cloudio.cloud.security.CloudioPermissionManager
 import ch.hevs.cloudio.cloud.security.EndpointModelElementPermission
 import ch.hevs.cloudio.cloud.security.EndpointPermission
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxQLQueryApi
+import com.influxdb.client.domain.InfluxQLQuery
+import com.influxdb.query.InfluxQLQueryResult
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -18,9 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Query
-import org.influxdb.dto.QueryResult
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -39,7 +43,7 @@ import javax.servlet.http.HttpServletRequest
 class EndpointHistoryAccessController(
     private val endpointRepository: EndpointRepository,
     private val permissionManager: CloudioPermissionManager,
-    private val influx: InfluxDB,
+    private val influx: InfluxDBClient,
     private val influxProperties: CloudioInfluxProperties
 ) {
     private val antMatcher = AntPathMatcher()
@@ -100,11 +104,10 @@ class EndpointHistoryAccessController(
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.map {
             DataPointEntity(
-                time = it[0] as String,
-                value = it[1]
+                time = it.values[0] as String,
+                value = it.values[1]
             )
         } ?: emptyList()
     }
@@ -166,15 +169,16 @@ class EndpointHistoryAccessController(
                 throw CloudioHttpExceptions.Forbidden("Forbidden.")
             }
         }
-
         return queryInflux(modelIdentifier, from, to, resampleInterval, resampleFunction, fillValue, max)?.values?.
         joinToString(separator = "\n") {
-            "${it[0] as String}${separator ?: ";"}${it[1]}"
+            "${it.values[0] as String}${separator ?: ";"}${it.values[1]}"
         }.orEmpty()
     }
 
-    private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): QueryResult.Series? {
-        val result = influx.query(Query(
+    private fun queryInflux(modelIdentifier: ModelIdentifier, from: String?, to: String?, resampleInterval: String?, resampleFunction: ResampleFunction?, fillValue: FillValue?, max: Int?): InfluxQLQueryResult.Series? {
+        val queryApi: InfluxQLQueryApi = influx.influxQLQueryApi
+
+        val result = queryApi.query(InfluxQLQuery(
             "SELECT time, ${
                 if (resampleInterval != null) {
                     (resampleFunction ?: ResampleFunction.MEAN).toString() + "(value)"
@@ -188,10 +192,6 @@ class EndpointHistoryAccessController(
                     "ORDER BY time ASC " +
                     "LIMIT ${max ?: 1000}",
             influxProperties.database))
-
-        if (result.hasError()) {
-            throw CloudioHttpExceptions.InternalServerError("InfluxDB error: ${result.error}")
-        }
 
         return result.results.firstOrNull()?.series?.firstOrNull()
     }

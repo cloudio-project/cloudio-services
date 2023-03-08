@@ -3,59 +3,60 @@ package ch.hevs.cloudio.cloud.services
 import ch.hevs.cloudio.cloud.abstractservices.AbstractLifecycleService
 import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.model.*
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.WriteApiBlocking
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import org.apache.commons.logging.LogFactory
-import org.influxdb.InfluxDB
-import org.influxdb.dto.Point
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @Service
 @Profile("lifecycle-influx", "default")
 class InfluxLifecycleService(
-    private val influx: InfluxDB,
+    private val influx: InfluxDBClient,
     private val influxProperties: CloudioInfluxProperties
 ) : AbstractLifecycleService() {
     private val log = LogFactory.getLog(InfluxLifecycleService::class.java)
 
     override fun endpointIsOnline(endpointUUID: UUID, dataModel: EndpointDataModel) {
-        influx.write(
-            influxProperties.database, "autogen", Point
+        val writeApi: WriteApiBlocking = influx.writeApiBlocking
+        writeApi.writePoint(
+            influxProperties.database, influxProperties.organization, Point
                 .measurement(endpointUUID.toString())
                 .addField("event", "online")
-                .build()
         )
         dataModel.nodes.writeAttributeValues(endpointUUID.toString())
     }
 
     override fun endpointIsOffline(endpointUUID: UUID) {
-        influx.write(
-            influxProperties.database, "autogen", Point
+        val writeApi: WriteApiBlocking = influx.writeApiBlocking
+        writeApi.writePoint(
+            influxProperties.database, influxProperties.organization, Point
                 .measurement(endpointUUID.toString())
                 .addField("event", "offline")
-                .build()
         )
     }
 
     override fun nodeAdded(endpointUUID: UUID, nodeName: String, node: Node) {
-        influx.write(
-            influxProperties.database, "autogen", Point
+        val writeApi: WriteApiBlocking = influx.writeApiBlocking
+        writeApi.writePoint(
+            influxProperties.database, influxProperties.organization, Point
                 .measurement(endpointUUID.toString())
-                .tag("node", nodeName)
+                .addTag("node", nodeName)
                 .addField("event", "added")
-                .build()
         )
         node.writeAttributeValues("$endpointUUID.$nodeName")
     }
 
     override fun nodeRemoved(endpointUUID: UUID, nodeName: String) {
-        influx.write(
-            influxProperties.database, "autogen", Point
+        val writeApi: WriteApiBlocking = influx.writeApiBlocking
+        writeApi.writePoint(
+            influxProperties.database, influxProperties.organization, Point
                 .measurement(endpointUUID.toString())
-                .tag("node", nodeName)
+                .addTag("node", nodeName)
                 .addField("event", "removed")
-                .build()
         )
     }
 
@@ -78,9 +79,9 @@ class InfluxLifecycleService(
             // create the influxDB point
             val point = Point
                 .measurement(attributeId)
-                .time((timestamp!! * (1000.0) * 1000.0).toLong(), TimeUnit.MICROSECONDS)
-                .tag("constraint", constraint.toString())
-                .tag("type", type.toString())
+                .time((timestamp!! * 1000.0).toLong(), WritePrecision.MS)
+                .addTag("constraint", constraint.toString())
+                .addTag("type", type.toString())
 
             try {
                 // complete the point depending on attribute type
@@ -97,11 +98,10 @@ class InfluxLifecycleService(
                     else -> {
                     }
                 }
-                //write the actual point in influx
-                val myPoint = point.build()
 
                 //if batch enabled, save point in set, either send it
-                influx.write(influxProperties.database, "autogen", myPoint)
+                val writeApi: WriteApiBlocking = influx.writeApiBlocking
+                writeApi.writePoint(influxProperties.database, influxProperties.organization, point)
 
             } catch (e: ClassCastException) {
                 log.error("The attribute $attributeId has been updated with wrong data type")

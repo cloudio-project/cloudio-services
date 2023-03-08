@@ -60,7 +60,7 @@ dependencies {
 
     implementation("org.postgresql:postgresql")
     implementation("com.vladmihalcea:hibernate-types-52:2.18.0")
-    implementation("org.influxdb:influxdb-java")
+    implementation("com.influxdb:influxdb-client-java:6.7.0")
     implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.6.21")
@@ -84,8 +84,10 @@ tasks.bootRun {
     doFirst {
         tasks.bootRun.configure {
             val adminPassword: String? by project
+            val influxToken: String? by project
 
-            environment("cloudio.initialAdminPassword", adminPassword ?: "admin")
+            environment("cloudio.initialAdminPassword", adminPassword ?: "admin_password")
+            environment("cloudio.influx.token", influxToken?:"influx_token")
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
@@ -104,7 +106,7 @@ tasks.bootRun {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudio")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "admin_password")
             environment("jpa.hibernate.ddl-auto" ,"update")
         }
     }
@@ -115,6 +117,7 @@ tasks.test {
     doFirst {
         tasks.test.configure {
             val adminPassword: String? by project
+            val influxToken: String? by project
 
             // Certificate manager.
             environment("cloudio.cert-manager.caCertificate", file("cloudio-dev-environment/certificates/ca.cer").readText())
@@ -126,7 +129,8 @@ tasks.test {
 
             // InfluxDB.
             environment("spring.influx.url", "http://localhost:8086")
-            environment("cloudio.influx.database", "cloudiotest")
+            environment("cloudio.influx.database", "cloudio-bucket")
+            environment("cloudio.influx.token", influxToken?:"influx_token")
 
             // MongoDB.
             environment("spring.data.mongodb.host", "localhost")
@@ -135,7 +139,7 @@ tasks.test {
             // PostgreSQL.
             environment("spring.datasource.url", "jdbc:postgresql://localhost:5432/cloudiotest")
             environment("spring.datasource.username", "cloudio")
-            environment("spring.datasource.password", adminPassword ?: "admin")
+            environment("spring.datasource.password", adminPassword ?: "admin_password")
             environment("jpa.hibernate.ddl-auto" ,"create")
 
         }

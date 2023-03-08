@@ -1,6 +1,5 @@
 package ch.hevs.cloudio.cloud.restapi.admin.usergroup
 
-import ch.hevs.cloudio.cloud.dao.UserGroup
 import ch.hevs.cloudio.cloud.restapi.admin.user.ListUserEntity
 import io.swagger.v3.oas.annotations.media.Schema
 

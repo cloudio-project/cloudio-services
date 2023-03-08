@@ -1,5 +1,6 @@
 package ch.hevs.cloudio.cloud
 
+import ch.hevs.cloudio.cloud.config.CloudioInfluxProperties
 import ch.hevs.cloudio.cloud.cors.CorsRepository
 import ch.hevs.cloudio.cloud.internalservice.certificatemanager.CertificateManagerService
 import ch.hevs.cloudio.cloud.security.Authority
@@ -8,6 +9,8 @@ import ch.hevs.cloudio.cloud.security.CloudioUserDetails
 import ch.hevs.cloudio.cloud.security.CloudioUserDetailsService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxDBClientFactory
 import com.rabbitmq.client.DefaultSaslConfig
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
@@ -81,21 +84,26 @@ class CloudioApplication {
             else -> json.toMessage(obj, messageProperties)
         }
 
-        override fun fromMessage(message: Message, conversionHint: Any) = if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
-            json.fromMessage(message, conversionHint)
-        } else {
-            simple.fromMessage(message)
-        }
+        override fun fromMessage(message: Message, conversionHint: Any) =
+            if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
+                json.fromMessage(message, conversionHint)
+            } else {
+                simple.fromMessage(message)
+            }
 
-        override fun fromMessage(message: Message) = if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
-            json.fromMessage(message)
-        } else {
-            simple.fromMessage(message)
-        }
+        override fun fromMessage(message: Message) =
+            if (message.messageProperties.contentType == MessageProperties.CONTENT_TYPE_JSON) {
+                json.fromMessage(message)
+            } else {
+                simple.fromMessage(message)
+            }
     }
 
     @Bean
-    fun connectionFactory(rabbitProperties: RabbitProperties, certificateManagerService: CertificateManagerService): ConnectionFactory =
+    fun connectionFactory(
+        rabbitProperties: RabbitProperties,
+        certificateManagerService: CertificateManagerService
+    ): ConnectionFactory =
         CachingConnectionFactory(object : RabbitConnectionFactoryBean() {
             override fun configureKeyManagers() = if (keyStore != "@generate") {
                 super.configureKeyManagers()
@@ -157,23 +165,24 @@ class CloudioApplication {
     fun corsConfigurationSource(repo: CorsRepository): CorsConfigurationSource = CloudioCorsConfigurationSource(repo)
 
     @Bean
-    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) = object : WebSecurityConfigurerAdapter() {
-        override fun configure(auth: AuthenticationManagerBuilder) {
-            auth.userDetailsService(cloudioUserDetailsService)
-        }
+    fun webSecurityConfigurerAdapter(cloudioUserDetailsService: CloudioUserDetailsService) =
+        object : WebSecurityConfigurerAdapter() {
+            override fun configure(auth: AuthenticationManagerBuilder) {
+                auth.userDetailsService(cloudioUserDetailsService)
+            }
 
-        override fun configure(http: HttpSecurity) {
-            http.cors().and()
-                .csrf().disable()
-                .authorizeRequests().antMatchers(
-                    "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
-                    "/api/v1/provision/*", "/messageformat/**"
-                ).permitAll()
-                .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
-                .and().httpBasic()
-                .and().sessionManagement().disable()
+            override fun configure(http: HttpSecurity) {
+                http.cors().and()
+                    .csrf().disable()
+                    .authorizeRequests().antMatchers(
+                        "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**",
+                        "/api/v1/provision/*", "/messageformat/**"
+                    ).permitAll()
+                    .anyRequest().hasAuthority(Authority.HTTP_ACCESS.name)
+                    .and().httpBasic()
+                    .and().sessionManagement().disable()
+            }
         }
-    }
 
     @Bean
     fun auditorAware() = AuditorAware {
@@ -188,6 +197,16 @@ class CloudioApplication {
         } else {
             Optional.empty()
         }
+    }
+
+    @Bean
+    fun influxDBClient(cloudioInfluxProperties: CloudioInfluxProperties): InfluxDBClient? {
+        return InfluxDBClientFactory.create(
+            cloudioInfluxProperties.url,
+            cloudioInfluxProperties.token.toCharArray(),
+            cloudioInfluxProperties.organization,
+            cloudioInfluxProperties.database
+        );
     }
 }
 

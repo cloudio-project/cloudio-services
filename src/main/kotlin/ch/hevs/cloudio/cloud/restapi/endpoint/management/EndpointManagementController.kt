@@ -249,7 +249,7 @@ class EndpointManagementController(
         @PathVariable @Parameter(description = "UUID of the endpoint.", required = true) uuid: UUID
     ) = endpointRepository.findById(uuid).orElseThrow {
         CloudioHttpExceptions.NotFound("Endpoint not found.")
-    }.configuration.logLevel
+    }.configuration.logLevel.toString()
 
 
     @GetMapping("/{uuid}/metaData", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -452,7 +452,7 @@ class EndpointManagementController(
         }
     }
 
-    @PutMapping("/{uuid}/configuration/logLevel", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/{uuid}/configuration/logLevel", consumes = [])
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(#uuid,T(ch.hevs.cloudio.cloud.security.EndpointPermission).CONFIGURE)")
     @Operation(summary = "Change an endpoint's log level.")
